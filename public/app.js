@@ -10,6 +10,76 @@ const fmtMoeda = (v) =>
 
 let edicoesDisponiveis = [];
 let debounceTimer = null;
+let ultimaConsulta = null;
+let ultimaConsultaMultiplos = null;
+
+// ---------- Abas ----------
+document.querySelectorAll('.tab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach((p) => p.classList.add('hidden'));
+    btn.classList.add('active');
+    document.getElementById(`tab-${btn.dataset.tab}`).classList.remove('hidden');
+  });
+});
+
+// ---------- Favoritos (localStorage, sem login) ----------
+const FAVORITOS_KEY = 'cbhpm_favoritos';
+const listaFavoritosEl = document.getElementById('lista-favoritos');
+const blocoFavoritosEl = document.getElementById('bloco-favoritos');
+
+function carregarFavoritos() {
+  try {
+    return JSON.parse(localStorage.getItem(FAVORITOS_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function isFavorito(codigo) {
+  return carregarFavoritos().some((f) => Number(f.codigo) === Number(codigo));
+}
+
+function alternarFavorito(codigo, descricao) {
+  const favoritos = carregarFavoritos();
+  const idx = favoritos.findIndex((f) => Number(f.codigo) === Number(codigo));
+  if (idx >= 0) {
+    favoritos.splice(idx, 1);
+  } else {
+    favoritos.unshift({ codigo: Number(codigo), descricao });
+  }
+  localStorage.setItem(FAVORITOS_KEY, JSON.stringify(favoritos));
+  renderizarFavoritos();
+}
+
+function renderizarFavoritos() {
+  const favoritos = carregarFavoritos();
+  blocoFavoritosEl.classList.toggle('hidden', favoritos.length === 0);
+  listaFavoritosEl.innerHTML = favoritos
+    .map(
+      (f) => `
+      <span class="favorito-chip" data-codigo="${f.codigo}" data-desc="${f.descricao.replace(/"/g, '&quot;')}">
+        ★ ${f.codigo} — ${f.descricao}
+        <button type="button" class="favorito-remover" data-remover="${f.codigo}" aria-label="Remover favorito">&times;</button>
+      </span>`
+    )
+    .join('');
+}
+
+listaFavoritosEl.addEventListener('click', (e) => {
+  const btnRemover = e.target.closest('.favorito-remover');
+  if (btnRemover) {
+    alternarFavorito(btnRemover.dataset.remover, '');
+    return;
+  }
+  const chip = e.target.closest('.favorito-chip');
+  if (chip) {
+    codigoInputEl.value = chip.dataset.codigo;
+    buscaInputEl.value = chip.dataset.desc;
+  }
+});
+
+renderizarFavoritos();
 
 // ---------- Autocomplete de busca por descrição ----------
 function esconderResultadosBusca() {
@@ -155,6 +225,9 @@ async function carregarEdicoes() {
         </label>`
       )
       .join('');
+
+    sugerirDefaultsAuxiliares();
+    popularSelectEdicaoMp();
   } catch (err) {
     listaEdicoesEl.innerHTML = '<span class="loading-text">Erro ao carregar edições.</span>';
     console.error(err);
@@ -163,10 +236,347 @@ async function carregarEdicoes() {
 
 document.getElementById('btn-todas').addEventListener('click', () => {
   document.querySelectorAll('input[name="edicao"]').forEach((cb) => (cb.checked = true));
+  sugerirDefaultsAuxiliares();
 });
 document.getElementById('btn-nenhuma').addEventListener('click', () => {
   document.querySelectorAll('input[name="edicao"]').forEach((cb) => (cb.checked = false));
+  sugerirDefaultsAuxiliares();
 });
+listaEdicoesEl.addEventListener('change', (e) => {
+  if (e.target.matches('input[name="edicao"]')) sugerirDefaultsAuxiliares();
+});
+
+// ---------- Sugestão automática dos % de auxiliar conforme a era da edição ----------
+// A CBHPM aumentou os percentuais de auxiliar a partir da edição 2018
+// (1º: 30%→60%, 2º: 20%→40%, 3º/4º: 20%→30%). Os campos abaixo só recebem a
+// sugestão automática enquanto o usuário não os edita manualmente.
+const CAMPOS_AUXILIAR_ERA = ['pct1Auxiliar', 'pct2Auxiliar', 'pct3Auxiliar', 'pct4Auxiliar'];
+const DEFAULT_PRE_2018 = { pct1Auxiliar: 30, pct2Auxiliar: 20, pct3Auxiliar: 20, pct4Auxiliar: 20 };
+const DEFAULT_POS_2018 = { pct1Auxiliar: 60, pct2Auxiliar: 40, pct3Auxiliar: 30, pct4Auxiliar: 30 };
+const camposAuxiliarEditados = new Set();
+
+CAMPOS_AUXILIAR_ERA.forEach((id) => {
+  document.getElementById(id).addEventListener('input', () => camposAuxiliarEditados.add(id));
+});
+
+document.getElementById('btn-restaurar-auxiliares').addEventListener('click', () => {
+  camposAuxiliarEditados.clear();
+  sugerirDefaultsAuxiliares();
+});
+
+function sugerirDefaultsAuxiliares() {
+  const anosSelecionados = Array.from(document.querySelectorAll('input[name="edicao"]:checked'))
+    .map((cb) => edicoesDisponiveis.find((e) => e.id === Number(cb.value))?.ano_inicio)
+    .filter((ano) => ano !== undefined);
+
+  if (anosSelecionados.length === 0) return;
+
+  const todasPre2018 = anosSelecionados.every((ano) => ano < 2018);
+  const defaults = todasPre2018 ? DEFAULT_PRE_2018 : DEFAULT_POS_2018;
+
+  CAMPOS_AUXILIAR_ERA.forEach((id) => {
+    if (!camposAuxiliarEditados.has(id)) {
+      document.getElementById(id).value = defaults[id];
+    }
+  });
+}
+
+// ---------- Múltiplos procedimentos no mesmo ato (via de acesso) ----------
+const mpEdicaoSelectEl = document.getElementById('mp-edicao');
+const mpListaEl = document.getElementById('mp-lista');
+const mpResultadoAreaEl = document.getElementById('mp-resultado-area');
+const formMultiplosEl = document.getElementById('form-multiplos');
+
+const RELACAO_LABELS = {
+  principal: 'Principal',
+  mesma_via: 'Mesma via',
+  via_diferente: 'Via diferente',
+  equipe_diferente: 'Equipe diferente',
+};
+let mpDebounceTimer = null;
+
+function popularSelectEdicaoMp() {
+  mpEdicaoSelectEl.innerHTML = edicoesDisponiveis.map((e) => `<option value="${e.id}">${e.nome}</option>`).join('');
+  aplicarDefaultsAuxiliarMp();
+}
+
+// Só há 1 edição selecionada aqui, então a era é exata — sem ambiguidade de mistura.
+function aplicarDefaultsAuxiliarMp() {
+  const edicao = edicoesDisponiveis.find((e) => e.id === Number(mpEdicaoSelectEl.value));
+  if (!edicao) return;
+  const defaults = edicao.ano_inicio < 2018 ? DEFAULT_PRE_2018 : DEFAULT_POS_2018;
+  Object.entries(defaults).forEach(([id, valor]) => {
+    document.getElementById(`mp-${id}`).value = valor;
+  });
+}
+mpEdicaoSelectEl.addEventListener('change', aplicarDefaultsAuxiliarMp);
+
+function mpCriarLinha(relacaoPadrao) {
+  const linha = document.createElement('div');
+  linha.className = 'mp-linha';
+  linha.dataset.codigo = '';
+  linha.innerHTML = `
+    <div class="busca-wrapper">
+      <input type="text" class="mp-busca-input" placeholder="Buscar por código ou descrição" autocomplete="off">
+      <div class="busca-dropdown hidden mp-busca-dropdown"></div>
+    </div>
+    <select class="mp-relacao">
+      <option value="principal">Principal</option>
+      <option value="mesma_via">Mesma via</option>
+      <option value="via_diferente">Via diferente</option>
+      <option value="equipe_diferente">Equipe diferente</option>
+    </select>
+    <button type="button" class="mp-btn-remover" aria-label="Remover procedimento">&times;</button>
+  `;
+  linha.querySelector('.mp-relacao').value = relacaoPadrao;
+  mpListaEl.appendChild(linha);
+}
+
+document.getElementById('mp-btn-adicionar').addEventListener('click', () => {
+  mpCriarLinha('mesma_via');
+});
+
+mpListaEl.addEventListener('click', (e) => {
+  if (e.target.closest('.mp-btn-remover')) {
+    if (mpListaEl.children.length <= 2) {
+      alert('São necessários ao menos 2 procedimentos para simular a sessão.');
+      return;
+    }
+    e.target.closest('.mp-linha').remove();
+    return;
+  }
+
+  const item = e.target.closest('.busca-item');
+  if (item && item.dataset.codigo) {
+    const linha = e.target.closest('.mp-linha');
+    linha.dataset.codigo = item.dataset.codigo;
+    linha.querySelector('.mp-busca-input').value = `${item.dataset.codigo} — ${item.dataset.desc}`;
+    linha.querySelector('.mp-busca-dropdown').classList.add('hidden');
+  }
+});
+
+mpListaEl.addEventListener('input', (e) => {
+  if (!e.target.matches('.mp-busca-input')) return;
+  const linha = e.target.closest('.mp-linha');
+  const dropdown = linha.querySelector('.mp-busca-dropdown');
+  const termo = e.target.value.trim();
+  linha.dataset.codigo = '';
+
+  clearTimeout(mpDebounceTimer);
+  if (termo.length < 2) {
+    dropdown.classList.add('hidden');
+    return;
+  }
+
+  mpDebounceTimer = setTimeout(async () => {
+    try {
+      const resp = await fetch(`/api/buscar-procedimentos?q=${encodeURIComponent(termo)}`);
+      const itens = await resp.json();
+      dropdown.innerHTML =
+        itens.length === 0
+          ? '<div class="busca-vazio">Nenhum procedimento encontrado.</div>'
+          : itens
+              .map(
+                (item) => `
+              <div class="busca-item" data-codigo="${item.codigo}" data-desc="${item.descricao.replace(/"/g, '&quot;')}">
+                <span class="codigo">${item.codigo}</span>
+                <span class="desc">${item.descricao}</span>
+              </div>`
+              )
+              .join('');
+      dropdown.classList.remove('hidden');
+    } catch (err) {
+      console.error(err);
+    }
+  }, 250);
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.mp-linha .busca-wrapper')) {
+    document.querySelectorAll('.mp-busca-dropdown').forEach((d) => d.classList.add('hidden'));
+  }
+});
+
+// ---------- Modal de ajuda (múltiplos procedimentos) ----------
+const modalAjudaMpEl = document.getElementById('modal-ajuda-mp');
+document.getElementById('btn-ajuda-mp').addEventListener('click', () => {
+  modalAjudaMpEl.classList.remove('hidden');
+});
+document.getElementById('btn-fechar-ajuda-mp').addEventListener('click', () => {
+  modalAjudaMpEl.classList.add('hidden');
+});
+modalAjudaMpEl.addEventListener('click', (e) => {
+  if (e.target === modalAjudaMpEl) modalAjudaMpEl.classList.add('hidden');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') modalAjudaMpEl.classList.add('hidden');
+});
+
+function renderizarResultadoMultiplos(data) {
+  if (data.erro) {
+    mpResultadoAreaEl.innerHTML = `<div class="msg erro">${data.erro}</div>`;
+    return;
+  }
+
+  const linhasProcedimentos = data.procedimentos
+    .map(
+      (p) => `
+      <div class="breakdown-row">
+        <span class="label">
+          ${p.codigo} — ${p.descricao}
+          <span class="pct-badge pct-badge-neutro">${RELACAO_LABELS[p.relacao]} · ${p.percentual_relacao}%</span>
+          <span class="detail">Porte ${fmtMoeda(p.porte.total_pago)} · UCO ${fmtMoeda(p.uco.total)} · Filme ${fmtMoeda(p.filme.total)}${
+            p.porte_anestesico.aplicavel ? ` · Porte Anestésico ${fmtMoeda(p.porte_anestesico.total)}` : ''
+          }</span>
+        </span>
+        <span class="value">${fmtMoeda(p.porte.total_pago + p.uco.total + p.filme.total)}</span>
+      </div>`
+    )
+    .join('');
+
+  const linhaPapel = (papel) => `
+    <div class="breakdown-row">
+      <span class="label">
+        ${papel.papel}
+        ${papel.percentual ? `<span class="pct-badge pct-badge-neutro">${papel.percentual}%</span>` : ''}
+      </span>
+      <span class="value ${papel.total === 0 ? 'zero' : ''}">${fmtMoeda(papel.total)}</span>
+    </div>`;
+
+  const s = data.sessao;
+
+  const grupo = (chave, nome, valor, corpoHtml, secundario, aberto) => `
+    <details class="grupo ${secundario ? 'grupo-secundario' : 'grupo-principal'}" data-grupo="${chave}" ${aberto ? 'open' : ''}>
+      <summary class="grupo-summary">
+        <span class="grupo-nome">${nome}</span>
+        <span class="grupo-valor">${fmtMoeda(valor)}</span>
+      </summary>
+      <div class="grupo-corpo">${corpoHtml}</div>
+    </details>`;
+
+  const corpoEquipe = `
+    <div class="breakdown">${s.equipe.papeis.map(linhaPapel).join('')}</div>
+    <div class="referencia-tabela">Base de cálculo (soma dos portes ponderados pela via): ${fmtMoeda(s.equipe.base_calculo)}</div>`;
+
+  mpResultadoAreaEl.innerHTML = `
+    <div class="resultado-header">
+      <h2>Sessão com ${data.procedimentos.length} procedimentos</h2>
+      <div class="resultado-acoes">
+        <button type="button" id="btn-mp-exportar-pdf" class="acao-btn">⬇ PDF</button>
+        <button type="button" id="btn-mp-exportar-csv" class="acao-btn">⬇ Excel</button>
+      </div>
+    </div>
+    <div class="edicao-card mp-card">
+      <div class="edicao-card-head">
+        <span class="nome">Procedimentos da sessão</span>
+      </div>
+      <div class="breakdown">${linhasProcedimentos}</div>
+
+      ${grupo('cirurgiao', 'Valor do procedimento (honorários da sessão)', s.cirurgiao.subtotal, '<div class="referencia-tabela">Soma do porte (já ponderado pela via) + UCO + filme de todos os procedimentos.</div>', false, false)}
+      ${s.anestesista.aplicavel ? grupo('anestesista', 'Anestesista (honorário separado, único por sessão)', s.anestesista.total, '<div class="referencia-tabela">Maior porte anestésico entre os procedimentos da sessão.</div>', true, false) : ''}
+      ${s.equipe.aplicavel ? grupo('equipe', 'Equipe (auxiliares / instrumentador)', s.equipe.total, corpoEquipe, true, false) : ''}
+    </div>
+  `;
+
+  ultimaConsultaMultiplos = data;
+}
+
+function exportarMultiplosCsv(data) {
+  const linhas = [
+    ['Código', 'Descrição', 'Relação', '% Relação', 'Porte pago (R$)', 'UCO (R$)', 'Filme (R$)', 'Porte Anestésico (R$)'],
+  ];
+  data.procedimentos.forEach((p) => {
+    linhas.push([
+      p.codigo,
+      p.descricao,
+      RELACAO_LABELS[p.relacao],
+      p.percentual_relacao,
+      numCsv(p.porte.total_pago),
+      numCsv(p.uco.total),
+      numCsv(p.filme.total),
+      p.porte_anestesico.aplicavel ? numCsv(p.porte_anestesico.total) : '',
+    ]);
+  });
+  linhas.push([]);
+  linhas.push(['Valor do procedimento (sessão)', numCsv(data.sessao.cirurgiao.subtotal)]);
+  if (data.sessao.anestesista.aplicavel) {
+    linhas.push(['Anestesista (sessão)', numCsv(data.sessao.anestesista.total)]);
+  }
+  if (data.sessao.equipe.aplicavel) {
+    linhas.push([]);
+    linhas.push(['Equipe', 'Percentual', 'Valor (R$)']);
+    data.sessao.equipe.papeis.forEach((p) => linhas.push([p.papel, p.percentual, numCsv(p.total)]));
+    linhas.push(['Total equipe', '', numCsv(data.sessao.equipe.total)]);
+  }
+  baixarCsv('cbhpm-multiplos-procedimentos.csv', linhas);
+}
+
+mpResultadoAreaEl.addEventListener('click', (e) => {
+  if (e.target.closest('#btn-mp-exportar-pdf')) {
+    window.print();
+  } else if (e.target.closest('#btn-mp-exportar-csv')) {
+    if (ultimaConsultaMultiplos) exportarMultiplosCsv(ultimaConsultaMultiplos);
+  }
+});
+
+formMultiplosEl.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const linhas = Array.from(mpListaEl.querySelectorAll('.mp-linha'));
+  const procedimentos = linhas.map((linha) => {
+    const codigoDigitado = linha.querySelector('.mp-busca-input').value.trim();
+    const codigo = linha.dataset.codigo || (/^\d+$/.test(codigoDigitado) ? codigoDigitado : '');
+    return { codigo: Number(codigo), relacao: linha.querySelector('.mp-relacao').value };
+  });
+
+  if (procedimentos.some((p) => !p.codigo)) {
+    mpResultadoAreaEl.innerHTML = '<div class="msg erro">Selecione um procedimento válido em cada linha (busque pela descrição ou digite o código).</div>';
+    return;
+  }
+  if (procedimentos.filter((p) => p.relacao === 'principal').length !== 1) {
+    mpResultadoAreaEl.innerHTML = '<div class="msg erro">Marque exatamente um procedimento como "Principal".</div>';
+    return;
+  }
+
+  const payload = {
+    edicaoId: Number(mpEdicaoSelectEl.value),
+    procedimentos,
+    ajustes: {
+      pctPorte: Number(document.getElementById('mp-pctPorte').value) || 0,
+      pctUco: Number(document.getElementById('mp-pctUco').value) || 0,
+      pctPorteAnestesico: Number(document.getElementById('mp-pctPorteAnestesico').value) || 0,
+      valorFilme: Number(document.getElementById('mp-valorFilme').value) || 0,
+      pctFilme: Number(document.getElementById('mp-pctFilme').value) || 0,
+      pct1Auxiliar: Number(document.getElementById('mp-pct1Auxiliar').value) || 0,
+      pct2Auxiliar: Number(document.getElementById('mp-pct2Auxiliar').value) || 0,
+      pct3Auxiliar: Number(document.getElementById('mp-pct3Auxiliar').value) || 0,
+      pct4Auxiliar: Number(document.getElementById('mp-pct4Auxiliar').value) || 0,
+      pctInstrumentador: Number(document.getElementById('mp-pctInstrumentador').value) || 0,
+      pctAuxAnestesista: Number(document.getElementById('mp-pctAuxAnestesista').value) || 0,
+      pctMesmaVia: Number(document.getElementById('mp-pctMesmaVia').value),
+      pctViaDiferente: Number(document.getElementById('mp-pctViaDiferente').value),
+      pctEquipeDiferente: Number(document.getElementById('mp-pctEquipeDiferente').value),
+    },
+  };
+
+  mpResultadoAreaEl.innerHTML = '<div class="msg vazio">Calculando…</div>';
+
+  try {
+    const resp = await fetch('/api/consultar-multiplos-procedimentos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await resp.json();
+    renderizarResultadoMultiplos(data);
+  } catch (err) {
+    mpResultadoAreaEl.innerHTML = '<div class="msg erro">Erro ao consultar o servidor.</div>';
+    console.error(err);
+  }
+});
+
+mpCriarLinha('principal');
+mpCriarLinha('mesma_via');
 
 function montarComparativo(original, ajustado) {
   const diferenca = ajustado - original;
@@ -273,15 +683,81 @@ function renderizarResultado(data, ajustes) {
     })
     .join('');
 
+  const descricaoAtual = data.resultados[0]?.descricao || '';
+
   resultadoAreaEl.innerHTML = `
     <div class="resultado-header">
       <h2>Código <span class="codigo-tag">${data.codigo}</span></h2>
+      <div class="resultado-acoes">
+        <button type="button" id="btn-favoritar" class="acao-btn ${isFavorito(data.codigo) ? 'ativo' : ''}" data-codigo="${data.codigo}" data-descricao="${descricaoAtual.replace(/"/g, '&quot;')}">
+          ${isFavorito(data.codigo) ? '★ Favoritado' : '☆ Favoritar'}
+        </button>
+        <button type="button" id="btn-exportar-pdf" class="acao-btn">⬇ PDF</button>
+        <button type="button" id="btn-exportar-csv" class="acao-btn">⬇ Excel</button>
+      </div>
     </div>
     <div class="cards-grid">${cards}</div>
   `;
 
   montarDashboard(data);
+  ultimaConsulta = data;
 }
+
+// ---------- Exportar (PDF via impressão do navegador / Excel via CSV) ----------
+function csvEscape(valor) {
+  const s = String(valor ?? '');
+  return /[;"\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+function numCsv(v) {
+  return Number(v).toFixed(2).replace('.', ',');
+}
+function baixarCsv(nomeArquivo, linhas) {
+  const conteudo = String.fromCharCode(0xfeff) + linhas.map((linha) => linha.map(csvEscape).join(';')).join('\r\n');
+  const blob = new Blob([conteudo], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArquivo;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
+function exportarConsultaCsv(data) {
+  const linhas = [
+    ['Código', data.codigo],
+    [],
+    ['Edição', 'Ano', 'Porte (R$)', 'UCO (R$)', 'Filme (R$)', 'Valor do Procedimento (R$)', 'Valor Original Planilha (R$)', 'Anestesista (R$)', 'Equipe Total (R$)'],
+  ];
+  data.resultados.forEach((r) => {
+    linhas.push([
+      r.edicao,
+      r.ano,
+      numCsv(r.cirurgiao.porte.total),
+      numCsv(r.cirurgiao.uco.total),
+      numCsv(r.cirurgiao.filme.total),
+      numCsv(r.cirurgiao.subtotal),
+      numCsv(r.cirurgiao.subtotal_original_planilha),
+      r.anestesista.aplicavel ? numCsv(r.anestesista.total) : '',
+      r.equipe.aplicavel ? numCsv(r.equipe.total) : '',
+    ]);
+  });
+  baixarCsv(`cbhpm-codigo-${data.codigo}.csv`, linhas);
+}
+
+resultadoAreaEl.addEventListener('click', (e) => {
+  if (e.target.closest('#btn-favoritar')) {
+    const btn = e.target.closest('#btn-favoritar');
+    alternarFavorito(btn.dataset.codigo, btn.dataset.descricao);
+    btn.classList.toggle('ativo');
+    btn.textContent = btn.classList.contains('ativo') ? '★ Favoritado' : '☆ Favoritar';
+  } else if (e.target.closest('#btn-exportar-pdf')) {
+    window.print();
+  } else if (e.target.closest('#btn-exportar-csv')) {
+    if (ultimaConsulta) exportarConsultaCsv(ultimaConsulta);
+  }
+});
 
 // ---------- Dashboard comparativo (um gráfico de barras por item) ----------
 const dashboardAreaEl = document.getElementById('dashboard-area');

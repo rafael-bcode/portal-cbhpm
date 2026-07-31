@@ -1,5 +1,33 @@
 [
   {
+    "versao": "1.6.0",
+    "data": "2026-07-31",
+    "mudancas": [
+      "Reorganiza a tela em abas: 'Consulta por procedimento' e 'Múltiplos procedimentos', reduzindo a rolagem e separando os dois modos de uso.",
+      "Favoritos: marque procedimentos consultados como favoritos (salvos no navegador, sem login) para acesso rápido — aparecem como chips acima da busca.",
+      "Exportar PDF: botão que usa a impressão do navegador com um layout limpo (sem menu/formulários) para salvar ou imprimir a consulta e a sessão de múltiplos procedimentos.",
+      "Exportar Excel/CSV: baixa os valores da consulta (por edição) ou da sessão de múltiplos procedimentos em .csv, pronto para abrir no Excel."
+    ]
+  },
+  {
+    "versao": "1.5.0",
+    "data": "2026-07-31",
+    "mudancas": [
+      "Nova seção 'Múltiplos procedimentos no mesmo ato': simula honorários quando mais de um procedimento é feito na mesma cirurgia, aplicando os redutores oficiais da CBHPM ao Porte (mesma via 50%, via diferente 70%, equipe diferente 100%) — todos parametrizáveis, com sugestão de padrão.",
+      "UCO e Filme permanecem integrais para cada procedimento; Porte Anestésico é cobrado uma única vez por sessão (maior valor entre os procedimentos); Equipe incide sobre a soma dos portes já ponderados pela via.",
+      "Percentuais de auxiliar da nova seção também seguem a sugestão automática por era da edição (30/20/20/20 até 2017; 60/40/30/30 a partir de 2018)."
+    ]
+  },
+  {
+    "versao": "1.4.0",
+    "data": "2026-07-31",
+    "mudancas": [
+      "Corrige os percentuais padrão de auxiliar, que estavam desatualizados (30/20/20/20, regra anterior a 2018): agora são sugeridos automaticamente conforme a era das edições selecionadas — 30/20/20/20 até a edição 2017, 60/40/30/30 a partir da CBHPM 2018 — e preservam qualquer valor editado manualmente, com opção de restaurar a sugestão.",
+      "Adiciona nota explicando que Instrumentador e Auxiliar de Anestesista não são papéis definidos pela AMB/CBHPM (são taxas de convênio/hospital, por isso ficam com percentual livre).",
+      "Documenta pesquisa de mercado e roadmap de melhorias em ROADMAP_MELHORIAS.md (edição 2022, vias de acesso, tabelas por convênio, TISS)."
+    ]
+  },
+  {
     "versao": "1.3.0",
     "data": "2026-07-31",
     "mudancas": [

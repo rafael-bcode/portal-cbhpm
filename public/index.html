@@ -53,8 +53,20 @@
 
 <main class="container">
 
+  <div class="tabs">
+    <button type="button" class="tab-btn active" data-tab="consulta">Consulta por procedimento</button>
+    <button type="button" class="tab-btn" data-tab="multiplos">Múltiplos procedimentos</button>
+  </div>
+
+  <div id="tab-consulta" class="tab-panel">
+
   <section class="search-panel">
     <form id="form-consulta">
+      <div class="field field-favoritos hidden" id="bloco-favoritos">
+        <label>Favoritos</label>
+        <div id="lista-favoritos" class="favoritos-lista"></div>
+      </div>
+
       <div class="field field-busca">
         <label for="busca-descricao">Buscar por descrição (opcional)</label>
         <div class="busca-wrapper">
@@ -133,7 +145,16 @@
             <input type="number" id="pctAuxAnestesista" step="0.01" value="30">
           </div>
         </div>
-        <p class="ajustes-nota">Os percentuais dos papéis abaixo incidem sobre o valor do porte do cirurgião. Preencha 0% para os papéis que não se aplicam a este procedimento.</p>
+        <p class="ajustes-nota">
+          <strong>1º–4º Auxiliar</strong> são sugeridos automaticamente conforme a era das edições selecionadas
+          (30/20/20/20 até a edição 2017; <strong>60/40/30/30 a partir da CBHPM 2018</strong> — a AMB aumentou esses
+          percentuais nessa edição). Ajustou manualmente? O valor digitado passa a valer até você
+          <button type="button" id="btn-restaurar-auxiliares" class="link-inline">restaurar a sugestão</button>.
+          <br>
+          <strong>Instrumentador</strong> e <strong>Auxiliar de Anestesista</strong> não são papéis definidos pela
+          AMB/CBHPM — são taxas de convênio/hospital, por isso ficam com percentual livre (ajuste conforme o
+          contrato).
+        </p>
       </details>
 
       <button type="submit" class="btn-consultar">Consultar</button>
@@ -144,7 +165,142 @@
 
   <section id="dashboard-area"></section>
 
+  </div>
+
+  <div id="tab-multiplos" class="tab-panel hidden">
+
+  <section class="search-panel mp-panel">
+    <div class="mp-header">
+      <h2>Múltiplos procedimentos no mesmo ato</h2>
+      <button type="button" id="btn-ajuda-mp" class="btn-ajuda" title="Como funciona?" aria-label="Como funciona?">?</button>
+    </div>
+    <p class="ajustes-nota">
+      Quando mais de um procedimento é feito na mesma cirurgia, o <strong>Porte</strong> dos procedimentos
+      secundários é reduzido conforme a via de acesso. UCO e Filme permanecem integrais. O
+      <strong>Porte Anestésico</strong> é cobrado uma única vez (maior valor entre os procedimentos, pois é uma
+      anestesia só). A <strong>Equipe</strong> incide sobre a soma dos valores de porte já ponderados pela via.
+    </p>
+
+    <form id="form-multiplos">
+      <div class="field">
+        <label for="mp-edicao">Edição</label>
+        <select id="mp-edicao"></select>
+      </div>
+
+      <div class="field">
+        <label>Procedimentos</label>
+        <div id="mp-lista" class="mp-lista"></div>
+        <button type="button" id="mp-btn-adicionar" class="chip-btn mp-btn-adicionar">+ Adicionar procedimento</button>
+      </div>
+
+      <details class="ajustes">
+        <summary>Percentuais por relação com o principal</summary>
+        <div class="ajustes-grid">
+          <div class="field">
+            <label for="mp-pctMesmaVia">% Mesma via</label>
+            <input type="number" id="mp-pctMesmaVia" step="0.01" value="50">
+          </div>
+          <div class="field">
+            <label for="mp-pctViaDiferente">% Via diferente</label>
+            <input type="number" id="mp-pctViaDiferente" step="0.01" value="70">
+          </div>
+          <div class="field">
+            <label for="mp-pctEquipeDiferente">% Equipe diferente</label>
+            <input type="number" id="mp-pctEquipeDiferente" step="0.01" value="100">
+          </div>
+        </div>
+        <p class="ajustes-nota">Valores oficiais da CBHPM sugeridos como padrão — ajustáveis conforme o contrato do convênio.</p>
+      </details>
+
+      <details class="ajustes">
+        <summary>Ajustes de simulação (opcional)</summary>
+        <div class="ajustes-grid">
+          <div class="field">
+            <label for="mp-pctPorte">% Porte</label>
+            <input type="number" id="mp-pctPorte" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="mp-pctUco">% UCO</label>
+            <input type="number" id="mp-pctUco" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="mp-pctPorteAnestesico">% Porte Anestésico</label>
+            <input type="number" id="mp-pctPorteAnestesico" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="mp-valorFilme">Valor do Filme (R$/m²)</label>
+            <input type="number" id="mp-valorFilme" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="mp-pctFilme">% Filme</label>
+            <input type="number" id="mp-pctFilme" step="0.01" value="0">
+          </div>
+        </div>
+      </details>
+
+      <details class="ajustes">
+        <summary>Percentuais da equipe (auxiliares, instrumentador, anestesista)</summary>
+        <div class="ajustes-grid">
+          <div class="field">
+            <label for="mp-pct1Auxiliar">% 1º Auxiliar</label>
+            <input type="number" id="mp-pct1Auxiliar" step="0.01" value="60">
+          </div>
+          <div class="field">
+            <label for="mp-pct2Auxiliar">% 2º Auxiliar</label>
+            <input type="number" id="mp-pct2Auxiliar" step="0.01" value="40">
+          </div>
+          <div class="field">
+            <label for="mp-pct3Auxiliar">% 3º Auxiliar</label>
+            <input type="number" id="mp-pct3Auxiliar" step="0.01" value="30">
+          </div>
+          <div class="field">
+            <label for="mp-pct4Auxiliar">% 4º Auxiliar</label>
+            <input type="number" id="mp-pct4Auxiliar" step="0.01" value="30">
+          </div>
+          <div class="field">
+            <label for="mp-pctInstrumentador">% Instrumentador</label>
+            <input type="number" id="mp-pctInstrumentador" step="0.01" value="10">
+          </div>
+          <div class="field">
+            <label for="mp-pctAuxAnestesista">% Auxiliar de Anestesista</label>
+            <input type="number" id="mp-pctAuxAnestesista" step="0.01" value="30">
+          </div>
+        </div>
+        <p class="ajustes-nota">Sugeridos conforme a era da edição escolhida acima (30/20/20/20 até 2017; 60/40/30/30 a partir de 2018).</p>
+      </details>
+
+      <button type="submit" class="btn-consultar">Calcular sessão</button>
+    </form>
+  </section>
+
+  <section id="mp-resultado-area"></section>
+
+  </div>
+
 </main>
+
+<div id="modal-ajuda-mp" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Como a sessão com múltiplos procedimentos é calculada</h3>
+      <button type="button" id="btn-fechar-ajuda-mp" class="btn-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <ul>
+        <li><strong>Principal:</strong> 100% do porte.</li>
+        <li><strong>Mesma via de acesso:</strong> percentual configurável do porte (padrão 50%).</li>
+        <li><strong>Via diferente:</strong> percentual configurável do porte (padrão 70%).</li>
+        <li><strong>Equipe diferente:</strong> percentual configurável, integral por padrão (100%) — outra equipe fatura à parte.</li>
+      </ul>
+      <p><strong>UCO e Filme</strong> não sofrem redução — permanecem integrais em cada procedimento.</p>
+      <p><strong>Porte Anestésico</strong> é cobrado uma única vez por sessão (o maior valor entre os
+      procedimentos), pois é uma só anestesia para os procedimentos feitos juntos.</p>
+      <p><strong>Equipe</strong> (auxiliares/instrumentador) aplica seu percentual sobre a soma dos valores de
+      referência de porte de cada procedimento, já ponderados pela relação (principal 100% + secundários já
+      reduzidos pela via) — reflete o total que o cirurgião recebeu na sessão inteira.</p>
+    </div>
+  </div>
+</div>
 
 <div id="chart-tooltip" class="chart-tooltip hidden" role="tooltip"></div>
 
