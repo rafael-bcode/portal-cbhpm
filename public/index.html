@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Portal CBHPM — Consulta de Valores</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <span class="logo-mark">CBHPM</span>
+    <span class="logo-sub">Consulta de valores por edição</span>
+  </div>
+</header>
+
+<main class="container">
+
+  <section class="search-panel">
+    <form id="form-consulta">
+      <div class="field field-codigo">
+        <label for="codigo">Código do procedimento</label>
+        <input type="text" id="codigo" name="codigo" inputmode="numeric" placeholder="Ex: 10102019" required>
+      </div>
+
+      <div class="field field-edicoes">
+        <label>Edições</label>
+        <div class="edicoes-toolbar">
+          <button type="button" id="btn-todas" class="chip-btn">Todas</button>
+          <button type="button" id="btn-nenhuma" class="chip-btn">Nenhuma</button>
+        </div>
+        <div id="lista-edicoes" class="edicoes-grid">
+          <span class="loading-text">Carregando edições…</span>
+        </div>
+      </div>
+
+      <details class="ajustes">
+        <summary>Ajustes de simulação (opcional)</summary>
+        <div class="ajustes-grid">
+          <div class="field">
+            <label for="pctPorte">% Porte</label>
+            <input type="number" id="pctPorte" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="pctUco">% UCO</label>
+            <input type="number" id="pctUco" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="pctPorteAnestesico">% Porte Anestésico</label>
+            <input type="number" id="pctPorteAnestesico" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="valorFilme">Valor do Filme (R$/m²)</label>
+            <input type="number" id="valorFilme" step="0.01" value="0">
+          </div>
+          <div class="field">
+            <label for="pctFilme">% Filme</label>
+            <input type="number" id="pctFilme" step="0.01" value="0">
+          </div>
+        </div>
+      </details>
+
+      <button type="submit" class="btn-consultar">Consultar</button>
+    </form>
+  </section>
+
+  <section id="resultado-area"></section>
+
+</main>
+
+<script src="app.js"></script>
+</body>
+</html>

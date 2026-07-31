@@ -1,0 +1,509 @@
+﻿{
+    "codigo":  10102019,
+    "resultados":  [
+                       {
+                           "edicao":  "3ª EDIÇÃO - 2004",
+                           "ano":  2004,
+                           "descricao":  "Visita hospitalar (paciente internado)",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  32,
+                                         "percentual_aplicado":  10,
+                                         "total":  35.2
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  11.5,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  35.2,
+                           "subtotal_original_planilha":  35.2
+                       },
+                       {
+                           "edicao":  "4ª EDIÇÃO - 2005",
+                           "ano":  2005,
+                           "descricao":  "Visita hospitalar (paciente internado)",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  32,
+                                         "percentual_aplicado":  10,
+                                         "total":  35.2
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  11.5,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  35.2,
+                           "subtotal_original_planilha":  35.2
+                       },
+                       {
+                           "edicao":  "4ª EDIÇÃO - 2006",
+                           "ano":  2006,
+                           "descricao":  "Visita hospitalar (paciente internado)",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  32,
+                                         "percentual_aplicado":  10,
+                                         "total":  35.2
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  11.5,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  35.2,
+                           "subtotal_original_planilha":  35.2
+                       },
+                       {
+                           "edicao":  "4ª EDIÇÃO - 2007",
+                           "ano":  2007,
+                           "descricao":  "Visita hospitalar (paciente internado)",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  32,
+                                         "percentual_aplicado":  10,
+                                         "total":  35.2
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  11.5,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  35.2,
+                           "subtotal_original_planilha":  35.2
+                       },
+                       {
+                           "edicao":  "5ª EDIÇÃO - 2008",
+                           "ano":  2008,
+                           "descricao":  "Visita hospitalar (paciente internado)",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  40,
+                                         "percentual_aplicado":  10,
+                                         "total":  44
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  11.5,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  44,
+                           "subtotal_original_planilha":  44
+                       },
+                       {
+                           "edicao":  "5ª EDIÇÃO - 2009",
+                           "ano":  2009,
+                           "descricao":  "Visita hospitalar (paciente internado)",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  42,
+                                         "percentual_aplicado":  10,
+                                         "total":  46.2
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  12,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  46.2,
+                           "subtotal_original_planilha":  46.2
+                       },
+                       {
+                           "edicao":  "6ª EDIÇÃO - 2010",
+                           "ano":  2010,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  44,
+                                         "percentual_aplicado":  10,
+                                         "total":  48.4
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  12.67,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  48.4,
+                           "subtotal_original_planilha":  48.4
+                       },
+                       {
+                           "edicao":  "6ª EDIÇÃO - 2011",
+                           "ano":  2011,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  47.11,
+                                         "percentual_aplicado":  10,
+                                         "total":  51.82
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  13.57,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  51.82,
+                           "subtotal_original_planilha":  51.821
+                       },
+                       {
+                           "edicao":  "7ª EDIÇÃO - 2012",
+                           "ano":  2012,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  51.45,
+                                         "percentual_aplicado":  10,
+                                         "total":  56.6
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  14.33,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  56.6,
+                           "subtotal_original_planilha":  56.595
+                       },
+                       {
+                           "edicao":  "7ª EDIÇÃO - 2013",
+                           "ano":  2013,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2A",
+                                         "fracao":  1,
+                                         "valor_unitario":  54.38,
+                                         "percentual_aplicado":  10,
+                                         "total":  59.82
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  15.15,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  59.82,
+                           "subtotal_original_planilha":  59.818
+                       },
+                       {
+                           "edicao":  "8ª EDIÇÃO - 2014",
+                           "ano":  2014,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2B",
+                                         "fracao":  1,
+                                         "valor_unitario":  76.4,
+                                         "percentual_aplicado":  10,
+                                         "total":  84.04
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  16.15,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  84.04,
+                           "subtotal_original_planilha":  84.04
+                       },
+                       {
+                           "edicao":  "8ª EDIÇÃO - 2015",
+                           "ano":  2015,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2B",
+                                         "fracao":  1,
+                                         "valor_unitario":  83.97,
+                                         "percentual_aplicado":  10,
+                                         "total":  92.37
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  17.74,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  92.37,
+                           "subtotal_original_planilha":  92.367
+                       },
+                       {
+                           "edicao":  "9ª EDIÇÃO - 2016",
+                           "ano":  2016,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2B",
+                                         "fracao":  1,
+                                         "valor_unitario":  91.65,
+                                         "percentual_aplicado":  10,
+                                         "total":  100.82
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  19.36,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  100.82,
+                           "subtotal_original_planilha":  100.815
+                       },
+                       {
+                           "edicao":  "9ª EDIÇÃO - 2017",
+                           "ano":  2017,
+                           "descricao":  "Visita hospitalar a paciente internado",
+                           "porte":  {
+                                         "classificacao":  "2B",
+                                         "fracao":  1,
+                                         "valor_unitario":  93.15,
+                                         "percentual_aplicado":  10,
+                                         "total":  102.47
+                                     },
+                           "uco":  {
+                                       "quantidade":  0,
+                                       "valor_unitario_referencia":  19.69,
+                                       "percentual_aplicado":  0,
+                                       "total":  0
+                                   },
+                           "porte_anestesico":  {
+                                                    "classificacao":  "0",
+                                                    "valor_unitario":  0,
+                                                    "percentual_aplicado":  0,
+                                                    "total":  0
+                                                },
+                           "filme":  {
+                                         "quantidade_m2":  0,
+                                         "valor_informado":  25.5,
+                                         "percentual_aplicado":  0,
+                                         "total":  0
+                                     },
+                           "auxiliares":  {
+                                              "quantidade":  0,
+                                              "total":  0
+                                          },
+                           "subtotal_calculado":  102.47,
+                           "subtotal_original_planilha":  102.465
+                       }
+                   ]
+}
