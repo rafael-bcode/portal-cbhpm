@@ -71,7 +71,6 @@ function renderizarResultado(data) {
             <span class="label">Total calculado</span>
             <div style="text-align:right">
               <div class="value">${fmtMoeda(r.subtotal_calculado)}</div>
-              <div class="original">planilha: ${fmtMoeda(r.subtotal_original_planilha)}</div>
             </div>
           </div>
         </div>`;
