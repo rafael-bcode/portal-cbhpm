@@ -1,11 +1,70 @@
 const listaEdicoesEl = document.getElementById('lista-edicoes');
 const formEl = document.getElementById('form-consulta');
 const resultadoAreaEl = document.getElementById('resultado-area');
+const buscaInputEl = document.getElementById('busca-descricao');
+const buscaResultadosEl = document.getElementById('busca-resultados');
+const codigoInputEl = document.getElementById('codigo');
 
 const fmtMoeda = (v) =>
   Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
 let edicoesDisponiveis = [];
+let debounceTimer = null;
+
+// ---------- Autocomplete de busca por descrição ----------
+function esconderResultadosBusca() {
+  buscaResultadosEl.classList.add('hidden');
+  buscaResultadosEl.innerHTML = '';
+}
+
+async function buscarProcedimentos(termo) {
+  try {
+    const resp = await fetch(`/api/buscar-procedimentos?q=${encodeURIComponent(termo)}`);
+    const itens = await resp.json();
+
+    if (itens.length === 0) {
+      buscaResultadosEl.innerHTML = '<div class="busca-vazio">Nenhum procedimento encontrado.</div>';
+    } else {
+      buscaResultadosEl.innerHTML = itens
+        .map(
+          (item) => `
+          <div class="busca-item" data-codigo="${item.codigo}" data-desc="${item.descricao.replace(/"/g, '&quot;')}">
+            <span class="codigo">${item.codigo}</span>
+            <span class="desc">${item.descricao}</span>
+          </div>`
+        )
+        .join('');
+    }
+    buscaResultadosEl.classList.remove('hidden');
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+buscaInputEl.addEventListener('input', () => {
+  const termo = buscaInputEl.value.trim();
+  clearTimeout(debounceTimer);
+
+  if (termo.length < 2) {
+    esconderResultadosBusca();
+    return;
+  }
+
+  debounceTimer = setTimeout(() => buscarProcedimentos(termo), 250);
+});
+
+buscaResultadosEl.addEventListener('click', (e) => {
+  const item = e.target.closest('.busca-item');
+  if (!item || !item.dataset.codigo) return;
+
+  codigoInputEl.value = item.dataset.codigo;
+  buscaInputEl.value = item.dataset.desc;
+  esconderResultadosBusca();
+});
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.busca-wrapper')) esconderResultadosBusca();
+});
 
 // Carrega a lista de edições e monta os checkboxes
 async function carregarEdicoes() {

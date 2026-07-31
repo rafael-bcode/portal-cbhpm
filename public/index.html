@@ -19,6 +19,14 @@
 
   <section class="search-panel">
     <form id="form-consulta">
+      <div class="field field-busca">
+        <label for="busca-descricao">Buscar por descrição (opcional)</label>
+        <div class="busca-wrapper">
+          <input type="text" id="busca-descricao" placeholder="Ex: Hemograma" autocomplete="off">
+          <div id="busca-resultados" class="busca-dropdown hidden"></div>
+        </div>
+      </div>
+
       <div class="field field-codigo">
         <label for="codigo">Código do procedimento</label>
         <input type="text" id="codigo" name="codigo" inputmode="numeric" placeholder="Ex: 10102019" required>

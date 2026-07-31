@@ -17,6 +17,29 @@ app.get('/api/edicoes', async (req, res) => {
   }
 });
 
+// Busca procedimentos por descrição (autocomplete) — retorna os que COMEÇAM com o termo digitado
+app.get('/api/buscar-procedimentos', async (req, res) => {
+  try {
+    const termo = (req.query.q || '').trim();
+    if (termo.length < 2) {
+      return res.json([]);
+    }
+
+    const { rows } = await pool.query(
+      `SELECT codigo, descricao
+       FROM procedimentos
+       WHERE descricao ILIKE $1
+       ORDER BY descricao
+       LIMIT 15`,
+      [`${termo}%`]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca de procedimentos:', err);
+    res.status(500).json({ erro: 'Erro ao buscar procedimentos.' });
+  }
+});
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: { rejectUnauthorized: false }

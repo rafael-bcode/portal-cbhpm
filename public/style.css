@@ -90,6 +90,55 @@ body {
 }
 .field-codigo input { max-width: 260px; font-size: 1.1rem; }
 
+.busca-wrapper { position: relative; max-width: 420px; }
+.busca-wrapper input {
+  width: 100%;
+  font-family: var(--sans);
+  font-size: 0.95rem;
+  padding: 10px 12px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--paper);
+  color: var(--ink);
+}
+.busca-wrapper input:focus {
+  outline: none;
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px var(--teal-tint);
+}
+.busca-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 20px rgba(22, 35, 43, 0.12);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 20;
+}
+.busca-dropdown.hidden { display: none; }
+.busca-item {
+  padding: 10px 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.busca-item:last-child { border-bottom: none; }
+.busca-item:hover { background: var(--teal-tint); }
+.busca-item .codigo {
+  font-family: var(--mono);
+  font-size: 0.72rem;
+  color: var(--teal-dark);
+  font-weight: 600;
+  display: block;
+  margin-bottom: 2px;
+}
+.busca-item .desc { color: var(--ink); }
+.busca-vazio { padding: 10px 14px; font-size: 0.82rem; color: var(--ink-soft); }
+
 .edicoes-toolbar { display: flex; gap: 8px; margin-bottom: 8px; }
 .chip-btn {
   font-family: var(--sans);
