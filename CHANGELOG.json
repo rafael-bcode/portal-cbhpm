@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.13.1",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Correção de segurança: o Validador de XML TISS inseria dados do arquivo carregado (descrição de procedimento, nome de profissional, nome do arquivo, número de lote, mensagens de erro do XSD, resposta da BrasilAPI) diretamente em HTML sem escapar — um XML malicioso (ex: recebido de terceiros) podia executar JavaScript no navegador ao abrir a guia correspondente. Corrigido escapando todo conteúdo vindo do arquivo em todas as telas do validador (card principal, abas do modal de guia, histórico, comparação entre arquivos, conferência Unimed, resultado de CNPJ)."
+    ]
+  },
+  {
     "versao": "1.13.0",
     "data": "2026-08-03",
     "mudancas": [

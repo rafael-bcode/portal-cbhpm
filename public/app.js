@@ -8,6 +8,20 @@ const codigoInputEl = document.getElementById('codigo');
 const fmtMoeda = (v) =>
   Number(v).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
+// Escapa texto de origem não confiável (nome de arquivo escolhido pelo
+// usuário, conteúdo do XML carregado, resposta de API externa) antes de
+// interpolar em innerHTML — sem isso, um arquivo TISS malicioso poderia
+// injetar HTML/JS (ex: <ans:descricaoProcedimento>&lt;img ...&gt;</...>,
+// que o DOMParser decodifica de volta para texto com tags reais).
+function escaparHtml(texto) {
+  return String(texto ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 let edicoesDisponiveis = [];
 let debounceTimer = null;
 let ultimaConsulta = null;
@@ -1701,9 +1715,9 @@ function renderizarGuiaTiss(g, indice) {
       (it) => `
       <div class="breakdown-row">
         <span class="label">
-          ${it.codigoProcedimento || '—'}
+          ${escaparHtml(it.codigoProcedimento) || '—'}
           <span class="detail">
-            tabela ${it.codigoTabela || '—'} · ${it.quantidade} × ${fmtMoeda(it.valorUnitario ?? 0)} × ${it.reducao}
+            tabela ${escaparHtml(it.codigoTabela) || '—'} · ${it.quantidade} × ${fmtMoeda(it.valorUnitario ?? 0)} × ${it.reducao}
             ${it.ok === false ? `· esperado ${fmtMoeda(it.esperado)}` : ''}
           </span>
         </span>
@@ -1714,7 +1728,7 @@ function renderizarGuiaTiss(g, indice) {
 
   const consultaHtml = g.consultaItem
     ? `<div class="breakdown-row">
-        <span class="label">${g.consultaItem.codigoProcedimento || '—'} <span class="detail">tabela ${g.consultaItem.codigoTabela || '—'}</span></span>
+        <span class="label">${escaparHtml(g.consultaItem.codigoProcedimento) || '—'} <span class="detail">tabela ${escaparHtml(g.consultaItem.codigoTabela) || '—'}</span></span>
         <span class="value">${fmtMoeda(g.consultaItem.valorTotal ?? 0)}</span>
       </div>`
     : '';
@@ -1734,13 +1748,15 @@ function renderizarGuiaTiss(g, indice) {
 
   const profissionaisHtml = (g.profissionais || [])
     .map((p) => {
-      const crm = p.numeroConselho ? `${p.conselhoNome || 'Conselho ' + (p.conselho || '?')} nº ${p.numeroConselho}${p.uf ? '/' + p.uf : ''}` : '';
-      const cbo = p.cbo ? `CBO ${p.cbo}${p.cboDescricao ? ` (${p.cboDescricao})` : ''}` : '';
-      const funcao = p.grauPartDescricao || p.papel;
+      const crm = p.numeroConselho
+        ? `${escaparHtml(p.conselhoNome) || 'Conselho ' + (escaparHtml(p.conselho) || '?')} nº ${escaparHtml(p.numeroConselho)}${p.uf ? '/' + escaparHtml(p.uf) : ''}`
+        : '';
+      const cbo = p.cbo ? `CBO ${escaparHtml(p.cbo)}${p.cboDescricao ? ` (${escaparHtml(p.cboDescricao)})` : ''}` : '';
+      const funcao = escaparHtml(p.grauPartDescricao) || escaparHtml(p.papel);
       const detalhes = [crm, cbo].filter(Boolean).join(' · ');
       return `
         <div class="breakdown-row">
-          <span class="label">${p.nome || '—'} <span class="detail">${detalhes || '—'}</span></span>
+          <span class="label">${escaparHtml(p.nome) || '—'} <span class="detail">${detalhes || '—'}</span></span>
           <span class="value zero">${funcao}</span>
         </div>`;
     })
@@ -1749,7 +1765,7 @@ function renderizarGuiaTiss(g, indice) {
   return `
     <div class="edicao-card">
       <div class="edicao-card-head clicavel" data-guia-indice="${indice}" role="button" tabindex="0" title="Clique para ver os lançamentos desta guia agrupados por tipo">
-        <span class="nome">${g.tipo}${g.numeroGuiaPrestador ? ` — ${g.numeroGuiaPrestador}` : ''}</span>
+        <span class="nome">${escaparHtml(g.tipo)}${g.numeroGuiaPrestador ? ` — ${escaparHtml(g.numeroGuiaPrestador)}` : ''}</span>
         <span class="ano">${statusGeral ? '✔' : '⚠'}</span>
       </div>
       ${
@@ -1833,7 +1849,7 @@ function renderizarGruposDespesa(resultado) {
       totalGeral += subtotal;
       return `
         <div class="breakdown-row">
-          <span class="label">${grupo} <span class="detail">${itensGrupo.length} lançamento(s)</span></span>
+          <span class="label">${escaparHtml(grupo)} <span class="detail">${itensGrupo.length} lançamento(s)</span></span>
           <span class="value">${fmtMoeda(subtotal)}</span>
         </div>`;
     })
@@ -1864,9 +1880,9 @@ function renderizarTabelaGrupoModal(itensGrupo) {
     .map(
       (it) => `
       <tr>
-        <td>${it.dataExecucao || '—'}</td>
-        <td>${it.codigoProcedimento || '—'}</td>
-        <td>${it.descricaoProcedimento || '—'}</td>
+        <td>${escaparHtml(it.dataExecucao) || '—'}</td>
+        <td>${escaparHtml(it.codigoProcedimento) || '—'}</td>
+        <td>${escaparHtml(it.descricaoProcedimento) || '—'}</td>
         <td style="text-align:right">${it.quantidade ?? 1}</td>
         <td style="text-align:right">${fmtMoeda(it.valorTotal ?? 0)}</td>
       </tr>`
@@ -1885,13 +1901,15 @@ function renderizarTabelaGrupoModal(itensGrupo) {
 function renderizarProfissionaisGuiaModal(guia) {
   const linhas = (guia.profissionais || [])
     .map((p) => {
-      const crm = p.numeroConselho ? `${p.conselhoNome || 'Conselho ' + (p.conselho || '?')} nº ${p.numeroConselho}${p.uf ? '/' + p.uf : ''}` : '';
-      const cbo = p.cbo ? `CBO ${p.cbo}${p.cboDescricao ? ` (${p.cboDescricao})` : ''}` : '';
-      const funcao = p.grauPartDescricao || p.papel;
+      const crm = p.numeroConselho
+        ? `${escaparHtml(p.conselhoNome) || 'Conselho ' + (escaparHtml(p.conselho) || '?')} nº ${escaparHtml(p.numeroConselho)}${p.uf ? '/' + escaparHtml(p.uf) : ''}`
+        : '';
+      const cbo = p.cbo ? `CBO ${escaparHtml(p.cbo)}${p.cboDescricao ? ` (${escaparHtml(p.cboDescricao)})` : ''}` : '';
+      const funcao = escaparHtml(p.grauPartDescricao) || escaparHtml(p.papel);
       const detalhes = [crm, cbo].filter(Boolean).join(' · ');
       return `
         <div class="breakdown-row">
-          <span class="label">${p.nome || '—'} <span class="detail">${detalhes || '—'}</span></span>
+          <span class="label">${escaparHtml(p.nome) || '—'} <span class="detail">${detalhes || '—'}</span></span>
           <span class="value zero">${funcao}</span>
         </div>`;
     })
@@ -1910,7 +1928,7 @@ function renderizarResumoGuiaModal(guia) {
           .map(
             (it) => `
           <div class="breakdown-row">
-            <span class="label">${it.codigoProcedimento || '—'} <span class="detail">esperado ${fmtMoeda(it.esperado)}</span></span>
+            <span class="label">${escaparHtml(it.codigoProcedimento) || '—'} <span class="detail">esperado ${fmtMoeda(it.esperado)}</span></span>
             <span class="value zero">${fmtMoeda(it.valorTotal ?? 0)}</span>
           </div>`
           )
@@ -1931,8 +1949,8 @@ function renderizarResumoGuiaModal(guia) {
 
   return `
     <div class="breakdown">
-      <div class="breakdown-row"><span class="label">Tipo de guia</span><span class="value zero">${guia.tipo}</span></div>
-      ${guia.numeroGuiaPrestador ? `<div class="breakdown-row"><span class="label">Número da guia (prestador)</span><span class="value zero">${guia.numeroGuiaPrestador}</span></div>` : ''}
+      <div class="breakdown-row"><span class="label">Tipo de guia</span><span class="value zero">${escaparHtml(guia.tipo)}</span></div>
+      ${guia.numeroGuiaPrestador ? `<div class="breakdown-row"><span class="label">Número da guia (prestador)</span><span class="value zero">${escaparHtml(guia.numeroGuiaPrestador)}</span></div>` : ''}
       <div class="breakdown-row"><span class="label">Itens lançados</span><span class="value zero">${qtdItens}</span></div>
       <div class="breakdown-row"><span class="label">Profissionais</span><span class="value zero">${(guia.profissionais || []).length}</span></div>
     </div>
@@ -1963,7 +1981,7 @@ function abrirModalGuiaValidador(guia) {
   };
 
   tabsEl.innerHTML = abas
-    .map((a, i) => `<button type="button" class="tab-btn guia-modal-tab ${i === 0 ? 'active' : ''}" data-chave="${a.chave}">${a.rotulo}</button>`)
+    .map((a, i) => `<button type="button" class="tab-btn guia-modal-tab ${i === 0 ? 'active' : ''}" data-chave="${escaparHtml(a.chave)}">${escaparHtml(a.rotulo)}</button>`)
     .join('');
   conteudoEl.innerHTML = montarConteudo(abas[0].chave);
 
@@ -2008,44 +2026,45 @@ function exportarGruposDespesaCsv(resultado) {
 function renderizarValidadorTiss(resultado, containerEl) {
   containerEl = containerEl || validadorResultadoEl;
   if (resultado.erroParse) {
-    containerEl.innerHTML = `<div class="msg erro">Arquivo não é um XML válido: ${resultado.erroParse}</div>`;
+    containerEl.innerHTML = `<div class="msg erro">Arquivo não é um XML válido: ${escaparHtml(resultado.erroParse)}</div>`;
     return;
   }
 
   const linhaHash = resultado.hash.declarado
     ? resultado.hash.ok
-      ? `<div class="validador-linha ok">✔ Hash confere (${resultado.hash.declarado})</div>`
-      : `<div class="validador-linha erro">✘ Hash não confere — declarado ${resultado.hash.declarado}, calculado ${resultado.hash.calculado}. O conteúdo pode ter sido alterado após a geração do arquivo.</div>`
+      ? `<div class="validador-linha ok">✔ Hash confere (${escaparHtml(resultado.hash.declarado)})</div>`
+      : `<div class="validador-linha erro">✘ Hash não confere — declarado ${escaparHtml(resultado.hash.declarado)}, calculado ${escaparHtml(resultado.hash.calculado)}. O conteúdo pode ter sido alterado após a geração do arquivo.</div>`
     : `<div class="validador-linha aviso">— Arquivo não tem &lt;ans:hash&gt; no epílogo</div>`;
 
   const versaoConhecida = TISS_VERSOES_CONHECIDAS.includes(resultado.versao);
   const versaoAtual = resultado.versao === TISS_VERSAO_VIGENTE;
+  const versaoEsc = escaparHtml(resultado.versao);
   const linhaVersao = !resultado.versao
     ? `<div class="validador-linha aviso">— Versão do Padrão (&lt;ans:Padrao&gt;) não informada</div>`
     : !versaoConhecida
-    ? `<div class="validador-linha aviso">⚠ Versão "${resultado.versao}" não reconhecida</div>`
+    ? `<div class="validador-linha aviso">⚠ Versão "${versaoEsc}" não reconhecida</div>`
     : versaoAtual
-    ? `<div class="validador-linha ok">✔ Versão ${resultado.versao} (vigente)</div>`
-    : `<div class="validador-linha aviso">⚠ Versão ${resultado.versao} desatualizada — a obrigatória desde 01/07/2026 é ${TISS_VERSAO_VIGENTE}</div>`;
+    ? `<div class="validador-linha ok">✔ Versão ${versaoEsc} (vigente)</div>`
+    : `<div class="validador-linha aviso">⚠ Versão ${versaoEsc} desatualizada — a obrigatória desde 01/07/2026 é ${TISS_VERSAO_VIGENTE}</div>`;
 
   const linhaOperadora = resultado.operadoraDestino.registro
-    ? `<div class="validador-linha">Operadora de destino (registro ANS ${resultado.operadoraDestino.registro}): <strong>${resultado.operadoraDestino.nome || 'não encontrada na base de operadoras ativas'}</strong></div>`
+    ? `<div class="validador-linha">Operadora de destino (registro ANS ${escaparHtml(resultado.operadoraDestino.registro)}): <strong>${escaparHtml(resultado.operadoraDestino.nome) || 'não encontrada na base de operadoras ativas'}</strong></div>`
     : '';
   const linhaPrestador = resultado.prestadorOrigem
     ? `<div class="validador-linha">
-        Prestador de origem: ${resultado.prestadorOrigem}
+        Prestador de origem: ${escaparHtml(resultado.prestadorOrigem)}
         ${resultado.prestadorOrigemCnpj ? '<button type="button" id="btn-buscar-cnpj" class="chip-btn" style="margin-left:8px;">🔍 Buscar CNPJ</button><div id="cnpj-resultado" class="referencia-tabela"></div>' : ''}
       </div>`
     : '';
-  const linhaLote = resultado.numeroLote ? `<div class="validador-linha">Lote: ${resultado.numeroLote}</div>` : '';
+  const linhaLote = resultado.numeroLote ? `<div class="validador-linha">Lote: ${escaparHtml(resultado.numeroLote)}</div>` : '';
 
   let linhaUnimed = '';
   if (resultado.unimed && resultado.unimed.digitoArquivo) {
     const u = resultado.unimed;
     linhaUnimed = u.rotuloArquivo
       ? u.bateComLote === false
-        ? `<div class="validador-linha erro">✘ Convenção Unimed: nome do arquivo indica tipo "${u.digitoArquivo}" (${u.rotuloArquivo}), mas o lote começa com "${u.digitoLote}" — não batem.</div>`
-        : `<div class="validador-linha ok">✔ Convenção Unimed: tipo "${u.digitoArquivo}" — ${u.rotuloArquivo}</div>`
+        ? `<div class="validador-linha erro">✘ Convenção Unimed: nome do arquivo indica tipo "${escaparHtml(u.digitoArquivo)}" (${escaparHtml(u.rotuloArquivo)}), mas o lote começa com "${escaparHtml(u.digitoLote)}" — não batem.</div>`
+        : `<div class="validador-linha ok">✔ Convenção Unimed: tipo "${escaparHtml(u.digitoArquivo)}" — ${escaparHtml(u.rotuloArquivo)}</div>`
       : '';
   }
 
@@ -2059,16 +2078,16 @@ function renderizarValidadorTiss(resultado, containerEl) {
     codigosTabelaEncontrados.size === 0
       ? ''
       : codigosDesconhecidos.length > 0
-      ? `<div class="validador-linha aviso">⚠ Código(s) de tabela não reconhecido(s): ${codigosDesconhecidos.join(', ')}</div>`
+      ? `<div class="validador-linha aviso">⚠ Código(s) de tabela não reconhecido(s): ${codigosDesconhecidos.map(escaparHtml).join(', ')}</div>`
       : `<div class="validador-linha ok">✔ Códigos de tabela conhecidos: ${Array.from(codigosTabelaEncontrados)
-          .map((c) => `${c} (${TISS_CODIGOS_TABELA[c]})`)
+          .map((c) => `${escaparHtml(c)} (${escaparHtml(TISS_CODIGOS_TABELA[c])})`)
           .join('; ')}</div>`;
 
   let linhaXsd = '';
   let detalheXsd = '';
   if (resultado.xsd) {
     if (resultado.xsd.disponivel === false) {
-      linhaXsd = `<div class="validador-linha aviso">— Não foi possível carregar a validação estrutural (XSD): ${resultado.xsd.erroCarregamento}</div>`;
+      linhaXsd = `<div class="validador-linha aviso">— Não foi possível carregar a validação estrutural (XSD): ${escaparHtml(resultado.xsd.erroCarregamento)}</div>`;
     } else if (resultado.xsd.valid) {
       linhaXsd = `<div class="validador-linha ok">✔ Estrutura conforme o XSD oficial do Padrão TISS 4.03.00</div>`;
     } else {
@@ -2078,7 +2097,7 @@ function renderizarValidadorTiss(resultado, containerEl) {
           <summary class="grupo-summary"><span class="grupo-nome">Erros de estrutura (XSD)</span></summary>
           <div class="grupo-corpo">
             <ul style="margin:8px 16px; padding-left:18px; font-family: var(--mono); font-size:0.78rem;">
-              ${resultado.xsd.erros.map((e) => `<li>${e}</li>`).join('')}
+              ${resultado.xsd.erros.map((e) => `<li>${escaparHtml(e)}</li>`).join('')}
             </ul>
           </div>
         </details>`;
@@ -2086,7 +2105,7 @@ function renderizarValidadorTiss(resultado, containerEl) {
   }
 
   const tiposGuiaHtml = Object.entries(resultado.tiposGuia)
-    .map(([tipo, qtd]) => `<span class="pct-badge pct-badge-neutro">${tipo} × ${qtd}</span>`)
+    .map(([tipo, qtd]) => `<span class="pct-badge pct-badge-neutro">${escaparHtml(tipo)} × ${qtd}</span>`)
     .join(' ');
 
   const guiasHtml = resultado.guias.map((g, i) => renderizarGuiaTiss(g, i)).join('');
@@ -2094,7 +2113,7 @@ function renderizarValidadorTiss(resultado, containerEl) {
   containerEl.innerHTML = `
     <div class="edicao-card">
       <div class="edicao-card-head">
-        <span class="nome">${resultado.nomeArquivo}</span>
+        <span class="nome">${escaparHtml(resultado.nomeArquivo)}</span>
         <span class="ano">${(resultado.tamanhoBytes / 1024).toFixed(1)} KB</span>
       </div>
       <div class="breakdown">
@@ -2153,8 +2172,8 @@ function renderizarValidadorTiss(resultado, containerEl) {
       alvo.textContent = 'Consultando BrasilAPI…';
       try {
         const dados = await buscarCnpjBrasilApi(resultado.prestadorOrigemCnpj);
-        const situacao = dados.descricao_situacao_cadastral || '—';
-        alvo.innerHTML = `<strong>${dados.razao_social || '—'}</strong>${dados.nome_fantasia ? ` (${dados.nome_fantasia})` : ''} — situação cadastral: ${situacao}`;
+        const situacao = escaparHtml(dados.descricao_situacao_cadastral) || '—';
+        alvo.innerHTML = `<strong>${escaparHtml(dados.razao_social) || '—'}</strong>${dados.nome_fantasia ? ` (${escaparHtml(dados.nome_fantasia)})` : ''} — situação cadastral: ${situacao}`;
       } catch (err) {
         alvo.textContent = `Não foi possível consultar o CNPJ: ${err.message}`;
       }
@@ -2232,10 +2251,10 @@ function renderizarHistoricoTiss() {
       const dataFmt = new Date(e.data).toLocaleString('pt-BR');
       return `
         <div class="validador-linha ${classeStatus[e.status] || ''}">
-          ${iconeStatus[e.status] || '—'} <strong>${e.nomeArquivo}</strong> — ${dataFmt}
+          ${iconeStatus[e.status] || '—'} <strong>${escaparHtml(e.nomeArquivo)}</strong> — ${dataFmt}
           <span class="detail" style="display:block; font-family: var(--mono); font-size:0.75rem;">
-            ${e.operadora || 'operadora não identificada'} · lote ${e.numeroLote || '—'} · ${e.qtdGuias} guia(s) · ${fmtMoeda(e.valorTotal)}
-            ${e.versao ? `· versão ${e.versao}` : ''}
+            ${escaparHtml(e.operadora) || 'operadora não identificada'} · lote ${escaparHtml(e.numeroLote) || '—'} · ${e.qtdGuias} guia(s) · ${fmtMoeda(e.valorTotal)}
+            ${e.versao ? `· versão ${escaparHtml(e.versao)}` : ''}
           </span>
         </div>`;
     })
@@ -2290,14 +2309,14 @@ function renderizarCrossCheckArquivos(resultados) {
   const totalGeral = valorPorArquivo.reduce((s, x) => s + x.total, 0);
 
   const linhasArquivos = valorPorArquivo
-    .map((x) => `<div class="breakdown-row"><span class="label">${x.nome}</span><span class="value">${fmtMoeda(x.total)}</span></div>`)
+    .map((x) => `<div class="breakdown-row"><span class="label">${escaparHtml(x.nome)}</span><span class="value">${fmtMoeda(x.total)}</span></div>`)
     .join('');
 
   const cc = analisarCrossCheckUnimed(resultados);
   let ccHtml = '';
   if (cc) {
     const badgesDigitos = cc.comDigito
-      .map((x) => `<span class="pct-badge pct-badge-neutro">${x.unimed.digitoArquivo} — ${x.unimed.rotuloArquivo || '?'} (${x.resultado.nomeArquivo})</span>`)
+      .map((x) => `<span class="pct-badge pct-badge-neutro">${escaparHtml(x.unimed.digitoArquivo)} — ${escaparHtml(x.unimed.rotuloArquivo) || '?'} (${escaparHtml(x.resultado.nomeArquivo)})</span>`)
       .join(' ');
     ccHtml = `
       <div class="breakdown" style="margin-top:4px;">
@@ -2305,7 +2324,7 @@ function renderizarCrossCheckArquivos(resultados) {
           ${cc.mesmaOperadora ? '✔ Todos os arquivos com a convenção Unimed 0/2/5 são para a mesma operadora' : '✘ Os arquivos com a convenção Unimed 0/2/5 apontam para operadoras diferentes — confira se pertencem ao mesmo envio'}
         </div>
         <div class="validador-linha ${cc.mesmoLoteBase ? 'ok' : 'erro'}">
-          ${cc.mesmoLoteBase ? `✔ Mesmo lote-base entre os arquivos (final "${cc.restoLote}")` : '✘ Os números de lote não têm o mesmo final — pode não ser o mesmo envio dividido em 0/2/5'}
+          ${cc.mesmoLoteBase ? `✔ Mesmo lote-base entre os arquivos (final "${escaparHtml(cc.restoLote)}")` : '✘ Os números de lote não têm o mesmo final — pode não ser o mesmo envio dividido em 0/2/5'}
         </div>
         ${cc.digitosRepetidos ? `<div class="validador-linha aviso">⚠ Mais de um arquivo com o mesmo dígito inicial — confira se não carregou o mesmo tipo duas vezes</div>` : ''}
       </div>
@@ -2452,8 +2471,8 @@ function renderizarComparacaoTiss(resultadoA, resultadoB) {
       .map(
         (it) => `
         <tr>
-          <td>${it.codigoProcedimento || '—'}</td>
-          <td>${it.descricaoProcedimento || '—'}</td>
+          <td>${escaparHtml(it.codigoProcedimento) || '—'}</td>
+          <td>${escaparHtml(it.descricaoProcedimento) || '—'}</td>
           <td style="text-align:right">${it.qtdA} → ${it.qtdB}</td>
           <td style="text-align:right">${fmtMoeda(it.valorA)} → ${fmtMoeda(it.valorB)}</td>
           <td style="text-align:right; font-weight:600;">${it.valorB - it.valorA >= 0 ? '+' : ''}${fmtMoeda(it.valorB - it.valorA)}</td>
@@ -2464,7 +2483,7 @@ function renderizarComparacaoTiss(resultadoA, resultadoB) {
     return `
       <div class="edicao-card" style="margin-bottom:12px;">
         <div class="edicao-card-head">
-          <span class="nome">${l.chave}</span>
+          <span class="nome">${escaparHtml(l.chave)}</span>
           <span class="ano">${rotuloStatus[l.status] || ''}</span>
         </div>
         <div class="breakdown">
@@ -2498,12 +2517,12 @@ function renderizarComparacaoTiss(resultadoA, resultadoB) {
   compararResultadoEl.innerHTML = `
     <div class="edicao-card" style="margin-bottom:16px;">
       <div class="edicao-card-head">
-        <span class="nome">${resultadoA.nomeArquivo} → ${resultadoB.nomeArquivo}</span>
+        <span class="nome">${escaparHtml(resultadoA.nomeArquivo)} → ${escaparHtml(resultadoB.nomeArquivo)}</span>
         <span class="ano">${diferenca >= 0 ? '+' : ''}${fmtMoeda(diferenca)}</span>
       </div>
       <div class="breakdown">
-        <div class="breakdown-row"><span class="label">Total A (${resultadoA.nomeArquivo})</span><span class="value">${fmtMoeda(totalA)}</span></div>
-        <div class="breakdown-row"><span class="label">Total B (${resultadoB.nomeArquivo})</span><span class="value">${fmtMoeda(totalB)}</span></div>
+        <div class="breakdown-row"><span class="label">Total A (${escaparHtml(resultadoA.nomeArquivo)})</span><span class="value">${fmtMoeda(totalA)}</span></div>
+        <div class="breakdown-row"><span class="label">Total B (${escaparHtml(resultadoB.nomeArquivo)})</span><span class="value">${fmtMoeda(totalB)}</span></div>
         ${linhaDiferenca}
       </div>
     </div>
@@ -2517,7 +2536,7 @@ function renderizarComparacaoTiss(resultadoA, resultadoB) {
         ? `<details class="grupo grupo-secundario">
             <summary class="grupo-summary"><span class="grupo-nome">Guias iguais nos dois arquivos (${linhasIguais.length})</span></summary>
             <div class="grupo-corpo"><div class="breakdown">
-              ${linhasIguais.map((l) => `<div class="breakdown-row"><span class="label">${l.chave}</span><span class="value zero">${fmtMoeda(l.totalA)}</span></div>`).join('')}
+              ${linhasIguais.map((l) => `<div class="breakdown-row"><span class="label">${escaparHtml(l.chave)}</span><span class="value zero">${fmtMoeda(l.totalA)}</span></div>`).join('')}
             </div></div>
           </details>`
         : ''
