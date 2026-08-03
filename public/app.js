@@ -1251,6 +1251,58 @@ const UNIMED_ROTULOS_ARQUIVO = {
   '2': 'SP-SADT credenciados',
   '5': 'Honorário individual dos credenciados',
 };
+// Tabela de Domínio "Tipo de Despesa" (codigoDespesa, elemento <ans:despesa>
+// dentro de <ans:outrasDespesas>) — confirmada pelo usuário via captura de
+// tela do manual oficial do Padrão TISS.
+const TISS_CODIGOS_DESPESA = {
+  '01': 'Material',
+  '02': 'Medicamento',
+  '03': 'Gases Medicinais',
+  '04': 'Taxas Diversas',
+  '05': 'Diárias',
+  '06': 'Aluguéis',
+  '07': 'OPME (Órteses, Próteses e Materiais Especiais)',
+  '08': 'Medicamentos de Alto Custo',
+  '09': 'Outros',
+};
+// Tabela de Domínio 26 "Conselho Profissional" e Tabela de Domínio 35
+// "Grau de Participação" do Padrão TISS — verificadas por extração de texto
+// direta do PDF oficial "Tabelas de Domínio do Padrão TISS" (não é palpite).
+const TISS_CONSELHOS = {
+  '01': 'Conselho Regional de Assistência Social (CRAS)',
+  '02': 'Conselho Regional de Enfermagem (COREN)',
+  '03': 'Conselho Regional de Farmácia (CRF)',
+  '04': 'Conselho Regional de Fonoaudiologia (CRFA)',
+  '05': 'Conselho Regional de Fisioterapia e Terapia Ocupacional (CREFITO)',
+  '06': 'Conselho Regional de Medicina (CRM)',
+  '07': 'Conselho Regional de Nutrição (CRN)',
+  '08': 'Conselho Regional de Odontologia (CRO)',
+  '09': 'Conselho Regional de Psicologia (CRP)',
+  '10': 'Outros Conselhos',
+};
+const TISS_GRAU_PARTICIPACAO = {
+  '00': 'Cirurgião',
+  '01': '1º Auxiliar',
+  '02': '2º Auxiliar',
+  '03': '3º Auxiliar',
+  '04': '4º Auxiliar',
+  '05': 'Instrumentador',
+  '06': 'Anestesista',
+  '07': 'Auxiliar de Anestesista',
+  '08': 'Consultor',
+  '09': 'Perfusionista',
+  '10': 'Pediatra na sala de parto',
+  '11': 'Auxiliar SADT',
+  '12': 'Clínico',
+  '13': 'Intensivista',
+};
+const GRUPO_PROCEDIMENTOS = 'Procedimentos (honorários)';
+const GRUPO_CONSULTAS = 'Consultas';
+const ORDEM_GRUPOS_DESPESA = [
+  ...Object.values(TISS_CODIGOS_DESPESA),
+  GRUPO_PROCEDIMENTOS,
+  GRUPO_CONSULTAS,
+];
 
 let operadorasAnsCache = null;
 async function carregarOperadorasAns() {
@@ -1262,6 +1314,18 @@ async function carregarOperadorasAns() {
     operadorasAnsCache = {};
   }
   return operadorasAnsCache;
+}
+
+let cboMedicosCache = null;
+async function carregarCboMedicos() {
+  if (cboMedicosCache) return cboMedicosCache;
+  try {
+    const resp = await fetch('cbo-medicos.json');
+    cboMedicosCache = await resp.json();
+  } catch {
+    cboMedicosCache = {};
+  }
+  return cboMedicosCache;
 }
 
 function detectarEncodingXml(bytes) {
@@ -1325,16 +1389,50 @@ function numDeTiss(texto) {
   return Number.isFinite(n) ? n : null;
 }
 
-function analisarItemTiss(itemEl, procEl) {
+// Extrai a identificação de um profissional a partir de qualquer bloco que
+// tenha esses campos (profissionalSolicitante, profissionalExecutante,
+// equipeSadt) — os nomes dos elementos variam ligeiramente entre eles
+// (nomeProfissional/nomeProf, conselhoProfissional/conselho), então tenta
+// as duas formas.
+function extrairProfissionalTiss(el) {
+  if (!el) return null;
+  const nome = textoDeTiss(el, 'nomeProfissional') || textoDeTiss(el, 'nomeProf');
+  const conselho = textoDeTiss(el, 'conselhoProfissional') || textoDeTiss(el, 'conselho');
+  const numeroConselho = textoDeTiss(el, 'numeroConselhoProfissional');
+  const uf = textoDeTiss(el, 'UF');
+  const cbo = textoDeTiss(el, 'CBOS');
+  const grauPart = textoDeTiss(el, 'grauPart');
+  if (!nome && !conselho && !numeroConselho && !cbo) return null;
+  return { nome, conselho, numeroConselho, uf, cbo, grauPart };
+}
+
+function analisarItemTiss(itemEl, procEl, extras = {}) {
   const codigoTabela = textoDeTiss(procEl, 'codigoTabela');
   const codigoProcedimento = textoDeTiss(procEl, 'codigoProcedimento');
+  const descricaoProcedimento = textoDeTiss(procEl, 'descricaoProcedimento') || textoDeTiss(itemEl, 'descricaoProcedimento');
+  const dataExecucao = textoDeTiss(itemEl, 'dataExecucao');
   const quantidade = numDeTiss(textoDeTiss(itemEl, 'quantidadeExecutada')) ?? 1;
   const reducao = numDeTiss(textoDeTiss(itemEl, 'reducaoAcrescimo')) ?? 1;
   const valorUnitario = numDeTiss(textoDeTiss(itemEl, 'valorUnitario'));
   const valorTotal = numDeTiss(textoDeTiss(itemEl, 'valorTotal'));
   const esperado = valorUnitario !== null ? Number((valorUnitario * quantidade * reducao).toFixed(2)) : null;
   const ok = valorTotal !== null && esperado !== null ? Math.abs(valorTotal - esperado) <= 0.02 : null;
-  return { codigoTabela, codigoProcedimento, quantidade, reducao, valorUnitario, valorTotal, esperado, ok };
+  const profissional = extrairProfissionalTiss(filhoTiss(itemEl, 'equipeSadt'));
+  return {
+    codigoTabela,
+    codigoProcedimento,
+    descricaoProcedimento,
+    dataExecucao,
+    quantidade,
+    reducao,
+    valorUnitario,
+    valorTotal,
+    esperado,
+    ok,
+    codigoDespesa: extras.codigoDespesa || '',
+    grupo: extras.grupo || GRUPO_PROCEDIMENTOS,
+    profissional,
+  };
 }
 
 function analisarGuiaTiss(guiaEl, tipo) {
@@ -1342,16 +1440,34 @@ function analisarGuiaTiss(guiaEl, tipo) {
   const registroANS = textoDeTiss(cabecalho, 'registroANS');
   const numeroGuiaPrestador = textoDeTiss(cabecalho, 'numeroGuiaPrestador');
 
+  const profissionais = [];
+  const dadosSolicitante = filhoTiss(guiaEl, 'dadosSolicitante');
+  const solicitante = extrairProfissionalTiss(filhoTiss(dadosSolicitante, 'profissionalSolicitante'));
+  if (solicitante) profissionais.push({ ...solicitante, papel: 'Solicitante' });
+  // guiaConsulta tem o profissional executante direto na guia (não dentro de equipeSadt).
+  const executanteConsulta = extrairProfissionalTiss(filhoTiss(guiaEl, 'profissionalExecutante'));
+  if (executanteConsulta) profissionais.push({ ...executanteConsulta, papel: 'Executante' });
+
   const itens = [];
   const procedimentosExecutados = filhoTiss(guiaEl, 'procedimentosExecutados');
   filhosTiss(procedimentosExecutados, 'procedimentoExecutado').forEach((pe) => {
     const proc = filhoTiss(pe, 'procedimento');
-    if (proc) itens.push(analisarItemTiss(pe, proc));
+    if (proc) {
+      const item = analisarItemTiss(pe, proc, { grupo: GRUPO_PROCEDIMENTOS });
+      itens.push(item);
+      if (item.profissional && !profissionais.some((p) => p.numeroConselho === item.profissional.numeroConselho && p.grauPart === item.profissional.grauPart)) {
+        profissionais.push({ ...item.profissional, papel: 'Equipe' });
+      }
+    }
   });
   const outrasDespesas = filhoTiss(guiaEl, 'outrasDespesas');
   filhosTiss(outrasDespesas, 'despesa').forEach((d) => {
     const servico = filhoTiss(d, 'servicosExecutados');
-    if (servico) itens.push(analisarItemTiss(servico, servico));
+    if (servico) {
+      const codigoDespesa = textoDeTiss(d, 'codigoDespesa');
+      const grupo = TISS_CODIGOS_DESPESA[codigoDespesa] || `Despesa (código ${codigoDespesa || '?'})`;
+      itens.push(analisarItemTiss(servico, servico, { codigoDespesa, grupo }));
+    }
   });
 
   // guiaConsulta não tem quantidade/redução/valorTotal por item — só um
@@ -1364,7 +1480,11 @@ function analisarGuiaTiss(guiaEl, tipo) {
       consultaItem = {
         codigoTabela: textoDeTiss(proc, 'codigoTabela'),
         codigoProcedimento: textoDeTiss(proc, 'codigoProcedimento'),
-        valorProcedimento: numDeTiss(textoDeTiss(proc, 'valorProcedimento')),
+        descricaoProcedimento: '',
+        dataExecucao: textoDeTiss(dadosAtendimento, 'dataAtendimento'),
+        quantidade: 1,
+        valorTotal: numDeTiss(textoDeTiss(proc, 'valorProcedimento')),
+        grupo: GRUPO_CONSULTAS,
       };
     }
   }
@@ -1388,7 +1508,7 @@ function analisarGuiaTiss(guiaEl, tipo) {
     };
   }
 
-  return { tipo, registroANS, numeroGuiaPrestador, itens, consultaItem, valorTotal };
+  return { tipo, registroANS, numeroGuiaPrestador, itens, consultaItem, valorTotal, profissionais };
 }
 
 async function validarArquivoTiss(file) {
@@ -1406,6 +1526,7 @@ async function validarArquivoTiss(file) {
     versao: '',
     operadoraDestino: { registro: '', nome: null },
     prestadorOrigem: '',
+    prestadorOrigemCnpj: '',
     numeroLote: '',
     tiposGuia: {},
     guias: [],
@@ -1428,6 +1549,7 @@ async function validarArquivoTiss(file) {
     const cnpj = textoDeTiss(identPrestador, 'CNPJ');
     const codigoOperadora = textoDeTiss(identPrestador, 'codigoPrestadorNaOperadora');
     resultado.prestadorOrigem = cnpj ? `CNPJ ${cnpj}` : codigoOperadora ? `Código na operadora ${codigoOperadora}` : '';
+    resultado.prestadorOrigemCnpj = cnpj.replace(/\D/g, '');
   }
 
   const destino = filhoTiss(cabecalho, 'destino');
@@ -1437,6 +1559,7 @@ async function validarArquivoTiss(file) {
     resultado.operadoraDestino.nome = operadoras[resultado.operadoraDestino.registro].razaoSocial;
   }
 
+  const cboMedicos = await carregarCboMedicos();
   const loteGuias = buscarProfundoTiss(raiz, 'loteGuias');
   if (loteGuias) {
     resultado.numeroLote = textoDeTiss(loteGuias, 'numeroLote');
@@ -1445,7 +1568,13 @@ async function validarArquivoTiss(file) {
       Array.from(guiasTISS.children).forEach((guiaEl) => {
         const tipo = guiaEl.localName;
         resultado.tiposGuia[tipo] = (resultado.tiposGuia[tipo] || 0) + 1;
-        resultado.guias.push(analisarGuiaTiss(guiaEl, tipo));
+        const guia = analisarGuiaTiss(guiaEl, tipo);
+        guia.profissionais.forEach((p) => {
+          p.conselhoNome = TISS_CONSELHOS[p.conselho] || (p.conselho ? `Conselho ${p.conselho}` : '');
+          p.cboDescricao = cboMedicos[p.cbo] || '';
+          p.grauPartDescricao = TISS_GRAU_PARTICIPACAO[p.grauPart] || '';
+        });
+        resultado.guias.push(guia);
       });
     }
   }
@@ -1490,7 +1619,7 @@ function renderizarGuiaTiss(g) {
   const consultaHtml = g.consultaItem
     ? `<div class="breakdown-row">
         <span class="label">${g.consultaItem.codigoProcedimento || '—'} <span class="detail">tabela ${g.consultaItem.codigoTabela || '—'}</span></span>
-        <span class="value">${fmtMoeda(g.consultaItem.valorProcedimento ?? 0)}</span>
+        <span class="value">${fmtMoeda(g.consultaItem.valorTotal ?? 0)}</span>
       </div>`
     : '';
 
@@ -1507,12 +1636,34 @@ function renderizarGuiaTiss(g) {
 
   const qtdItens = g.itens.length || (g.consultaItem ? 1 : 0);
 
+  const profissionaisHtml = (g.profissionais || [])
+    .map((p) => {
+      const crm = p.numeroConselho ? `${p.conselhoNome || 'Conselho ' + (p.conselho || '?')} nº ${p.numeroConselho}${p.uf ? '/' + p.uf : ''}` : '';
+      const cbo = p.cbo ? `CBO ${p.cbo}${p.cboDescricao ? ` (${p.cboDescricao})` : ''}` : '';
+      const funcao = p.grauPartDescricao || p.papel;
+      const detalhes = [crm, cbo].filter(Boolean).join(' · ');
+      return `
+        <div class="breakdown-row">
+          <span class="label">${p.nome || '—'} <span class="detail">${detalhes || '—'}</span></span>
+          <span class="value zero">${funcao}</span>
+        </div>`;
+    })
+    .join('');
+
   return `
     <div class="edicao-card">
       <div class="edicao-card-head">
         <span class="nome">${g.tipo}${g.numeroGuiaPrestador ? ` — ${g.numeroGuiaPrestador}` : ''}</span>
         <span class="ano">${statusGeral ? '✔' : '⚠'}</span>
       </div>
+      ${
+        profissionaisHtml
+          ? `<details class="grupo grupo-secundario">
+              <summary class="grupo-summary"><span class="grupo-nome">Profissionais (${g.profissionais.length})</span></summary>
+              <div class="grupo-corpo"><div class="breakdown">${profissionaisHtml}</div></div>
+            </details>`
+          : ''
+      }
       ${
         qtdItens > 0
           ? `<details class="grupo grupo-principal" ${itensProblema.length > 0 ? 'open' : ''}>
@@ -1523,6 +1674,107 @@ function renderizarGuiaTiss(g) {
       }
       ${totalHtml}
     </div>`;
+}
+
+// Busca opt-in de CNPJ (só roda quando o usuário clica no botão — não é
+// automático). É a ÚNICA parte do validador que sai do navegador: envia o
+// CNPJ do prestador (dado público de registro empresarial, não dado do
+// paciente) à BrasilAPI (https://brasilapi.com.br), um agregador público e
+// gratuito de dados abertos. Confirmado CORS aberto (access-control-allow-
+// origin: *) antes de usar.
+async function buscarCnpjBrasilApi(cnpj) {
+  const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+  if (!resp.ok) {
+    if (resp.status === 404) throw new Error('CNPJ não encontrado');
+    throw new Error(`HTTP ${resp.status}`);
+  }
+  return resp.json();
+}
+
+function montarItensParaAgrupamento(resultado) {
+  const linhas = [];
+  resultado.guias.forEach((g) => {
+    g.itens.forEach((it) => linhas.push(it));
+    if (g.consultaItem) linhas.push(g.consultaItem);
+  });
+  return linhas;
+}
+
+function agruparPorTipoDespesa(resultado) {
+  const porGrupo = new Map();
+  montarItensParaAgrupamento(resultado).forEach((it) => {
+    const grupo = it.grupo || GRUPO_PROCEDIMENTOS;
+    if (!porGrupo.has(grupo)) porGrupo.set(grupo, []);
+    porGrupo.get(grupo).push(it);
+  });
+  const ordenados = ORDEM_GRUPOS_DESPESA.filter((g) => porGrupo.has(g)).concat(
+    Array.from(porGrupo.keys()).filter((g) => !ORDEM_GRUPOS_DESPESA.includes(g))
+  );
+  return { porGrupo, ordenados };
+}
+
+// Visão agrupada por Tipo de Despesa (ANS) — quebra todos os itens do
+// arquivo (procedimentos, consultas e outrasDespesas) pelos grupos oficiais
+// (Material, Medicamento, Diárias etc., mais Procedimentos/Consultas para
+// itens que não usam codigoDespesa), com data, código, descrição,
+// quantidade e valor de cada lançamento.
+function renderizarGruposDespesa(resultado) {
+  const { porGrupo, ordenados } = agruparPorTipoDespesa(resultado);
+  if (ordenados.length === 0) return '';
+
+  let totalGeral = 0;
+  const gruposHtml = ordenados
+    .map((grupo) => {
+      const itensGrupo = porGrupo.get(grupo);
+      const subtotal = itensGrupo.reduce((s, it) => s + (it.valorTotal || 0), 0);
+      totalGeral += subtotal;
+      const linhasHtml = itensGrupo
+        .map(
+          (it) => `
+          <tr>
+            <td>${it.dataExecucao || '—'}</td>
+            <td>${it.codigoProcedimento || '—'}</td>
+            <td>${it.descricaoProcedimento || '—'}</td>
+            <td style="text-align:right">${it.quantidade ?? 1}</td>
+            <td style="text-align:right">${fmtMoeda(it.valorTotal ?? 0)}</td>
+          </tr>`
+        )
+        .join('');
+      return `
+        <div class="referencia-tabela" style="margin-top:14px; font-weight:700; color: var(--teal-dark);">${grupo} — ${fmtMoeda(subtotal)}</div>
+        <div style="overflow-x:auto;">
+          <table class="guia-doc-tabela">
+            <thead><tr><th>Data</th><th>Código</th><th>Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
+            <tbody>${linhasHtml}</tbody>
+          </table>
+        </div>`;
+    })
+    .join('');
+
+  return `
+    <details class="grupo grupo-principal" open style="margin-top:16px;">
+      <summary class="grupo-summary">
+        <span class="grupo-nome">Por tipo de despesa (ANS)</span>
+        <span class="grupo-valor">${fmtMoeda(totalGeral)}</span>
+      </summary>
+      <div class="grupo-corpo">
+        ${gruposHtml}
+        <div style="margin-top:12px;">
+          <button type="button" id="btn-exportar-grupos-csv" class="acao-btn">⬇ Exportar CSV</button>
+        </div>
+      </div>
+    </details>`;
+}
+
+function exportarGruposDespesaCsv(resultado) {
+  const { porGrupo, ordenados } = agruparPorTipoDespesa(resultado);
+  const linhas = [['Grupo', 'Data', 'Código', 'Descrição', 'Quantidade', 'Valor (R$)']];
+  ordenados.forEach((grupo) => {
+    porGrupo.get(grupo).forEach((it) => {
+      linhas.push([grupo, it.dataExecucao || '', it.codigoProcedimento || '', it.descricaoProcedimento || '', it.quantidade ?? 1, numCsv(it.valorTotal ?? 0)]);
+    });
+  });
+  baixarCsv(`validador-tiss-grupos-${resultado.nomeArquivo.replace(/\.xml$/i, '')}.csv`, linhas);
 }
 
 function renderizarValidadorTiss(resultado) {
@@ -1551,7 +1803,10 @@ function renderizarValidadorTiss(resultado) {
     ? `<div class="validador-linha">Operadora de destino (registro ANS ${resultado.operadoraDestino.registro}): <strong>${resultado.operadoraDestino.nome || 'não encontrada na base de operadoras ativas'}</strong></div>`
     : '';
   const linhaPrestador = resultado.prestadorOrigem
-    ? `<div class="validador-linha">Prestador de origem: ${resultado.prestadorOrigem}</div>`
+    ? `<div class="validador-linha">
+        Prestador de origem: ${resultado.prestadorOrigem}
+        ${resultado.prestadorOrigemCnpj ? '<button type="button" id="btn-buscar-cnpj" class="chip-btn" style="margin-left:8px;">🔍 Buscar CNPJ</button><div id="cnpj-resultado" class="referencia-tabela"></div>' : ''}
+      </div>`
     : '';
   const linhaLote = resultado.numeroLote ? `<div class="validador-linha">Lote: ${resultado.numeroLote}</div>` : '';
 
@@ -1602,9 +1857,30 @@ function renderizarValidadorTiss(resultado) {
         ${linhaCodigos}
       </div>
       <div class="referencia-tabela">Guias encontradas: ${tiposGuiaHtml || '—'}</div>
+      ${renderizarGruposDespesa(resultado)}
     </div>
     <div class="cards-grid" style="margin-top:16px;">${guiasHtml}</div>
   `;
+
+  const btnCnpj = document.getElementById('btn-buscar-cnpj');
+  if (btnCnpj) {
+    btnCnpj.addEventListener('click', async () => {
+      const alvo = document.getElementById('cnpj-resultado');
+      alvo.textContent = 'Consultando BrasilAPI…';
+      try {
+        const dados = await buscarCnpjBrasilApi(resultado.prestadorOrigemCnpj);
+        const situacao = dados.descricao_situacao_cadastral || '—';
+        alvo.innerHTML = `<strong>${dados.razao_social || '—'}</strong>${dados.nome_fantasia ? ` (${dados.nome_fantasia})` : ''} — situação cadastral: ${situacao}`;
+      } catch (err) {
+        alvo.textContent = `Não foi possível consultar o CNPJ: ${err.message}`;
+      }
+    });
+  }
+
+  const btnExportarGrupos = document.getElementById('btn-exportar-grupos-csv');
+  if (btnExportarGrupos) {
+    btnExportarGrupos.addEventListener('click', () => exportarGruposDespesaCsv(resultado));
+  }
 }
 
 if (validadorArquivoEl) {

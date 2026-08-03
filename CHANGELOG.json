@@ -1,5 +1,15 @@
 [
   {
+    "versao": "1.10.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Validador de XML TISS: nova visão 'Por tipo de despesa (ANS)' que organiza todos os lançamentos do arquivo (procedimentos, consultas e outras despesas) pelos grupos oficiais da ANS — Material, Medicamento, Gases Medicinais, Taxas Diversas, Diárias, Aluguéis, OPME, Medicamentos de Alto Custo e Outros — com data, código, descrição, quantidade e valor de cada item, exportável em CSV.",
+      "Validador de XML TISS: mostra os profissionais de cada guia (solicitante, executante e equipe) com CRM (conselho + número + UF), CBO com a especialidade médica e a função (grau de participação — cirurgião, auxiliar, anestesista, clínico etc., conforme a Tabela de Domínio da ANS).",
+      "Validador de XML TISS: busca opcional de CNPJ (botão, não automático) que traz razão social, nome fantasia e situação cadastral via BrasilAPI — a única parte da ferramenta que se comunica com um serviço externo, e só quando o usuário pede.",
+      "Pesquisado (e descartado por ora): consulta automática de nome de médico por CRM via CFM — não existe API pública sem credenciamento; exigiria cadastro no CFM ou um serviço pago de terceiros, e uma chave de API armazenada no servidor (não no navegador)."
+    ]
+  },
+  {
     "versao": "1.9.0",
     "data": "2026-08-03",
     "mudancas": [

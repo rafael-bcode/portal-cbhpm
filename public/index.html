@@ -353,8 +353,12 @@
     <p class="ajustes-nota">
       Confere um arquivo XML do Padrão TISS <strong>só no seu navegador</strong> — o arquivo nunca é enviado a
       nenhum servidor. Verifica o hash MD5, a versão do Padrão, os tipos de guia, os códigos de tabela, os
-      valores por item e o total de cada guia, e mostra a operadora a partir do registro ANS. Não é um
-      validador oficial certificado pela ANS.
+      valores por item e o total de cada guia, mostra a operadora a partir do registro ANS e organiza os
+      lançamentos por tipo de despesa (Material, Medicamento, Diárias etc.). Não é um validador oficial
+      certificado pela ANS.
+      <br><strong>Exceção:</strong> o botão "Buscar CNPJ" (opcional, não acontece automaticamente) envia o CNPJ
+      do prestador — não dados do paciente — à <a href="https://brasilapi.com.br" target="_blank" rel="noopener">BrasilAPI</a>,
+      um serviço público e gratuito de consulta ao CNPJ, para trazer razão social e nome fantasia.
     </p>
     <div class="field">
       <label for="validador-arquivo">Arquivo XML</label>

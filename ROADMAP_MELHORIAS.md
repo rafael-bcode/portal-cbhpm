@@ -162,6 +162,41 @@ Verifica:
 **Não é** um validador oficial certificado pela ANS — não valida contra o
 schema XSD completo nem substitui a homologação da operadora.
 
+## Fase 5c — Grupos de despesa, profissionais e CNPJ ✅ Implementado
+
+Extensão do validador (ago/2026), a partir de dados oficiais fornecidos
+pelo usuário e pesquisa complementar:
+
+- **Por tipo de despesa (ANS)**: todos os lançamentos do arquivo
+  (procedimentos, consultas, outrasDespesas) organizados pelos grupos
+  oficiais da Tabela de Domínio "Tipo de Despesa" (`codigoDespesa`):
+  Material, Medicamento, Gases Medicinais, Taxas Diversas, Diárias,
+  Aluguéis, OPME, Medicamentos de Alto Custo, Outros — mais "Procedimentos
+  (honorários)" e "Consultas" para itens que não usam `codigoDespesa`. Data,
+  código, descrição, quantidade e valor de cada lançamento, com subtotal
+  por grupo e exportação em CSV.
+- **Profissionais por guia**: nome, CRM (conselho + número + UF, via
+  Tabela de Domínio 26 "Conselho Profissional"), CBO com a especialidade
+  médica (via CSV oficial do CBO, Ministério do Trabalho e Emprego,
+  filtrado à família 225 — médicos) e função (via Tabela de Domínio 35
+  "Grau de Participação" — cirurgião, auxiliar, anestesista, clínico etc.).
+- **Busca opcional de CNPJ** (botão, não automático): traz razão social,
+  nome fantasia e situação cadastral via [BrasilAPI](https://brasilapi.com.br)
+  — CORS aberto confirmado, gratuita, sem cadastro. É a única parte do
+  validador que se comunica com um serviço externo, e só quando o usuário
+  pede (envia apenas o CNPJ do prestador, não dados do paciente).
+
+**Pesquisado e descartado por ora**: consulta automática do nome do médico
+a partir do CRM via CFM. Não existe API pública sem credenciamento — o
+Conselho Federal de Medicina exige acesso formal (Resolução CFM nº
+2.129/15) via chave concedida a empresas/instituições cadastradas; opções
+de terceiros (Infosimples, Consultar.IO) são pagas. Se o usuário obtiver
+essa credencial (própria ou de terceiro pago), o caminho correto é um
+endpoint no servidor (`/api/consultar-crm`) guardando a chave como variável
+de ambiente — nunca embutida no navegador.
+
+Fontes: [Tabelas de Domínio do Padrão TISS — v3.02.00](https://fiosaude.org.br/wp-content/uploads/2020/04/TabelaDominioANS.pdf) (Tabela 26 — Conselho Profissional, Tabela 35 — Grau de Participação), [CBO — downloads oficiais (MTE)](https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/cbo/servicos/downloads), [BrasilAPI — CNPJ](https://brasilapi.com.br/api/cnpj/v1/), [CFM — Web Service de Listagem de Médicos](https://sistemas.cfm.org.br/listamedicos/informacoes) (exige credenciamento)
+
 ## Resumo executivo
 
 | Fase | Status | Esforço | Valor | Depende de dado pago? |
@@ -171,3 +206,5 @@ schema XSD completo nem substitui a homologação da operadora.
 | 3. Presets de convênio (escopo reduzido) | ✅ Feito | Baixo | Médio | Não |
 | 4. Exportar/persistir | ✅ Feito | Baixo | Médio | Não |
 | 5. Guia/fatura simulada (escopo reduzido) | ✅ Feito | Médio | Alto (dentro do escopo reduzido) | Não |
+| 5b. Validador de XML TISS | ✅ Feito | Alto | Alto | Não |
+| 5c. Grupos de despesa, profissionais e CNPJ | ✅ Feito | Médio | Alto | Não |
