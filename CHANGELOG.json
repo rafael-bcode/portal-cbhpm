@@ -1,5 +1,16 @@
 [
   {
+    "versao": "1.7.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Adiciona a edição 2018 da CBHPM e as edições de reajuste periódico (INPC/IBGE) sobre a 11ª Edição — 2020-2021, 2022-2023, 2023-2024 e 2025-2026 — mantendo os valores de referência sempre atualizados.",
+      "Renomeia as edições para trazer o número oficial na frente do ano (ex: '9ª Edição - 2017') e identifica os reajustes periódicos como tal, facilitando a identificação na lista de seleção.",
+      "Adiciona testes automatizados cobrindo a lógica de cálculo de honorários e via de acesso.",
+      "Adiciona tabela de mapeamento CBHPM ↔ AMB90/92/96/99 ↔ TUSS.",
+      "Remove do controle de versão os arquivos-fonte de importação (planilhas, PDFs e dumps JSON) — não afeta o funcionamento do portal."
+    ]
+  },
+  {
     "versao": "1.6.0",
     "data": "2026-07-31",
     "mudancas": [
