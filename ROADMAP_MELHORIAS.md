@@ -197,6 +197,21 @@ de ambiente — nunca embutida no navegador.
 
 Fontes: [Tabelas de Domínio do Padrão TISS — v3.02.00](https://fiosaude.org.br/wp-content/uploads/2020/04/TabelaDominioANS.pdf) (Tabela 26 — Conselho Profissional, Tabela 35 — Grau de Participação), [CBO — downloads oficiais (MTE)](https://www.gov.br/trabalho-e-emprego/pt-br/assuntos/cbo/servicos/downloads), [BrasilAPI — CNPJ](https://brasilapi.com.br/api/cnpj/v1/), [CFM — Web Service de Listagem de Médicos](https://sistemas.cfm.org.br/listamedicos/informacoes) (exige credenciamento)
 
+## Fase 5d — Detalhe por guia (abas) e busca por número ✅ Implementado
+
+Ajuste de organização de tela pedido pelo usuário (ago/2026): a visão "Por
+tipo de despesa (ANS)" misturava os lançamentos de todas as guias do
+arquivo numa lista só. Agora:
+
+- Cada card de guia é clicável e abre uma tela própria (modal) com **abas**
+  — uma por grupo de despesa presente **naquela guia** (não do arquivo
+  inteiro), mais Resumo (total, itens com valor divergente) e Profissionais.
+- A visão "Por tipo de despesa (ANS)" no resultado geral virou um resumo
+  (subtotal por grupo, todo o arquivo) — o detalhe item a item mora na tela
+  de cada guia; a exportação CSV de tudo continua disponível ali.
+- Campo de busca por número da guia (`numeroGuiaPrestador`) filtra a lista
+  de cards em tempo real.
+
 ## Resumo executivo
 
 | Fase | Status | Esforço | Valor | Depende de dado pago? |
@@ -208,3 +223,4 @@ Fontes: [Tabelas de Domínio do Padrão TISS — v3.02.00](https://fiosaude.org.
 | 5. Guia/fatura simulada (escopo reduzido) | ✅ Feito | Médio | Alto (dentro do escopo reduzido) | Não |
 | 5b. Validador de XML TISS | ✅ Feito | Alto | Alto | Não |
 | 5c. Grupos de despesa, profissionais e CNPJ | ✅ Feito | Médio | Alto | Não |
+| 5d. Detalhe por guia (abas) e busca por número | ✅ Feito | Baixo–médio | Alto | Não |

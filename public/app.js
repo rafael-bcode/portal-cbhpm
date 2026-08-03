@@ -1595,7 +1595,7 @@ async function validarArquivoTiss(file) {
   return resultado;
 }
 
-function renderizarGuiaTiss(g) {
+function renderizarGuiaTiss(g, indice) {
   const itensProblema = g.itens.filter((it) => it.ok === false);
   const totalProblema = g.valorTotal && (g.valorTotal.okComponentes === false || g.valorTotal.okItens === false);
   const statusGeral = itensProblema.length === 0 && !totalProblema;
@@ -1652,7 +1652,7 @@ function renderizarGuiaTiss(g) {
 
   return `
     <div class="edicao-card">
-      <div class="edicao-card-head">
+      <div class="edicao-card-head clicavel" data-guia-indice="${indice}" role="button" tabindex="0" title="Clique para ver os lançamentos desta guia agrupados por tipo">
         <span class="nome">${g.tipo}${g.numeroGuiaPrestador ? ` — ${g.numeroGuiaPrestador}` : ''}</span>
         <span class="ano">${statusGeral ? '✔' : '⚠'}</span>
       </div>
@@ -1691,18 +1691,21 @@ async function buscarCnpjBrasilApi(cnpj) {
   return resp.json();
 }
 
-function montarItensParaAgrupamento(resultado) {
-  const linhas = [];
-  resultado.guias.forEach((g) => {
-    g.itens.forEach((it) => linhas.push(it));
-    if (g.consultaItem) linhas.push(g.consultaItem);
-  });
+function itensDaGuia(guia) {
+  const linhas = guia.itens.slice();
+  if (guia.consultaItem) linhas.push(guia.consultaItem);
   return linhas;
 }
 
-function agruparPorTipoDespesa(resultado) {
+function montarItensParaAgrupamento(resultado) {
+  const linhas = [];
+  resultado.guias.forEach((g) => linhas.push(...itensDaGuia(g)));
+  return linhas;
+}
+
+function agruparItens(itens) {
   const porGrupo = new Map();
-  montarItensParaAgrupamento(resultado).forEach((it) => {
+  itens.forEach((it) => {
     const grupo = it.grupo || GRUPO_PROCEDIMENTOS;
     if (!porGrupo.has(grupo)) porGrupo.set(grupo, []);
     porGrupo.get(grupo).push(it);
@@ -1713,57 +1716,186 @@ function agruparPorTipoDespesa(resultado) {
   return { porGrupo, ordenados };
 }
 
-// Visão agrupada por Tipo de Despesa (ANS) — quebra todos os itens do
-// arquivo (procedimentos, consultas e outrasDespesas) pelos grupos oficiais
+function agruparPorTipoDespesa(resultado) {
+  return agruparItens(montarItensParaAgrupamento(resultado));
+}
+
+// Visão agrupada por Tipo de Despesa (ANS) — subtotais de todo o arquivo
+// (procedimentos, consultas e outrasDespesas) pelos grupos oficiais
 // (Material, Medicamento, Diárias etc., mais Procedimentos/Consultas para
-// itens que não usam codigoDespesa), com data, código, descrição,
-// quantidade e valor de cada lançamento.
+// itens que não usam codigoDespesa). O detalhe item a item de cada grupo
+// fica na tela de cada guia (clique no card da guia), não aqui.
 function renderizarGruposDespesa(resultado) {
   const { porGrupo, ordenados } = agruparPorTipoDespesa(resultado);
   if (ordenados.length === 0) return '';
 
   let totalGeral = 0;
-  const gruposHtml = ordenados
+  const linhasHtml = ordenados
     .map((grupo) => {
       const itensGrupo = porGrupo.get(grupo);
       const subtotal = itensGrupo.reduce((s, it) => s + (it.valorTotal || 0), 0);
       totalGeral += subtotal;
-      const linhasHtml = itensGrupo
-        .map(
-          (it) => `
-          <tr>
-            <td>${it.dataExecucao || '—'}</td>
-            <td>${it.codigoProcedimento || '—'}</td>
-            <td>${it.descricaoProcedimento || '—'}</td>
-            <td style="text-align:right">${it.quantidade ?? 1}</td>
-            <td style="text-align:right">${fmtMoeda(it.valorTotal ?? 0)}</td>
-          </tr>`
-        )
-        .join('');
       return `
-        <div class="referencia-tabela" style="margin-top:14px; font-weight:700; color: var(--teal-dark);">${grupo} — ${fmtMoeda(subtotal)}</div>
-        <div style="overflow-x:auto;">
-          <table class="guia-doc-tabela">
-            <thead><tr><th>Data</th><th>Código</th><th>Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
-            <tbody>${linhasHtml}</tbody>
-          </table>
+        <div class="breakdown-row">
+          <span class="label">${grupo} <span class="detail">${itensGrupo.length} lançamento(s)</span></span>
+          <span class="value">${fmtMoeda(subtotal)}</span>
         </div>`;
     })
     .join('');
 
   return `
-    <details class="grupo grupo-principal" open style="margin-top:16px;">
+    <details class="grupo grupo-principal" style="margin-top:16px;">
       <summary class="grupo-summary">
-        <span class="grupo-nome">Por tipo de despesa (ANS)</span>
+        <span class="grupo-nome">Por tipo de despesa (ANS) — visão geral do arquivo</span>
         <span class="grupo-valor">${fmtMoeda(totalGeral)}</span>
       </summary>
       <div class="grupo-corpo">
-        ${gruposHtml}
-        <div style="margin-top:12px;">
-          <button type="button" id="btn-exportar-grupos-csv" class="acao-btn">⬇ Exportar CSV</button>
+        <div class="breakdown">${linhasHtml}</div>
+        <p class="ajustes-nota" style="margin:10px 16px 0;">Para ver os lançamentos item a item por grupo, clique numa guia na lista abaixo.</p>
+        <div style="margin:6px 16px 0;">
+          <button type="button" id="btn-exportar-grupos-csv" class="acao-btn">⬇ Exportar CSV (todos os itens)</button>
         </div>
       </div>
     </details>`;
+}
+
+// Tela de detalhe de uma guia (aberta ao clicar no card da guia): quebra
+// SÓ os itens daquela guia em abas por grupo de despesa, mais uma aba de
+// profissionais e uma de resumo/total — em vez de misturar tudo do XML.
+function renderizarTabelaGrupoModal(itensGrupo) {
+  const subtotal = itensGrupo.reduce((s, it) => s + (it.valorTotal || 0), 0);
+  const linhasHtml = itensGrupo
+    .map(
+      (it) => `
+      <tr>
+        <td>${it.dataExecucao || '—'}</td>
+        <td>${it.codigoProcedimento || '—'}</td>
+        <td>${it.descricaoProcedimento || '—'}</td>
+        <td style="text-align:right">${it.quantidade ?? 1}</td>
+        <td style="text-align:right">${fmtMoeda(it.valorTotal ?? 0)}</td>
+      </tr>`
+    )
+    .join('');
+  return `
+    <div style="overflow-x:auto;">
+      <table class="guia-doc-tabela">
+        <thead><tr><th>Data</th><th>Código</th><th>Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
+        <tbody>${linhasHtml}</tbody>
+        <tfoot><tr><td colspan="4" style="text-align:right; font-weight:700;">Subtotal</td><td style="text-align:right; font-weight:700;">${fmtMoeda(subtotal)}</td></tr></tfoot>
+      </table>
+    </div>`;
+}
+
+function renderizarProfissionaisGuiaModal(guia) {
+  const linhas = (guia.profissionais || [])
+    .map((p) => {
+      const crm = p.numeroConselho ? `${p.conselhoNome || 'Conselho ' + (p.conselho || '?')} nº ${p.numeroConselho}${p.uf ? '/' + p.uf : ''}` : '';
+      const cbo = p.cbo ? `CBO ${p.cbo}${p.cboDescricao ? ` (${p.cboDescricao})` : ''}` : '';
+      const funcao = p.grauPartDescricao || p.papel;
+      const detalhes = [crm, cbo].filter(Boolean).join(' · ');
+      return `
+        <div class="breakdown-row">
+          <span class="label">${p.nome || '—'} <span class="detail">${detalhes || '—'}</span></span>
+          <span class="value zero">${funcao}</span>
+        </div>`;
+    })
+    .join('');
+  return `<div class="breakdown">${linhas || '<div class="breakdown-row"><span class="label">Nenhum profissional identificado nesta guia</span></div>'}</div>`;
+}
+
+function renderizarResumoGuiaModal(guia) {
+  const itensProblema = guia.itens.filter((it) => it.ok === false);
+  const totalProblema = guia.valorTotal && (guia.valorTotal.okComponentes === false || guia.valorTotal.okItens === false);
+  const qtdItens = itensDaGuia(guia).length;
+
+  const problemasHtml = itensProblema.length
+    ? `<div class="breakdown">
+        ${itensProblema
+          .map(
+            (it) => `
+          <div class="breakdown-row">
+            <span class="label">${it.codigoProcedimento || '—'} <span class="detail">esperado ${fmtMoeda(it.esperado)}</span></span>
+            <span class="value zero">${fmtMoeda(it.valorTotal ?? 0)}</span>
+          </div>`
+          )
+          .join('')}
+      </div>`
+    : '';
+
+  const totalHtml = guia.valorTotal
+    ? `<div class="breakdown"><div class="total-row">
+        <span class="label">Total da guia ${totalProblema ? '⚠' : '✔'}</span>
+        <div style="text-align:right">
+          <div class="value">${fmtMoeda(guia.valorTotal.valorTotalGeral ?? 0)}</div>
+          ${guia.valorTotal.okComponentes === false ? `<div class="original">soma dos componentes do total: ${fmtMoeda(guia.valorTotal.soma)}</div>` : ''}
+          ${guia.valorTotal.okItens === false ? `<div class="original">soma dos itens: ${fmtMoeda(guia.valorTotal.somaItens)}</div>` : ''}
+        </div>
+      </div></div>`
+    : '';
+
+  return `
+    <div class="breakdown">
+      <div class="breakdown-row"><span class="label">Tipo de guia</span><span class="value zero">${guia.tipo}</span></div>
+      ${guia.numeroGuiaPrestador ? `<div class="breakdown-row"><span class="label">Número da guia (prestador)</span><span class="value zero">${guia.numeroGuiaPrestador}</span></div>` : ''}
+      <div class="breakdown-row"><span class="label">Itens lançados</span><span class="value zero">${qtdItens}</span></div>
+      <div class="breakdown-row"><span class="label">Profissionais</span><span class="value zero">${(guia.profissionais || []).length}</span></div>
+    </div>
+    ${itensProblema.length ? `<p class="ajustes-nota" style="margin:10px 16px 0;">⚠ ${itensProblema.length} item(ns) com valor divergente do esperado:</p>${problemasHtml}` : ''}
+    ${totalHtml}`;
+}
+
+function abrirModalGuiaValidador(guia) {
+  const modalEl = document.getElementById('modal-validador-guia');
+  const tituloEl = document.getElementById('validador-guia-titulo');
+  const tabsEl = document.getElementById('validador-guia-tabs');
+  const conteudoEl = document.getElementById('validador-guia-conteudo');
+  if (!modalEl) return;
+
+  tituloEl.textContent = `${guia.tipo}${guia.numeroGuiaPrestador ? ` — ${guia.numeroGuiaPrestador}` : ''}`;
+
+  const { porGrupo, ordenados } = agruparItens(itensDaGuia(guia));
+  const abas = [
+    { chave: '__resumo', rotulo: 'Resumo' },
+    ...ordenados.map((g) => ({ chave: g, rotulo: `${g} (${porGrupo.get(g).length})` })),
+    { chave: '__profissionais', rotulo: `Profissionais (${(guia.profissionais || []).length})` },
+  ];
+
+  const montarConteudo = (chave) => {
+    if (chave === '__resumo') return renderizarResumoGuiaModal(guia);
+    if (chave === '__profissionais') return renderizarProfissionaisGuiaModal(guia);
+    return renderizarTabelaGrupoModal(porGrupo.get(chave) || []);
+  };
+
+  tabsEl.innerHTML = abas
+    .map((a, i) => `<button type="button" class="tab-btn guia-modal-tab ${i === 0 ? 'active' : ''}" data-chave="${a.chave}">${a.rotulo}</button>`)
+    .join('');
+  conteudoEl.innerHTML = montarConteudo(abas[0].chave);
+
+  tabsEl.querySelectorAll('.guia-modal-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tabsEl.querySelectorAll('.guia-modal-tab').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      conteudoEl.innerHTML = montarConteudo(btn.dataset.chave);
+    });
+  });
+
+  modalEl.classList.remove('hidden');
+}
+
+function fecharModalGuiaValidador() {
+  const modalEl = document.getElementById('modal-validador-guia');
+  if (modalEl) modalEl.classList.add('hidden');
+}
+
+const modalValidadorGuiaEl = document.getElementById('modal-validador-guia');
+if (modalValidadorGuiaEl) {
+  document.getElementById('btn-fechar-validador-guia').addEventListener('click', fecharModalGuiaValidador);
+  modalValidadorGuiaEl.addEventListener('click', (e) => {
+    if (e.target === modalValidadorGuiaEl) fecharModalGuiaValidador();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fecharModalGuiaValidador();
+  });
 }
 
 function exportarGruposDespesaCsv(resultado) {
@@ -1839,7 +1971,7 @@ function renderizarValidadorTiss(resultado) {
     .map(([tipo, qtd]) => `<span class="pct-badge pct-badge-neutro">${tipo} × ${qtd}</span>`)
     .join(' ');
 
-  const guiasHtml = resultado.guias.map(renderizarGuiaTiss).join('');
+  const guiasHtml = resultado.guias.map((g, i) => renderizarGuiaTiss(g, i)).join('');
 
   validadorResultadoEl.innerHTML = `
     <div class="edicao-card">
@@ -1859,8 +1991,40 @@ function renderizarValidadorTiss(resultado) {
       <div class="referencia-tabela">Guias encontradas: ${tiposGuiaHtml || '—'}</div>
       ${renderizarGruposDespesa(resultado)}
     </div>
-    <div class="cards-grid" style="margin-top:16px;">${guiasHtml}</div>
+    ${
+      resultado.guias.length > 0
+        ? `<div class="field" style="max-width:340px; margin:16px 0 0;">
+            <label for="validador-busca-guia">Buscar guia por número</label>
+            <input type="text" id="validador-busca-guia" placeholder="Ex: 461088482">
+          </div>`
+        : ''
+    }
+    <div id="validador-guias-grid" class="cards-grid" style="margin-top:12px;">${guiasHtml}</div>
   `;
+
+  validadorResultadoEl.querySelectorAll('.edicao-card-head.clicavel').forEach((el) => {
+    const abrir = () => abrirModalGuiaValidador(resultado.guias[Number(el.dataset.guiaIndice)]);
+    el.addEventListener('click', abrir);
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        abrir();
+      }
+    });
+  });
+
+  const buscaGuiaEl = document.getElementById('validador-busca-guia');
+  if (buscaGuiaEl) {
+    buscaGuiaEl.addEventListener('input', () => {
+      const termo = buscaGuiaEl.value.trim().toLowerCase();
+      const cards = validadorResultadoEl.querySelectorAll('#validador-guias-grid > .edicao-card');
+      cards.forEach((card, i) => {
+        const g = resultado.guias[i];
+        const alvo = `${g.numeroGuiaPrestador || ''} ${g.tipo || ''}`.toLowerCase();
+        card.style.display = !termo || alvo.includes(termo) ? '' : 'none';
+      });
+    });
+  }
 
   const btnCnpj = document.getElementById('btn-buscar-cnpj');
   if (btnCnpj) {

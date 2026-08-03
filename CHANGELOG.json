@@ -1,5 +1,14 @@
 [
   {
+    "versao": "1.11.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Validador de XML TISS: cada guia agora abre em uma tela própria (clique no card da guia) com abas — uma para cada grupo de despesa daquela guia (Procedimentos, Consultas, Material etc.), mais Resumo (total, itens com problema) e Profissionais — em vez de misturar os lançamentos de todo o arquivo numa única lista.",
+      "Validador de XML TISS: a visão 'Por tipo de despesa (ANS)' no topo virou um resumo geral do arquivo (subtotal por grupo), com o detalhe item a item disponível na tela de cada guia; a exportação em CSV de todos os itens continua disponível ali.",
+      "Validador de XML TISS: novo campo de busca por número da guia, que filtra a lista de cards em tempo real."
+    ]
+  },
+  {
     "versao": "1.10.0",
     "data": "2026-08-03",
     "mudancas": [
