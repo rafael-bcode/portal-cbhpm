@@ -369,14 +369,52 @@
       valores por item e o total de cada guia, mostra a operadora a partir do registro ANS e organiza os
       lançamentos por tipo de despesa (Material, Medicamento, Diárias etc.). Não é um validador oficial
       certificado pela ANS.
+      <br>Pode selecionar <strong>mais de um arquivo de uma vez</strong> — útil para o caso de algumas Unimeds,
+      que dividem o mesmo lote em 3 arquivos (iniciados por 0, 2 e 5): quando isso é detectado, mostra uma
+      conferência extra entre eles (mesma operadora, mesmo lote-base) e o total somado de todos.
       <br><strong>Exceção:</strong> o botão "Buscar CNPJ" (opcional, não acontece automaticamente) envia o CNPJ
       do prestador — não dados do paciente — à <a href="https://brasilapi.com.br" target="_blank" rel="noopener">BrasilAPI</a>,
       um serviço público e gratuito de consulta ao CNPJ, para trazer razão social e nome fantasia.
     </p>
     <div class="field">
-      <label for="validador-arquivo">Arquivo XML</label>
-      <input type="file" id="validador-arquivo" accept=".xml">
+      <label for="validador-arquivo">Arquivo(s) XML</label>
+      <input type="file" id="validador-arquivo" accept=".xml" multiple>
     </div>
+
+    <details class="grupo grupo-principal" id="validador-historico-bloco">
+      <summary class="grupo-summary"><span class="grupo-nome">Histórico de validações (neste navegador)</span></summary>
+      <div class="grupo-corpo">
+        <p class="ajustes-nota" style="margin:10px 16px 0;">
+          Guarda só um resumo de cada validação (nome do arquivo, data, operadora, totais e status) — nunca o
+          conteúdo do XML. Fica salvo só neste navegador (localStorage), nunca é enviado a lugar nenhum.
+        </p>
+        <div id="validador-historico-lista"></div>
+        <div style="margin:10px 16px;">
+          <button type="button" id="btn-limpar-historico-tiss" class="acao-btn">🗑 Limpar histórico</button>
+        </div>
+      </div>
+    </details>
+
+    <details class="grupo grupo-principal" id="validador-comparar-bloco">
+      <summary class="grupo-summary"><span class="grupo-nome">Comparar dois arquivos (ex: original × reenviado após glosa)</span></summary>
+      <div class="grupo-corpo">
+        <p class="ajustes-nota" style="margin:10px 16px 0;">
+          Compara as guias de dois arquivos pelo número da guia (prestador) — mostra o que mudou item a item
+          (quantidade e valor) e a diferença de total, útil para conferir um arquivo reenviado após glosa
+          contra o original.
+        </p>
+        <div class="field">
+          <label for="comparar-arquivo-a">Arquivo A (ex: original)</label>
+          <input type="file" id="comparar-arquivo-a" accept=".xml">
+        </div>
+        <div class="field">
+          <label for="comparar-arquivo-b">Arquivo B (ex: reenviado)</label>
+          <input type="file" id="comparar-arquivo-b" accept=".xml">
+        </div>
+        <button type="button" id="btn-comparar-arquivos" class="btn-consultar">Comparar</button>
+        <div id="comparar-resultado" style="margin-top:16px;"></div>
+      </div>
+    </details>
   </section>
 
   <section id="validador-resultado-area"></section>

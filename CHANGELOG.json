@@ -1,5 +1,15 @@
 [
   {
+    "versao": "1.12.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Validador de XML TISS: histórico local de validações (nome do arquivo, data, operadora, lote, total e status) — guarda só o resumo, nunca o XML, salvo apenas no navegador (localStorage).",
+      "Validador de XML TISS: agora aceita carregar vários arquivos de uma vez — quando detecta a convenção Unimed 0/2/5 (arquivos do mesmo lote divididos por tipo), mostra uma conferência extra (mesma operadora, mesmo lote-base) e o total somado de todos.",
+      "Validador de XML TISS: nova ferramenta de comparação entre dois arquivos (ex: original × reenviado após glosa) — casa as guias pelo número do prestador e mostra o que mudou item a item (quantidade, valor) e a diferença de total.",
+      "Corrige bug: profissionais da equipe não apareciam em procedimentos de guiaResumoInternacao (o XML usa <identEquipe><identificacaoEquipe>, não <equipeSadt>) nem em guiaHonorarios/Honorário Individual dos credenciados (que usa nomes de campo próprios: procedimentosRealizados/procedimentoRealizado, valorTotalHonorarios, profissionais com grauParticipacao/CBO) — essas guias apareciam com itens e profissionais zerados mesmo tendo dados no XML. Confirmado contra o XSD oficial do Padrão TISS 4.03.00."
+    ]
+  },
+  {
     "versao": "1.11.0",
     "data": "2026-08-03",
     "mudancas": [

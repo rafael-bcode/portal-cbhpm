@@ -1391,19 +1391,44 @@ function numDeTiss(texto) {
 
 // Extrai a identificação de um profissional a partir de qualquer bloco que
 // tenha esses campos (profissionalSolicitante, profissionalExecutante,
-// equipeSadt) — os nomes dos elementos variam ligeiramente entre eles
-// (nomeProfissional/nomeProf, conselhoProfissional/conselho), então tenta
-// as duas formas.
+// equipeSadt, identificacaoEquipe, profissionais de guiaHonorarios) — os
+// nomes dos elementos variam ligeiramente entre eles (nomeProfissional/
+// nomeProf, conselhoProfissional/conselho, CBOS/CBO, grauPart/
+// grauParticipacao — confirmado no XSD oficial), então tenta as duas formas.
 function extrairProfissionalTiss(el) {
   if (!el) return null;
   const nome = textoDeTiss(el, 'nomeProfissional') || textoDeTiss(el, 'nomeProf');
   const conselho = textoDeTiss(el, 'conselhoProfissional') || textoDeTiss(el, 'conselho');
   const numeroConselho = textoDeTiss(el, 'numeroConselhoProfissional');
   const uf = textoDeTiss(el, 'UF');
-  const cbo = textoDeTiss(el, 'CBOS');
-  const grauPart = textoDeTiss(el, 'grauPart');
+  const cbo = textoDeTiss(el, 'CBOS') || textoDeTiss(el, 'CBO');
+  const grauPart = textoDeTiss(el, 'grauPart') || textoDeTiss(el, 'grauParticipacao');
   if (!nome && !conselho && !numeroConselho && !cbo) return null;
   return { nome, conselho, numeroConselho, uf, cbo, grauPart };
+}
+
+// Profissionais da equipe de um procedimento executado — o nome do bloco
+// muda conforme o tipo de guia (confirmado no XSD oficial,
+// tissComplexTypesV4_03_00.xsd): guiaSP-SADT usa <equipeSadt> direto (0..N,
+// ct_procedimentoExecutadoSadt); guiaResumoInternacao usa <identEquipe>
+// <identificacaoEquipe> (0..N, ct_procedimentoExecutadoInt); guiaHonorarios
+// (honorário individual dos credenciados) usa <profissionais> direto (0..N,
+// ct_procedimentoExecutadoHonorIndiv) — mesmos dados, nomes diferentes.
+function extrairProfissionaisItemTiss(itemEl) {
+  const lista = [];
+  filhosTiss(itemEl, 'equipeSadt').forEach((el) => {
+    const p = extrairProfissionalTiss(el);
+    if (p) lista.push(p);
+  });
+  filhosTiss(itemEl, 'identEquipe').forEach((wrapper) => {
+    const p = extrairProfissionalTiss(filhoTiss(wrapper, 'identificacaoEquipe'));
+    if (p) lista.push(p);
+  });
+  filhosTiss(itemEl, 'profissionais').forEach((el) => {
+    const p = extrairProfissionalTiss(el);
+    if (p) lista.push(p);
+  });
+  return lista;
 }
 
 function analisarItemTiss(itemEl, procEl, extras = {}) {
@@ -1417,7 +1442,7 @@ function analisarItemTiss(itemEl, procEl, extras = {}) {
   const valorTotal = numDeTiss(textoDeTiss(itemEl, 'valorTotal'));
   const esperado = valorUnitario !== null ? Number((valorUnitario * quantidade * reducao).toFixed(2)) : null;
   const ok = valorTotal !== null && esperado !== null ? Math.abs(valorTotal - esperado) <= 0.02 : null;
-  const profissional = extrairProfissionalTiss(filhoTiss(itemEl, 'equipeSadt'));
+  const profissionais = extrairProfissionaisItemTiss(itemEl);
   return {
     codigoTabela,
     codigoProcedimento,
@@ -1431,7 +1456,7 @@ function analisarItemTiss(itemEl, procEl, extras = {}) {
     ok,
     codigoDespesa: extras.codigoDespesa || '',
     grupo: extras.grupo || GRUPO_PROCEDIMENTOS,
-    profissional,
+    profissionais,
   };
 }
 
@@ -1449,17 +1474,23 @@ function analisarGuiaTiss(guiaEl, tipo) {
   if (executanteConsulta) profissionais.push({ ...executanteConsulta, papel: 'Executante' });
 
   const itens = [];
-  const procedimentosExecutados = filhoTiss(guiaEl, 'procedimentosExecutados');
-  filhosTiss(procedimentosExecutados, 'procedimentoExecutado').forEach((pe) => {
+  const registrarItemProcedimento = (pe) => {
     const proc = filhoTiss(pe, 'procedimento');
-    if (proc) {
-      const item = analisarItemTiss(pe, proc, { grupo: GRUPO_PROCEDIMENTOS });
-      itens.push(item);
-      if (item.profissional && !profissionais.some((p) => p.numeroConselho === item.profissional.numeroConselho && p.grauPart === item.profissional.grauPart)) {
-        profissionais.push({ ...item.profissional, papel: 'Equipe' });
+    if (!proc) return;
+    const item = analisarItemTiss(pe, proc, { grupo: GRUPO_PROCEDIMENTOS });
+    itens.push(item);
+    item.profissionais.forEach((p) => {
+      if (!profissionais.some((existente) => existente.numeroConselho === p.numeroConselho && existente.grauPart === p.grauPart)) {
+        profissionais.push({ ...p, papel: 'Equipe' });
       }
-    }
-  });
+    });
+  };
+  // guiaSP-SADT / guiaResumoInternacao usam procedimentosExecutados/procedimentoExecutado;
+  // guiaHonorarios (honorário individual dos credenciados) usa
+  // procedimentosRealizados/procedimentoRealizado — nomes diferentes,
+  // mesma forma de item (confirmado no XSD oficial, tissGuiasV4_03_00.xsd).
+  filhosTiss(filhoTiss(guiaEl, 'procedimentosExecutados'), 'procedimentoExecutado').forEach(registrarItemProcedimento);
+  filhosTiss(filhoTiss(guiaEl, 'procedimentosRealizados'), 'procedimentoRealizado').forEach(registrarItemProcedimento);
   const outrasDespesas = filhoTiss(guiaEl, 'outrasDespesas');
   filhosTiss(outrasDespesas, 'despesa').forEach((d) => {
     const servico = filhoTiss(d, 'servicosExecutados');
@@ -1506,6 +1537,20 @@ function analisarGuiaTiss(guiaEl, tipo) {
       somaItens: Number(somaItens.toFixed(2)),
       okItens: itens.length > 0 && valorTotalGeral !== null ? Math.abs(somaItens - valorTotalGeral) <= 0.02 : null,
     };
+  } else {
+    // guiaHonorarios não tem o wrapper <valorTotal> — só um campo flat
+    // <valorTotalHonorarios> (confirmado no XSD oficial).
+    const valorTotalHonorarios = numDeTiss(textoDeTiss(guiaEl, 'valorTotalHonorarios'));
+    if (valorTotalHonorarios !== null) {
+      const somaItens = itens.reduce((s, it) => s + (it.valorTotal || 0), 0);
+      valorTotal = {
+        soma: null,
+        valorTotalGeral: valorTotalHonorarios,
+        okComponentes: null,
+        somaItens: Number(somaItens.toFixed(2)),
+        okItens: itens.length > 0 ? Math.abs(somaItens - valorTotalHonorarios) <= 0.02 : null,
+      };
+    }
   }
 
   return { tipo, registroANS, numeroGuiaPrestador, itens, consultaItem, valorTotal, profissionais };
@@ -1909,9 +1954,10 @@ function exportarGruposDespesaCsv(resultado) {
   baixarCsv(`validador-tiss-grupos-${resultado.nomeArquivo.replace(/\.xml$/i, '')}.csv`, linhas);
 }
 
-function renderizarValidadorTiss(resultado) {
+function renderizarValidadorTiss(resultado, containerEl) {
+  containerEl = containerEl || validadorResultadoEl;
   if (resultado.erroParse) {
-    validadorResultadoEl.innerHTML = `<div class="msg erro">Arquivo não é um XML válido: ${resultado.erroParse}</div>`;
+    containerEl.innerHTML = `<div class="msg erro">Arquivo não é um XML válido: ${resultado.erroParse}</div>`;
     return;
   }
 
@@ -1973,7 +2019,7 @@ function renderizarValidadorTiss(resultado) {
 
   const guiasHtml = resultado.guias.map((g, i) => renderizarGuiaTiss(g, i)).join('');
 
-  validadorResultadoEl.innerHTML = `
+  containerEl.innerHTML = `
     <div class="edicao-card">
       <div class="edicao-card-head">
         <span class="nome">${resultado.nomeArquivo}</span>
@@ -2002,7 +2048,7 @@ function renderizarValidadorTiss(resultado) {
     <div id="validador-guias-grid" class="cards-grid" style="margin-top:12px;">${guiasHtml}</div>
   `;
 
-  validadorResultadoEl.querySelectorAll('.edicao-card-head.clicavel').forEach((el) => {
+  containerEl.querySelectorAll('.edicao-card-head.clicavel').forEach((el) => {
     const abrir = () => abrirModalGuiaValidador(resultado.guias[Number(el.dataset.guiaIndice)]);
     el.addEventListener('click', abrir);
     el.addEventListener('keydown', (e) => {
@@ -2013,11 +2059,11 @@ function renderizarValidadorTiss(resultado) {
     });
   });
 
-  const buscaGuiaEl = document.getElementById('validador-busca-guia');
+  const buscaGuiaEl = containerEl.querySelector('#validador-busca-guia');
   if (buscaGuiaEl) {
     buscaGuiaEl.addEventListener('input', () => {
       const termo = buscaGuiaEl.value.trim().toLowerCase();
-      const cards = validadorResultadoEl.querySelectorAll('#validador-guias-grid > .edicao-card');
+      const cards = containerEl.querySelectorAll('#validador-guias-grid > .edicao-card');
       cards.forEach((card, i) => {
         const g = resultado.guias[i];
         const alvo = `${g.numeroGuiaPrestador || ''} ${g.tipo || ''}`.toLowerCase();
@@ -2026,10 +2072,10 @@ function renderizarValidadorTiss(resultado) {
     });
   }
 
-  const btnCnpj = document.getElementById('btn-buscar-cnpj');
+  const btnCnpj = containerEl.querySelector('#btn-buscar-cnpj');
   if (btnCnpj) {
     btnCnpj.addEventListener('click', async () => {
-      const alvo = document.getElementById('cnpj-resultado');
+      const alvo = containerEl.querySelector('#cnpj-resultado');
       alvo.textContent = 'Consultando BrasilAPI…';
       try {
         const dados = await buscarCnpjBrasilApi(resultado.prestadorOrigemCnpj);
@@ -2041,23 +2087,394 @@ function renderizarValidadorTiss(resultado) {
     });
   }
 
-  const btnExportarGrupos = document.getElementById('btn-exportar-grupos-csv');
+  const btnExportarGrupos = containerEl.querySelector('#btn-exportar-grupos-csv');
   if (btnExportarGrupos) {
     btnExportarGrupos.addEventListener('click', () => exportarGruposDespesaCsv(resultado));
   }
 }
 
+// Histórico local de validações — guarda só um resumo de cada arquivo já
+// validado (nunca o XML em si) para consulta rápida depois, tudo em
+// localStorage (nunca sai do navegador).
+const TISS_HISTORICO_KEY = 'cbhpmValidadorTissHistorico';
+const TISS_HISTORICO_MAX = 20;
+
+function carregarHistoricoTiss() {
+  try {
+    const bruto = localStorage.getItem(TISS_HISTORICO_KEY);
+    const lista = bruto ? JSON.parse(bruto) : [];
+    return Array.isArray(lista) ? lista : [];
+  } catch {
+    return [];
+  }
+}
+
+function statusGeralValidacaoTiss(resultado) {
+  const hashErro = resultado.hash.declarado && resultado.hash.ok === false;
+  const itemErro = resultado.guias.some(
+    (g) => g.itens.some((it) => it.ok === false) || (g.valorTotal && (g.valorTotal.okComponentes === false || g.valorTotal.okItens === false))
+  );
+  const unimedErro = resultado.unimed && resultado.unimed.bateComLote === false;
+  if (hashErro || itemErro || unimedErro) return 'erro';
+  const versaoAviso = resultado.versao && (!TISS_VERSOES_CONHECIDAS.includes(resultado.versao) || resultado.versao !== TISS_VERSAO_VIGENTE);
+  if (versaoAviso) return 'aviso';
+  return 'ok';
+}
+
+function registrarHistoricoTiss(resultado) {
+  const valorTotal = valorTotalArquivo(resultado);
+  const entrada = {
+    data: new Date().toISOString(),
+    nomeArquivo: resultado.nomeArquivo,
+    tamanhoBytes: resultado.tamanhoBytes,
+    versao: resultado.versao || '',
+    operadora: resultado.operadoraDestino.nome || resultado.operadoraDestino.registro || '',
+    numeroLote: resultado.numeroLote || '',
+    qtdGuias: resultado.guias.length,
+    valorTotal,
+    status: statusGeralValidacaoTiss(resultado),
+  };
+  const lista = [entrada, ...carregarHistoricoTiss()].slice(0, TISS_HISTORICO_MAX);
+  try {
+    localStorage.setItem(TISS_HISTORICO_KEY, JSON.stringify(lista));
+  } catch {
+    /* localStorage indisponível ou cheio — histórico é conveniência, não crítico */
+  }
+  renderizarHistoricoTiss();
+}
+
+function renderizarHistoricoTiss() {
+  const alvo = document.getElementById('validador-historico-lista');
+  if (!alvo) return;
+  const lista = carregarHistoricoTiss();
+  if (lista.length === 0) {
+    alvo.innerHTML = '<p class="ajustes-nota" style="margin:0 16px;">Nenhuma validação registrada ainda.</p>';
+    return;
+  }
+  const iconeStatus = { ok: '✔', aviso: '⚠', erro: '✘' };
+  const classeStatus = { ok: 'ok', aviso: 'aviso', erro: 'erro' };
+  alvo.innerHTML = lista
+    .map((e) => {
+      const dataFmt = new Date(e.data).toLocaleString('pt-BR');
+      return `
+        <div class="validador-linha ${classeStatus[e.status] || ''}">
+          ${iconeStatus[e.status] || '—'} <strong>${e.nomeArquivo}</strong> — ${dataFmt}
+          <span class="detail" style="display:block; font-family: var(--mono); font-size:0.75rem;">
+            ${e.operadora || 'operadora não identificada'} · lote ${e.numeroLote || '—'} · ${e.qtdGuias} guia(s) · ${fmtMoeda(e.valorTotal)}
+            ${e.versao ? `· versão ${e.versao}` : ''}
+          </span>
+        </div>`;
+    })
+    .join('');
+}
+
+const btnLimparHistoricoTiss = document.getElementById('btn-limpar-historico-tiss');
+if (btnLimparHistoricoTiss) {
+  btnLimparHistoricoTiss.addEventListener('click', () => {
+    localStorage.removeItem(TISS_HISTORICO_KEY);
+    renderizarHistoricoTiss();
+  });
+}
+
+renderizarHistoricoTiss();
+
+// Total de uma guia, cobrindo tanto guiaConsulta (sem <ans:valorTotal>, só
+// consultaItem.valorTotal) quanto as demais (com <ans:valorTotal>).
+function valorTotalGuia(guia) {
+  if (guia.valorTotal && guia.valorTotal.valorTotalGeral !== null) return guia.valorTotal.valorTotalGeral || 0;
+  return itensDaGuia(guia).reduce((s, it) => s + (it.valorTotal || 0), 0);
+}
+
+function valorTotalArquivo(resultado) {
+  return resultado.guias.reduce((s, g) => s + valorTotalGuia(g), 0);
+}
+
+// Conferência entre múltiplos arquivos carregados juntos — pensada para o
+// caso da Unimed que divide o mesmo lote em 3 arquivos (0/2/5, ver
+// UNIMED_ROTULOS_ARQUIVO): confere se todos são da mesma operadora e se o
+// "final" do número do lote (tudo menos o primeiro dígito) bate entre eles.
+function analisarCrossCheckUnimed(resultados) {
+  const comDigito = resultados
+    .map((r, indice) => ({ indice, resultado: r, unimed: r.unimed }))
+    .filter((x) => x.unimed && x.unimed.digitoArquivo);
+  if (comDigito.length < 2) return null;
+
+  const registros = new Set(comDigito.map((x) => x.resultado.operadoraDestino.registro || ''));
+  const mesmaOperadora = registros.size === 1;
+
+  const restos = comDigito.map((x) => (x.resultado.numeroLote || '').slice(1));
+  const mesmoLoteBase = restos.every((r) => r === restos[0]) && restos[0] !== '';
+
+  const digitos = comDigito.map((x) => x.unimed.digitoArquivo);
+  const digitosRepetidos = digitos.length !== new Set(digitos).size;
+
+  return { comDigito, mesmaOperadora, mesmoLoteBase, digitosRepetidos, restoLote: restos[0] || null };
+}
+
+function renderizarCrossCheckArquivos(resultados) {
+  const valorPorArquivo = resultados.map((r) => ({ nome: r.nomeArquivo, total: valorTotalArquivo(r) }));
+  const totalGeral = valorPorArquivo.reduce((s, x) => s + x.total, 0);
+
+  const linhasArquivos = valorPorArquivo
+    .map((x) => `<div class="breakdown-row"><span class="label">${x.nome}</span><span class="value">${fmtMoeda(x.total)}</span></div>`)
+    .join('');
+
+  const cc = analisarCrossCheckUnimed(resultados);
+  let ccHtml = '';
+  if (cc) {
+    const badgesDigitos = cc.comDigito
+      .map((x) => `<span class="pct-badge pct-badge-neutro">${x.unimed.digitoArquivo} — ${x.unimed.rotuloArquivo || '?'} (${x.resultado.nomeArquivo})</span>`)
+      .join(' ');
+    ccHtml = `
+      <div class="breakdown" style="margin-top:4px;">
+        <div class="validador-linha ${cc.mesmaOperadora ? 'ok' : 'erro'}">
+          ${cc.mesmaOperadora ? '✔ Todos os arquivos com a convenção Unimed 0/2/5 são para a mesma operadora' : '✘ Os arquivos com a convenção Unimed 0/2/5 apontam para operadoras diferentes — confira se pertencem ao mesmo envio'}
+        </div>
+        <div class="validador-linha ${cc.mesmoLoteBase ? 'ok' : 'erro'}">
+          ${cc.mesmoLoteBase ? `✔ Mesmo lote-base entre os arquivos (final "${cc.restoLote}")` : '✘ Os números de lote não têm o mesmo final — pode não ser o mesmo envio dividido em 0/2/5'}
+        </div>
+        ${cc.digitosRepetidos ? `<div class="validador-linha aviso">⚠ Mais de um arquivo com o mesmo dígito inicial — confira se não carregou o mesmo tipo duas vezes</div>` : ''}
+      </div>
+      <div class="referencia-tabela">Tipos identificados (convenção Unimed): ${badgesDigitos}</div>`;
+  }
+
+  return `
+    <div class="edicao-card" style="margin-bottom:20px;">
+      <div class="edicao-card-head">
+        <span class="nome">Conferência entre os ${resultados.length} arquivos carregados</span>
+        <span class="ano">${fmtMoeda(totalGeral)}</span>
+      </div>
+      <div class="breakdown">${linhasArquivos}</div>
+      ${ccHtml}
+    </div>`;
+}
+
+function renderizarResultadosValidador(resultados) {
+  validadorResultadoEl.innerHTML = '';
+  if (resultados.length > 1) {
+    const crossCheckEl = document.createElement('div');
+    crossCheckEl.innerHTML = renderizarCrossCheckArquivos(resultados);
+    validadorResultadoEl.appendChild(crossCheckEl);
+  }
+  resultados.forEach((resultado, i) => {
+    const wrapperEl = document.createElement('div');
+    if (i > 0) wrapperEl.style.marginTop = '28px';
+    validadorResultadoEl.appendChild(wrapperEl);
+    renderizarValidadorTiss(resultado, wrapperEl);
+  });
+}
+
 if (validadorArquivoEl) {
   validadorArquivoEl.addEventListener('change', async () => {
-    const file = validadorArquivoEl.files[0];
-    if (!file) return;
+    const files = Array.from(validadorArquivoEl.files);
+    if (files.length === 0) return;
     validadorResultadoEl.innerHTML = '<div class="msg vazio">Analisando…</div>';
     try {
-      const resultado = await validarArquivoTiss(file);
-      renderizarValidadorTiss(resultado);
+      const resultados = [];
+      for (const file of files) {
+        const resultado = await validarArquivoTiss(file);
+        resultados.push(resultado);
+        registrarHistoricoTiss(resultado);
+      }
+      renderizarResultadosValidador(resultados);
     } catch (err) {
       console.error(err);
-      validadorResultadoEl.innerHTML = `<div class="msg erro">Erro ao analisar o arquivo: ${err.message}</div>`;
+      validadorResultadoEl.innerHTML = `<div class="msg erro">Erro ao analisar o(s) arquivo(s): ${err.message}</div>`;
+    }
+  });
+}
+
+// Comparação entre dois arquivos TISS (ex: original × reenviado após
+// glosa) — casa as guias pelo número da guia (prestador) e, dentro de cada
+// guia presente nos dois, agrupa os itens por código para comparar
+// quantidade e valor.
+function agruparItensPorCodigo(itens) {
+  const mapa = new Map();
+  itens.forEach((it) => {
+    const chave = `${it.codigoTabela || ''}|${it.codigoProcedimento || ''}`;
+    if (!mapa.has(chave)) {
+      mapa.set(chave, {
+        codigoTabela: it.codigoTabela,
+        codigoProcedimento: it.codigoProcedimento,
+        descricaoProcedimento: it.descricaoProcedimento,
+        quantidade: 0,
+        valorTotal: 0,
+      });
+    }
+    const acc = mapa.get(chave);
+    acc.quantidade += it.quantidade || 0;
+    acc.valorTotal += it.valorTotal || 0;
+  });
+  return mapa;
+}
+
+function compararItensGuia(guiaA, guiaB) {
+  const mapaA = agruparItensPorCodigo(itensDaGuia(guiaA));
+  const mapaB = agruparItensPorCodigo(itensDaGuia(guiaB));
+  const chaves = new Set([...mapaA.keys(), ...mapaB.keys()]);
+  return Array.from(chaves)
+    .map((chave) => {
+      const a = mapaA.get(chave);
+      const b = mapaB.get(chave);
+      const base = a || b;
+      const qtdA = a ? a.quantidade : 0;
+      const qtdB = b ? b.quantidade : 0;
+      const valorA = a ? a.valorTotal : 0;
+      const valorB = b ? b.valorTotal : 0;
+      let status = 'igual';
+      if (!a) status = 'novo';
+      else if (!b) status = 'removido';
+      else if (Math.abs(valorA - valorB) > 0.02 || qtdA !== qtdB) status = 'mudou';
+      return {
+        codigoTabela: base.codigoTabela,
+        codigoProcedimento: base.codigoProcedimento,
+        descricaoProcedimento: base.descricaoProcedimento,
+        qtdA,
+        qtdB,
+        valorA,
+        valorB,
+        status,
+      };
+    })
+    .sort((x, y) => (x.status === 'igual' ? 1 : 0) - (y.status === 'igual' ? 1 : 0));
+}
+
+function compararGuiasTiss(resultadoA, resultadoB) {
+  const chaveGuia = (g, i) => g.numeroGuiaPrestador || `${g.tipo} #${i + 1}`;
+  const porGuiaA = new Map(resultadoA.guias.map((g, i) => [chaveGuia(g, i), g]));
+  const porGuiaB = new Map(resultadoB.guias.map((g, i) => [chaveGuia(g, i), g]));
+  const chaves = new Set([...porGuiaA.keys(), ...porGuiaB.keys()]);
+
+  const linhas = Array.from(chaves).map((chave) => {
+    const a = porGuiaA.get(chave) || null;
+    const b = porGuiaB.get(chave) || null;
+    if (a && !b) return { chave, status: 'removida', totalA: valorTotalGuia(a), totalB: 0, itens: [] };
+    if (!a && b) return { chave, status: 'nova', totalA: 0, totalB: valorTotalGuia(b), itens: [] };
+    const totalA = valorTotalGuia(a);
+    const totalB = valorTotalGuia(b);
+    const itens = compararItensGuia(a, b);
+    const mudou = Math.abs(totalA - totalB) > 0.02 || itens.some((it) => it.status !== 'igual');
+    return { chave, status: mudou ? 'mudou' : 'igual', totalA, totalB, itens };
+  });
+
+  const ordem = { mudou: 0, nova: 1, removida: 2, igual: 3 };
+  linhas.sort((x, y) => ordem[x.status] - ordem[y.status]);
+  return linhas;
+}
+
+function renderizarComparacaoTiss(resultadoA, resultadoB) {
+  const totalA = valorTotalArquivo(resultadoA);
+  const totalB = valorTotalArquivo(resultadoB);
+  const diferenca = totalB - totalA;
+  const linhasGuias = compararGuiasTiss(resultadoA, resultadoB);
+  const linhasComDiferenca = linhasGuias.filter((l) => l.status !== 'igual');
+  const linhasIguais = linhasGuias.filter((l) => l.status === 'igual');
+
+  const rotuloStatus = { mudou: '⚠ Mudou', nova: '＋ Nova em B', removida: '－ Só em A' };
+
+  const renderizarLinhaGuia = (l) => {
+    const itensComDiferenca = (l.itens || []).filter((it) => it.status !== 'igual');
+    const itensHtml = itensComDiferenca
+      .map(
+        (it) => `
+        <tr>
+          <td>${it.codigoProcedimento || '—'}</td>
+          <td>${it.descricaoProcedimento || '—'}</td>
+          <td style="text-align:right">${it.qtdA} → ${it.qtdB}</td>
+          <td style="text-align:right">${fmtMoeda(it.valorA)} → ${fmtMoeda(it.valorB)}</td>
+          <td style="text-align:right; font-weight:600;">${it.valorB - it.valorA >= 0 ? '+' : ''}${fmtMoeda(it.valorB - it.valorA)}</td>
+        </tr>`
+      )
+      .join('');
+
+    return `
+      <div class="edicao-card" style="margin-bottom:12px;">
+        <div class="edicao-card-head">
+          <span class="nome">${l.chave}</span>
+          <span class="ano">${rotuloStatus[l.status] || ''}</span>
+        </div>
+        <div class="breakdown">
+          <div class="breakdown-row">
+            <span class="label">Total</span>
+            <span class="value">${fmtMoeda(l.totalA)} → ${fmtMoeda(l.totalB)}
+              <span class="detail" style="display:inline; font-family: var(--mono);">(${l.totalB - l.totalA >= 0 ? '+' : ''}${fmtMoeda(l.totalB - l.totalA)})</span>
+            </span>
+          </div>
+        </div>
+        ${
+          itensHtml
+            ? `<div style="overflow-x:auto;">
+                <table class="guia-doc-tabela">
+                  <thead><tr><th>Código</th><th>Descrição</th><th style="text-align:right">Qtd (A→B)</th><th style="text-align:right">Valor (A→B)</th><th style="text-align:right">Diferença</th></tr></thead>
+                  <tbody>${itensHtml}</tbody>
+                </table>
+              </div>`
+            : ''
+        }
+      </div>`;
+  };
+
+  const linhaDiferenca =
+    Math.abs(diferenca) <= 0.02
+      ? `<div class="validador-linha ok">✔ Nenhuma diferença de valor total entre os dois arquivos</div>`
+      : diferenca < 0
+      ? `<div class="validador-linha erro">✘ Total reduziu ${fmtMoeda(Math.abs(diferenca))} de A para B (possível glosa)</div>`
+      : `<div class="validador-linha aviso">⚠ Total aumentou ${fmtMoeda(diferenca)} de A para B</div>`;
+
+  compararResultadoEl.innerHTML = `
+    <div class="edicao-card" style="margin-bottom:16px;">
+      <div class="edicao-card-head">
+        <span class="nome">${resultadoA.nomeArquivo} → ${resultadoB.nomeArquivo}</span>
+        <span class="ano">${diferenca >= 0 ? '+' : ''}${fmtMoeda(diferenca)}</span>
+      </div>
+      <div class="breakdown">
+        <div class="breakdown-row"><span class="label">Total A (${resultadoA.nomeArquivo})</span><span class="value">${fmtMoeda(totalA)}</span></div>
+        <div class="breakdown-row"><span class="label">Total B (${resultadoB.nomeArquivo})</span><span class="value">${fmtMoeda(totalB)}</span></div>
+        ${linhaDiferenca}
+      </div>
+    </div>
+    ${
+      linhasComDiferenca.length > 0
+        ? linhasComDiferenca.map(renderizarLinhaGuia).join('')
+        : '<p class="ajustes-nota">Nenhuma diferença encontrada entre as guias com o mesmo número em A e B.</p>'
+    }
+    ${
+      linhasIguais.length > 0
+        ? `<details class="grupo grupo-secundario">
+            <summary class="grupo-summary"><span class="grupo-nome">Guias iguais nos dois arquivos (${linhasIguais.length})</span></summary>
+            <div class="grupo-corpo"><div class="breakdown">
+              ${linhasIguais.map((l) => `<div class="breakdown-row"><span class="label">${l.chave}</span><span class="value zero">${fmtMoeda(l.totalA)}</span></div>`).join('')}
+            </div></div>
+          </details>`
+        : ''
+    }
+  `;
+}
+
+const compararArquivoAEl = document.getElementById('comparar-arquivo-a');
+const compararArquivoBEl = document.getElementById('comparar-arquivo-b');
+const btnCompararArquivos = document.getElementById('btn-comparar-arquivos');
+const compararResultadoEl = document.getElementById('comparar-resultado');
+
+if (btnCompararArquivos) {
+  btnCompararArquivos.addEventListener('click', async () => {
+    const fileA = compararArquivoAEl.files[0];
+    const fileB = compararArquivoBEl.files[0];
+    if (!fileA || !fileB) {
+      compararResultadoEl.innerHTML = '<div class="msg erro">Selecione os dois arquivos (A e B) para comparar.</div>';
+      return;
+    }
+    compararResultadoEl.innerHTML = '<div class="msg vazio">Comparando…</div>';
+    try {
+      const [resultadoA, resultadoB] = await Promise.all([validarArquivoTiss(fileA), validarArquivoTiss(fileB)]);
+      if (resultadoA.erroParse || resultadoB.erroParse) {
+        compararResultadoEl.innerHTML = `<div class="msg erro">Arquivo inválido: ${resultadoA.erroParse || resultadoB.erroParse}</div>`;
+        return;
+      }
+      renderizarComparacaoTiss(resultadoA, resultadoB);
+    } catch (err) {
+      console.error(err);
+      compararResultadoEl.innerHTML = `<div class="msg erro">Erro ao comparar: ${err.message}</div>`;
     }
   });
 }

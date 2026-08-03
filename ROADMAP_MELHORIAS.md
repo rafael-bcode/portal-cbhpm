@@ -212,6 +212,34 @@ arquivo numa lista só. Agora:
 - Campo de busca por número da guia (`numeroGuiaPrestador`) filtra a lista
   de cards em tempo real.
 
+## Fase 6a/6b — Histórico local, múltiplos arquivos e comparação ✅ Implementado
+
+Retomada do roadmap de fases futuras (ago/2026), em ordem de esforço crescente,
+excluindo a consulta por CRM via CFM (pendente de credenciamento pago):
+
+- **Histórico local de validações** (localStorage): guarda um resumo de cada
+  arquivo já validado (nome, data, operadora, lote, total, status) — nunca o
+  XML em si — para consulta rápida depois, sem sair do navegador.
+- **Múltiplos arquivos + cross-check Unimed 0/2/5**: o campo de arquivo aceita
+  vários XMLs de uma vez; quando detecta a convenção Unimed (arquivos do
+  mesmo lote divididos por tipo 0/2/5), confere se todos são da mesma
+  operadora e se o "lote-base" (número do lote sem o primeiro dígito) bate
+  entre eles, além de somar o total de todos os arquivos carregados.
+- **Comparação entre dois arquivos**: casa as guias de dois arquivos pelo
+  número da guia (prestador) e mostra, por guia, o que mudou item a item
+  (código, quantidade, valor) e a diferença de total — pensado para conferir
+  um arquivo reenviado após glosa contra o original.
+- **Correção de bug (profissionais da equipe)**: `extrairProfissionaisItemTiss`
+  agora cobre as três formas usadas pelo XSD oficial para o profissional de
+  um procedimento — `equipeSadt` (SP-SADT), `identEquipe > identificacaoEquipe`
+  (Resumo de Internação) e `profissionais` (Honorário Individual) — e
+  `analisarGuiaTiss` passou a ler também `procedimentosRealizados/
+  procedimentoRealizado` e o campo flat `valorTotalHonorarios`, usados pelas
+  guias `guiaHonorarios` (Honorário Individual dos credenciados — o arquivo
+  "5" da convenção Unimed), que antes apareciam com itens e profissionais
+  zerados mesmo tendo dados no XML. Confirmado diretamente no XSD oficial
+  (`tissComplexTypesV4_03_00.xsd`, `tissGuiasV4_03_00.xsd`), não em suposição.
+
 ## Resumo executivo
 
 | Fase | Status | Esforço | Valor | Depende de dado pago? |
@@ -224,3 +252,4 @@ arquivo numa lista só. Agora:
 | 5b. Validador de XML TISS | ✅ Feito | Alto | Alto | Não |
 | 5c. Grupos de despesa, profissionais e CNPJ | ✅ Feito | Médio | Alto | Não |
 | 5d. Detalhe por guia (abas) e busca por número | ✅ Feito | Baixo–médio | Alto | Não |
+| 6a. Histórico local, múltiplos arquivos (Unimed 0/2/5) e comparação | ✅ Feito | Médio | Alto | Não |
