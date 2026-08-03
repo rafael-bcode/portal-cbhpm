@@ -81,10 +81,16 @@ ponderados pela via.
 
 Fonte: [Cálculo Básico de Procedimentos Médicos — Oazez/CBHPM](https://www.cbhpm.com.br/wiki/index.php?title=C%C3%A1lculo_B%C3%A1sico_de_Procedimentos_M%C3%A9dicos)
 
-## Fase 3 — Tabelas por convênio (deflator) — fora de escopo
+## Fase 3 — Presets de convênio ✅ Implementado (escopo reduzido)
 
-**Decisão do usuário:** o portal não será usado para gestão por convênio —
-é uma consulta geral, independente da operadora de saúde. Fase descartada.
+**Decisão do usuário (ago/2026):** não um cadastro persistido de contratos
+por procedimento/operadora — apenas um atalho de UI. O usuário salva os
+percentuais de ajuste (Porte, UCO, Porte Anestésico, Filme, equipe) com um
+nome de convênio no `localStorage` do navegador e reaplica com um clique,
+tanto na consulta única quanto em múltiplos procedimentos. Sem cadastro
+persistido no banco, sem login, sem variação por procedimento — se essa
+granularidade for necessária no futuro, é um novo escopo (tabela
+`convenios`/`contratos_convenio`, versionada no tempo).
 
 ## Fase 4 — Exportar / persistir simulações ✅ Implementado
 
@@ -97,21 +103,27 @@ Fonte: [Cálculo Básico de Procedimentos Médicos — Oazez/CBHPM](https://www.
 - **Exportar Excel/CSV**: baixa os valores em `.csv` (separador `;`, decimal
   `,`, compatível com Excel pt-BR).
 
-## Fase 5 — TISS / faturamento (escopo grande, avaliar se é objetivo do projeto)
+## Fase 5 — TISS / faturamento — ✅ Implementado (guia simulada, não oficial)
 
-Se a intenção for este portal virar uma ferramenta de faturamento de verdade
-(não só consulta/simulação), os sistemas do mercado convergem em:
+**Decisão do usuário (ago/2026):** não a geração de XML compatível com o
+schema oficial da ANS (exigiria dados de credenciamento — CNES, registro
+ANS do prestador/operadora — que o portal não coleta, e normalmente login
+multiusuário). Em vez disso, um botão "🧾 Guia/Fatura" na consulta única e
+em múltiplos procedimentos que reaproveita o cálculo já feito e monta um
+documento de impressão (paciente, convênio, data, prestador + itens
+cirurgião/anestesista/equipe + total), com aviso explícito de que **não é**
+um XML TISS oficial nem é enviado a nenhuma operadora.
 
-- Mapeamento CBHPM ↔ TUSS (código de procedimento/serviço padronizado ANS)
-- Geração de guias TISS (com participantes por grau de participação:
-  cirurgião, auxiliares, anestesista) e exportação em XML
-- Painel de **glosas** (contestação/correção de valores recusados pela
-  operadora) e conferência de prazos contratuais
-- Múltiplos usuários/clínicas (autenticação, hoje o portal não tem login)
+Mapeamento CBHPM ↔ TUSS já existe (tabela `mapeamento_amb_tuss`). Painel de
+glosas e geração de XML real seguem fora de escopo — exigiriam dados de
+credenciamento reais e provavelmente autenticação multiusuário, que não
+foram pedidos.
 
-Isso é um salto de escopo grande — de "calculadora/comparador de tabela"
-para "sistema de faturamento". Vale confirmar se é essa a ambição antes de
-entrar aqui.
+Atualização (ago/2026): a ANS publicou o Ofício-Circular nº 1/2026 com a
+versão do Padrão TISS de janeiro/2026, obrigatória a partir de 01/07/2026
+(mudanças principalmente em terminologia de Materiais/OPME, medicamentos e
+mensagens de glosa) — é a versão de referência caso a geração de XML
+oficial seja implementada no futuro.
 
 Fontes: [TISS — ANS](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss), [Faturamento médico — ProDoctor](https://prodoctor.net/blog/faturamento-medico/), [Controle de glosas — Medicalsys](https://www.medicalsys.com.br/blog/controle-de-glosas-como-evitar-perdas-financeiras-e-aumentar-a-rentabilidade-da-sua-cl%C3%ADnica)
 
@@ -119,8 +131,8 @@ Fontes: [TISS — ANS](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-
 
 | Fase | Status | Esforço | Valor | Depende de dado pago? |
 |---|---|---|---|---|
-| 1. Correções de auxiliar + dados 2022/2025 | Parcial (auxiliar ✅, dados 2022/2025 pendente) | Baixo–médio | Alto | Sim (CBHPM 2022 é paga) |
+| 1. Correções de auxiliar + dados 2018/2022/2025 | ✅ Feito | Baixo–médio | Alto | Sim (CBHPM 2022 é paga — já adquirida) |
 | 2. Vias de acesso | ✅ Feito | Médio | Alto | Não |
-| 3. Convênios/deflator | ❌ Fora de escopo | — | — | — |
+| 3. Presets de convênio (escopo reduzido) | ✅ Feito | Baixo | Médio | Não |
 | 4. Exportar/persistir | ✅ Feito | Baixo | Médio | Não |
-| 5. TISS/faturamento | Não iniciado | Alto | Alto, mas é outro produto | Não, mas exige TUSS |
+| 5. Guia/fatura simulada (escopo reduzido) | ✅ Feito | Médio | Alto (dentro do escopo reduzido) | Não |

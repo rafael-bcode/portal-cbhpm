@@ -8,6 +8,11 @@ const app = express();
 app.use(express.json());
 app.use(express.static('public')); // serve os arquivos da tela (HTML/CSS/JS)
 
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
+
 // Versão atual do portal e histórico de mudanças (exibidos no rodapé da tela)
 app.get('/api/versao', (req, res) => {
   res.json({ versaoAtual: packageJson.version, changelog });
@@ -45,11 +50,6 @@ app.get('/api/buscar-procedimentos', async (req, res) => {
     console.error('Erro na busca de procedimentos:', err);
     res.status(500).json({ erro: 'Erro ao buscar procedimentos.' });
   }
-});
-
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
 });
 
 /**

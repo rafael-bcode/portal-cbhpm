@@ -11,9 +11,27 @@
   --teal-tint: #E4F1EE;
   --amber: #C97A2B;
   --amber-tint: #FBEEE0;
+  /* Superfície sempre escura (topbar, cabeçalho do card, tooltip) — não
+     inverte no modo escuro, ao contrário de --ink (que é texto). */
+  --navy: #16232B;
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
   --sans: 'IBM Plex Sans', system-ui, sans-serif;
   --radius: 10px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #E4E9EA;
+    --ink-soft: #93A3A8;
+    --paper: #10161A;
+    --panel: #1A2328;
+    --border: #2E3A3F;
+    --teal: #2FB39A;
+    --teal-dark: #7FD9C4;
+    --teal-tint: #17302C;
+    --amber: #E3A85E;
+    --amber-tint: #33291B;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -28,7 +46,7 @@ body {
 
 /* ---------- Topbar ---------- */
 .topbar {
-  background: var(--ink);
+  background: var(--navy);
   color: #fff;
   border-bottom: 3px solid var(--teal);
 }
@@ -295,6 +313,19 @@ body {
 }
 .chip-btn:hover { border-color: var(--teal); color: var(--teal); }
 
+.field-convenio { margin-bottom: 18px; }
+.convenio-toolbar { display: flex; gap: 8px; align-items: center; }
+.convenio-toolbar select {
+  flex: 1;
+  font-family: var(--sans);
+  font-size: 0.9rem;
+  padding: 9px 10px;
+  border: 1.5px solid var(--border);
+  border-radius: 6px;
+  background: var(--panel);
+  color: var(--ink);
+}
+
 .edicoes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -445,7 +476,7 @@ body {
   overflow: hidden;
 }
 .edicao-card-head {
-  background: var(--ink);
+  background: var(--navy);
   color: #fff;
   padding: 12px 16px;
   display: flex;
@@ -637,7 +668,7 @@ body {
   position: fixed;
   z-index: 200;
   pointer-events: none;
-  background: var(--ink);
+  background: var(--navy);
   color: #fff;
   padding: 8px 12px;
   border-radius: 6px;
@@ -782,4 +813,40 @@ body {
   .container { padding: 0; max-width: 100%; }
   .cards-grid, .dashboard-grid { grid-template-columns: 1fr 1fr; }
   .edicao-card, .grafico-card, .mp-card { break-inside: avoid; }
+}
+
+/* ---------- Guia/fatura simulada (Fase 5) ---------- */
+.guia-print-area { display: none; }
+.guia-doc-head { margin-bottom: 20px; }
+.guia-doc-aviso {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  font-style: italic;
+  margin: 2px 0 14px;
+}
+.guia-doc-meta {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px 24px;
+  font-size: 0.9rem;
+}
+.guia-doc-tabela { width: 100%; border-collapse: collapse; margin-top: 20px; }
+.guia-doc-tabela th, .guia-doc-tabela td {
+  text-align: left;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+.guia-doc-tabela th:last-child, .guia-doc-tabela td:last-child { text-align: right; font-family: var(--mono); }
+.guia-doc-tabela tfoot td { font-weight: 700; border-top: 2px solid var(--ink); border-bottom: none; }
+
+@media print {
+  body.modo-guia .topbar,
+  body.modo-guia .tabs,
+  body.modo-guia .version-badge,
+  body.modo-guia .modal-overlay,
+  body.modo-guia .container {
+    display: none !important;
+  }
+  body.modo-guia .guia-print-area { display: block !important; }
 }

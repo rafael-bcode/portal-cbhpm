@@ -81,6 +81,92 @@ listaFavoritosEl.addEventListener('click', (e) => {
 
 renderizarFavoritos();
 
+// ---------- Convênios (presets de % de simulação, localStorage, sem login) ----------
+// Fase 3 do roadmap: não é um cadastro de contratos por procedimento — é um
+// atalho para não redigitar os mesmos percentuais de ajuste toda vez que se
+// consulta pelo mesmo convênio.
+const CONVENIOS_KEY = 'cbhpm_convenios';
+const CAMPOS_CONVENIO = [
+  'pctPorte', 'pctUco', 'pctPorteAnestesico', 'valorFilme', 'pctFilme',
+  'pct1Auxiliar', 'pct2Auxiliar', 'pct3Auxiliar', 'pct4Auxiliar',
+  'pctInstrumentador', 'pctAuxAnestesista',
+];
+
+function carregarConvenios() {
+  try {
+    return JSON.parse(localStorage.getItem(CONVENIOS_KEY)) || [];
+  } catch {
+    return [];
+  }
+}
+
+function salvarConvenios(lista) {
+  localStorage.setItem(CONVENIOS_KEY, JSON.stringify(lista));
+}
+
+function renderizarSelectsConvenio() {
+  const convenios = carregarConvenios();
+  document.querySelectorAll('.convenio-select').forEach((select) => {
+    const atual = select.value;
+    select.innerHTML =
+      '<option value="">— Manual —</option>' +
+      convenios
+        .map((c) => `<option value="${c.nome.replace(/"/g, '&quot;')}">${c.nome}</option>`)
+        .join('');
+    if (convenios.some((c) => c.nome === atual)) select.value = atual;
+  });
+}
+
+function configurarConvenioUI(prefixo) {
+  const idCampo = (campo) => (prefixo ? `${prefixo}-${campo}` : campo);
+  const selectEl = document.getElementById(idCampo('convenio-select'));
+  const btnSalvarEl = document.getElementById(idCampo('btn-salvar-convenio'));
+  const btnExcluirEl = document.getElementById(idCampo('btn-excluir-convenio'));
+  if (!selectEl || !btnSalvarEl || !btnExcluirEl) return;
+
+  selectEl.addEventListener('change', () => {
+    const convenio = carregarConvenios().find((c) => c.nome === selectEl.value);
+    if (!convenio) return;
+    CAMPOS_CONVENIO.forEach((campo) => {
+      const input = document.getElementById(idCampo(campo));
+      if (input && convenio.ajustes[campo] !== undefined) input.value = convenio.ajustes[campo];
+    });
+  });
+
+  btnSalvarEl.addEventListener('click', () => {
+    const nome = window.prompt('Nome do convênio para salvar os percentuais atuais:', selectEl.value || '');
+    if (!nome || !nome.trim()) return;
+
+    const ajustes = {};
+    CAMPOS_CONVENIO.forEach((campo) => {
+      const input = document.getElementById(idCampo(campo));
+      if (input) ajustes[campo] = Number(input.value) || 0;
+    });
+
+    const convenios = carregarConvenios();
+    const nomeLimpo = nome.trim();
+    const idx = convenios.findIndex((c) => c.nome === nomeLimpo);
+    const registro = { nome: nomeLimpo, ajustes };
+    if (idx >= 0) convenios[idx] = registro;
+    else convenios.push(registro);
+
+    salvarConvenios(convenios);
+    renderizarSelectsConvenio();
+    selectEl.value = nomeLimpo;
+  });
+
+  btnExcluirEl.addEventListener('click', () => {
+    if (!selectEl.value) return;
+    if (!window.confirm(`Excluir o convênio "${selectEl.value}"?`)) return;
+    salvarConvenios(carregarConvenios().filter((c) => c.nome !== selectEl.value));
+    renderizarSelectsConvenio();
+  });
+}
+
+renderizarSelectsConvenio();
+configurarConvenioUI('');
+configurarConvenioUI('mp');
+
 // ---------- Autocomplete de busca por descrição ----------
 function esconderResultadosBusca() {
   buscaResultadosEl.classList.add('hidden');
@@ -464,6 +550,7 @@ function renderizarResultadoMultiplos(data) {
       <div class="resultado-acoes">
         <button type="button" id="btn-mp-exportar-pdf" class="acao-btn">⬇ PDF</button>
         <button type="button" id="btn-mp-exportar-csv" class="acao-btn">⬇ Excel</button>
+        <button type="button" id="btn-mp-guia" class="acao-btn">🧾 Guia/Fatura</button>
       </div>
     </div>
     <div class="edicao-card mp-card">
@@ -516,7 +603,132 @@ mpResultadoAreaEl.addEventListener('click', (e) => {
     window.print();
   } else if (e.target.closest('#btn-mp-exportar-csv')) {
     if (ultimaConsultaMultiplos) exportarMultiplosCsv(ultimaConsultaMultiplos);
+  } else if (e.target.closest('#btn-mp-guia')) {
+    abrirModalGuia('multiplos');
   }
+});
+
+// ---------- Guia/fatura simulada (Fase 5 do roadmap) ----------
+// Reaproveita o cálculo já feito (consulta única ou múltiplos procedimentos)
+// para montar um documento de impressão no formato de guia/fatura. NÃO é um
+// XML do Padrão TISS da ANS — guias reais exigem schema oficial e dados de
+// credenciamento (CNES, registro ANS) que este portal não coleta.
+const modalGuiaEl = document.getElementById('modal-guia');
+const campoGuiaEdicaoEl = document.getElementById('campo-guia-edicao');
+const guiaEdicaoSelectEl = document.getElementById('guia-edicao');
+let fonteGuiaAtual = 'consulta';
+
+function fecharModalGuia() {
+  modalGuiaEl.classList.add('hidden');
+}
+
+function abrirModalGuia(fonte) {
+  fonteGuiaAtual = fonte;
+
+  if (fonte === 'consulta') {
+    if (!ultimaConsulta) return;
+    campoGuiaEdicaoEl.classList.remove('hidden');
+    guiaEdicaoSelectEl.innerHTML = ultimaConsulta.resultados
+      .map((r, i) => `<option value="${i}">${r.edicao} (${r.ano})</option>`)
+      .join('');
+    guiaEdicaoSelectEl.value = String(ultimaConsulta.resultados.length - 1);
+  } else {
+    if (!ultimaConsultaMultiplos) return;
+    campoGuiaEdicaoEl.classList.add('hidden');
+  }
+
+  modalGuiaEl.classList.remove('hidden');
+}
+
+document.getElementById('btn-fechar-guia').addEventListener('click', fecharModalGuia);
+modalGuiaEl.addEventListener('click', (e) => {
+  if (e.target === modalGuiaEl) fecharModalGuia();
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') fecharModalGuia();
+});
+
+function formatarDataBR(iso) {
+  if (!iso) return '—';
+  const [ano, mes, dia] = iso.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
+function montarCabecalhoGuia() {
+  const paciente = document.getElementById('guia-paciente').value.trim();
+  const convenio = document.getElementById('guia-convenio').value.trim();
+  const data = document.getElementById('guia-data').value;
+  const prestador = document.getElementById('guia-prestador').value.trim();
+
+  return `
+    <div class="guia-doc-head">
+      <h2>Guia/Fatura</h2>
+      <p class="guia-doc-aviso">Documento simulado gerado pelo portal — não é um XML do Padrão TISS da ANS.</p>
+      <div class="guia-doc-meta">
+        <span>Paciente: <b>${paciente || '—'}</b></span>
+        <span>Convênio: <b>${convenio || '—'}</b></span>
+        <span>Data do atendimento: <b>${formatarDataBR(data)}</b></span>
+        <span>Prestador: <b>${prestador || '—'}</b></span>
+      </div>
+    </div>`;
+}
+
+function gerarGuiaConsulta() {
+  const idx = Number(guiaEdicaoSelectEl.value);
+  const r = ultimaConsulta.resultados[idx];
+  const linhas = [];
+  linhas.push(['Cirurgião', r.descricao, r.cirurgiao.subtotal]);
+  if (r.anestesista.aplicavel) linhas.push(['Anestesista', `Porte anestésico ${r.anestesista.classificacao ?? '—'}`, r.anestesista.total]);
+  if (r.equipe.aplicavel) linhas.push(['Equipe', 'Auxiliares / instrumentador', r.equipe.total]);
+  const total = linhas.reduce((soma, l) => soma + l[2], 0);
+
+  return `
+    ${montarCabecalhoGuia()}
+    <table class="guia-doc-tabela">
+      <thead><tr><th>Item</th><th>Descrição</th><th>Valor (R$)</th></tr></thead>
+      <tbody>
+        ${linhas.map((l) => `<tr><td>${l[0]}</td><td>${l[1]}</td><td>${fmtMoeda(l[2])}</td></tr>`).join('')}
+      </tbody>
+      <tfoot><tr><td colspan="2">Total</td><td>${fmtMoeda(total)}</td></tr></tfoot>
+    </table>`;
+}
+
+function gerarGuiaMultiplos() {
+  const data = ultimaConsultaMultiplos;
+  const linhas = data.procedimentos.map((p) => [
+    'Cirurgião',
+    `${p.codigo} — ${p.descricao} (${RELACAO_LABELS[p.relacao]})`,
+    p.porte.total_pago + p.uco.total + p.filme.total,
+  ]);
+  if (data.sessao.anestesista.aplicavel) {
+    linhas.push(['Anestesista', 'Porte anestésico da sessão (único, maior valor)', data.sessao.anestesista.total]);
+  }
+  if (data.sessao.equipe.aplicavel) {
+    linhas.push(['Equipe', 'Auxiliares / instrumentador da sessão', data.sessao.equipe.total]);
+  }
+  const total = linhas.reduce((soma, l) => soma + l[2], 0);
+
+  return `
+    ${montarCabecalhoGuia()}
+    <table class="guia-doc-tabela">
+      <thead><tr><th>Item</th><th>Descrição</th><th>Valor (R$)</th></tr></thead>
+      <tbody>
+        ${linhas.map((l) => `<tr><td>${l[0]}</td><td>${l[1]}</td><td>${fmtMoeda(l[2])}</td></tr>`).join('')}
+      </tbody>
+      <tfoot><tr><td colspan="2">Total</td><td>${fmtMoeda(total)}</td></tr></tfoot>
+    </table>`;
+}
+
+document.getElementById('btn-gerar-guia').addEventListener('click', () => {
+  const guiaPrintAreaEl = document.getElementById('guia-print-area');
+  guiaPrintAreaEl.innerHTML = fonteGuiaAtual === 'consulta' ? gerarGuiaConsulta() : gerarGuiaMultiplos();
+  fecharModalGuia();
+  document.body.classList.add('modo-guia');
+  window.print();
+});
+
+window.addEventListener('afterprint', () => {
+  document.body.classList.remove('modo-guia');
 });
 
 formMultiplosEl.addEventListener('submit', async (e) => {
@@ -712,6 +924,7 @@ function renderizarResultado(data, ajustes) {
         </button>
         <button type="button" id="btn-exportar-pdf" class="acao-btn">⬇ PDF</button>
         <button type="button" id="btn-exportar-csv" class="acao-btn">⬇ Excel</button>
+        <button type="button" id="btn-guia" class="acao-btn">🧾 Guia/Fatura</button>
       </div>
     </div>
     ${mapeamentoHtml}
@@ -775,6 +988,8 @@ resultadoAreaEl.addEventListener('click', (e) => {
     window.print();
   } else if (e.target.closest('#btn-exportar-csv')) {
     if (ultimaConsulta) exportarConsultaCsv(ultimaConsulta);
+  } else if (e.target.closest('#btn-guia')) {
+    abrirModalGuia('consulta');
   }
 });
 

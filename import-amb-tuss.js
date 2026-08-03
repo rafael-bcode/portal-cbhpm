@@ -7,6 +7,11 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+// Proveniência: gerado a partir de um arquivo CSV fornecido pelo usuário
+// (fonte e data originais não registradas). Sem previsão de atualização
+// periódica — se a tabela de equivalência AMB/TUSS precisar ser atualizada
+// no futuro, repita este fluxo (CSV -> JSON -> import) com uma fonte
+// datada e documente aqui.
 const ARQUIVO = 'amb_tuss_dados.json';
 
 async function importar() {

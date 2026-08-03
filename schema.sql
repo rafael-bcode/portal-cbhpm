@@ -65,3 +65,23 @@ CREATE TABLE valores_procedimento (
 CREATE INDEX idx_valores_codigo ON valores_procedimento(codigo);
 CREATE INDEX idx_valores_edicao ON valores_procedimento(edicao_id);
 CREATE INDEX idx_procedimentos_descricao ON procedimentos USING gin(to_tsvector('portuguese', descricao));
+
+-- 6. Mapeamento CBHPM <-> AMB (90/92/96/99) <-> TUSS/ANS.
+-- Sem FK para procedimentos(codigo): a fonte de dados atual (amb_tuss_dados.json)
+-- tem ~600 códigos CBHPM sem correspondência em procedimentos e ~180 linhas com
+-- codigo_cbhpm nulo (mapeamento só por TUSS/AMB). Adicionar a FK quebraria a
+-- importação até que a fonte de dados seja revisada.
+CREATE TABLE mapeamento_amb_tuss (
+    id SERIAL PRIMARY KEY,
+    codigo_cbhpm BIGINT,
+    codigo_amb90 VARCHAR(10),
+    codigo_amb92 VARCHAR(10),
+    codigo_amb96 VARCHAR(10),
+    codigo_amb99 VARCHAR(10),
+    codigo_tuss VARCHAR(10),
+    procedimento TEXT,
+    procedimento_tuss TEXT
+);
+
+CREATE INDEX idx_mapeamento_codigo_cbhpm ON mapeamento_amb_tuss(codigo_cbhpm);
+CREATE INDEX idx_mapeamento_codigo_tuss ON mapeamento_amb_tuss(codigo_tuss);

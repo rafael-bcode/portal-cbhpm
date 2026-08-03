@@ -1,5 +1,17 @@
 [
   {
+    "versao": "1.8.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Convênios: preset de percentuais de simulação salvo no navegador (localStorage, sem cadastro nem login) — salve os ajustes atuais com o nome de um convênio e reaplique com um clique, na consulta única e em múltiplos procedimentos.",
+      "Guia/Fatura simulada: botão que gera um documento de impressão com paciente, convênio, data e prestador, reaproveitando o cálculo já feito — não é um XML do Padrão TISS da ANS.",
+      "Modo escuro automático (segue a preferência do sistema operacional/navegador).",
+      "Corrige schema.sql, que não tinha a tabela mapeamento_amb_tuss (ficava só num arquivo solto).",
+      "Adiciona CI (GitHub Actions) rodando os testes automatizados a cada push/PR.",
+      "Documenta a procedência do mapeamento AMB/TUSS e a versão vigente do Padrão TISS da ANS (jan/2026) no roadmap."
+    ]
+  },
+  {
     "versao": "1.7.0",
     "data": "2026-08-03",
     "mudancas": [

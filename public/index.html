@@ -51,6 +51,44 @@
 
 <button type="button" id="btn-versao" class="version-badge">v…</button>
 
+<div id="modal-guia" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Gerar guia/fatura</h3>
+      <button type="button" id="btn-fechar-guia" class="btn-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="ajustes-nota">
+        <strong>Documento simulado</strong> — organiza os valores já calculados num formato de guia/fatura para
+        impressão. Não é um XML do Padrão TISS da ANS nem é enviado a nenhuma operadora.
+      </p>
+      <div class="field" id="campo-guia-edicao">
+        <label for="guia-edicao">Edição a faturar</label>
+        <select id="guia-edicao"></select>
+      </div>
+      <div class="field">
+        <label for="guia-paciente">Paciente</label>
+        <input type="text" id="guia-paciente" placeholder="Nome do paciente">
+      </div>
+      <div class="field">
+        <label for="guia-convenio">Convênio</label>
+        <input type="text" id="guia-convenio" placeholder="Ex: Unimed, particular...">
+      </div>
+      <div class="field">
+        <label for="guia-data">Data do atendimento</label>
+        <input type="date" id="guia-data">
+      </div>
+      <div class="field">
+        <label for="guia-prestador">Prestador (médico)</label>
+        <input type="text" id="guia-prestador" placeholder="Nome do médico">
+      </div>
+      <button type="button" id="btn-gerar-guia" class="btn-consultar">Gerar e imprimir</button>
+    </div>
+  </div>
+</div>
+
+<section id="guia-print-area" class="guia-print-area"></section>
+
 <main class="container">
 
   <div class="tabs">
@@ -89,6 +127,19 @@
         <div id="lista-edicoes" class="edicoes-grid">
           <span class="loading-text">Carregando edições…</span>
         </div>
+      </div>
+
+      <div class="field field-convenio">
+        <label for="convenio-select">Convênio (preset de %)</label>
+        <div class="convenio-toolbar">
+          <select id="convenio-select" class="convenio-select"></select>
+          <button type="button" id="btn-salvar-convenio" class="chip-btn">Salvar atual</button>
+          <button type="button" id="btn-excluir-convenio" class="chip-btn">Excluir</button>
+        </div>
+        <p class="ajustes-nota">
+          Salva os percentuais abaixo com um nome (ex: nome do convênio) para reaplicar depois — sem cadastro
+          nem envio a nenhum servidor, fica só neste navegador.
+        </p>
       </div>
 
       <details class="ajustes">
@@ -211,6 +262,18 @@
         </div>
         <p class="ajustes-nota">Valores oficiais da CBHPM sugeridos como padrão — ajustáveis conforme o contrato do convênio.</p>
       </details>
+
+      <div class="field field-convenio">
+        <label for="mp-convenio-select">Convênio (preset de %)</label>
+        <div class="convenio-toolbar">
+          <select id="mp-convenio-select" class="convenio-select"></select>
+          <button type="button" id="mp-btn-salvar-convenio" class="chip-btn">Salvar atual</button>
+          <button type="button" id="mp-btn-excluir-convenio" class="chip-btn">Excluir</button>
+        </div>
+        <p class="ajustes-nota">
+          Salva os percentuais de simulação abaixo com um nome para reaplicar depois — fica só neste navegador.
+        </p>
+      </div>
 
       <details class="ajustes">
         <summary>Ajustes de simulação (opcional)</summary>

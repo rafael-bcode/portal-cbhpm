@@ -6,7 +6,12 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Comunicados de reajuste (somente Faixa Original) que faltavam no histórico
+// Comunicados de reajuste (somente Faixa Original) que faltavam no histórico.
+// A AMB costuma publicar o comunicado de correção INPC/IBGE em outubro de
+// cada ano (o mais recente, "2025-2026", saiu em 18/10/2025 e vale até
+// set/2026). Quando sair o próximo (ciclo "2026-2027"), repita o padrão
+// abaixo com os novos valores oficiais de porte/UCO e rode este script de
+// novo — não adivinhe os valores antes do comunicado real ser publicado.
 const NOVAS_EDICOES = [
   {
     nome: '2020-2021',
