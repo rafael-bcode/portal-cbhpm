@@ -1,5 +1,13 @@
 [
   {
+    "versao": "1.13.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Validador de XML TISS: nova checagem 'Estrutura (XSD oficial)' — valida o arquivo inteiro contra o XSD oficial do Padrão TISS 4.03.00 (o mesmo schema que a operadora usaria), rodando inteiramente no navegador via libxml2 compilado para WebAssembly (xmllint-wasm) — carregado só quando o usuário usa o validador, sem afetar o carregamento inicial da página e sem sair do navegador.",
+      "Adiciona atualizar-tiss-xsd.js para manter os XSDs oficiais em dia quando a ANS publicar uma nova versão do Padrão TISS."
+    ]
+  },
+  {
     "versao": "1.12.0",
     "data": "2026-08-03",
     "mudancas": [

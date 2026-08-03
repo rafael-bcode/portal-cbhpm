@@ -1328,6 +1328,54 @@ async function carregarCboMedicos() {
   return cboMedicosCache;
 }
 
+// Validação estrutural contra o XSD oficial do Padrão TISS 4.03.00 — a
+// checagem mais rigorosa do validador (schema real da ANS, não só os campos
+// que já conferimos manualmente). Roda inteiramente no navegador via
+// xmllint-wasm (libxml2 compilado para WebAssembly, ver
+// vendor/xmllint-wasm/LICENSE), carregado sob demanda (só quando o usuário
+// usa o validador) para não pesar no carregamento inicial da página.
+// Os 6 arquivos XSD (ver public/tiss-xsd/) são o "Componente de
+// Comunicação" oficial baixado de gov.br/ans — ver atualizar-tiss-xsd.js.
+const TISS_XSD_ARQUIVOS = [
+  'tissV4_03_00.xsd',
+  'tissSimpleTypesV4_03_00.xsd',
+  'tissComplexTypesV4_03_00.xsd',
+  'tissGuiasV4_03_00.xsd',
+  'tissAssinaturaDigital_v1.01.xsd',
+  'xmldsig-core-schema.xsd',
+];
+
+let tissXsdCache = null;
+async function carregarXsdTiss() {
+  if (tissXsdCache) return tissXsdCache;
+  const [modulo, ...conteudos] = await Promise.all([
+    import('./vendor/xmllint-wasm/index-browser.mjs'),
+    ...TISS_XSD_ARQUIVOS.map((nome) => fetch(`tiss-xsd/${nome}`).then((r) => r.text())),
+  ]);
+  const [principal, ...deps] = conteudos;
+  tissXsdCache = {
+    validateXML: modulo.validateXML,
+    principal,
+    preload: deps.map((c, i) => ({ fileName: TISS_XSD_ARQUIVOS[i + 1], contents: c })),
+  };
+  return tissXsdCache;
+}
+
+async function validarEstruturaXsdTiss(textoXml, nomeArquivo) {
+  try {
+    const { validateXML, principal, preload } = await carregarXsdTiss();
+    const resultado = await validateXML({
+      xml: [{ fileName: nomeArquivo, contents: textoXml }],
+      schema: [principal],
+      preload,
+    });
+    return { disponivel: true, valid: resultado.valid, erros: resultado.errors.map((e) => e.message) };
+  } catch (err) {
+    console.error('Falha ao validar contra o XSD do Padrão TISS:', err);
+    return { disponivel: false, valid: null, erros: [], erroCarregamento: err.message };
+  }
+}
+
 function detectarEncodingXml(bytes) {
   const inicio = new TextDecoder('ascii').decode(bytes.slice(0, 200));
   const m = inicio.match(/encoding=["']([\w-]+)["']/i);
@@ -1576,6 +1624,7 @@ async function validarArquivoTiss(file) {
     tiposGuia: {},
     guias: [],
     unimed: null,
+    xsd: null,
   };
 
   if (resultado.erroParse) return resultado;
@@ -1636,6 +1685,8 @@ async function validarArquivoTiss(file) {
       bateComLote: digitoArquivo && digitoLote ? digitoArquivo === digitoLote : null,
     };
   }
+
+  resultado.xsd = await validarEstruturaXsdTiss(textoXml, file.name);
 
   return resultado;
 }
@@ -2013,6 +2064,27 @@ function renderizarValidadorTiss(resultado, containerEl) {
           .map((c) => `${c} (${TISS_CODIGOS_TABELA[c]})`)
           .join('; ')}</div>`;
 
+  let linhaXsd = '';
+  let detalheXsd = '';
+  if (resultado.xsd) {
+    if (resultado.xsd.disponivel === false) {
+      linhaXsd = `<div class="validador-linha aviso">— Não foi possível carregar a validação estrutural (XSD): ${resultado.xsd.erroCarregamento}</div>`;
+    } else if (resultado.xsd.valid) {
+      linhaXsd = `<div class="validador-linha ok">✔ Estrutura conforme o XSD oficial do Padrão TISS 4.03.00</div>`;
+    } else {
+      linhaXsd = `<div class="validador-linha erro">✘ ${resultado.xsd.erros.length} erro(s) de estrutura contra o XSD oficial do Padrão TISS 4.03.00 (ver abaixo)</div>`;
+      detalheXsd = `
+        <details class="grupo grupo-secundario">
+          <summary class="grupo-summary"><span class="grupo-nome">Erros de estrutura (XSD)</span></summary>
+          <div class="grupo-corpo">
+            <ul style="margin:8px 16px; padding-left:18px; font-family: var(--mono); font-size:0.78rem;">
+              ${resultado.xsd.erros.map((e) => `<li>${e}</li>`).join('')}
+            </ul>
+          </div>
+        </details>`;
+    }
+  }
+
   const tiposGuiaHtml = Object.entries(resultado.tiposGuia)
     .map(([tipo, qtd]) => `<span class="pct-badge pct-badge-neutro">${tipo} × ${qtd}</span>`)
     .join(' ');
@@ -2033,7 +2105,9 @@ function renderizarValidadorTiss(resultado, containerEl) {
         ${linhaLote}
         ${linhaUnimed}
         ${linhaCodigos}
+        ${linhaXsd}
       </div>
+      ${detalheXsd}
       <div class="referencia-tabela">Guias encontradas: ${tiposGuiaHtml || '—'}</div>
       ${renderizarGruposDespesa(resultado)}
     </div>

@@ -240,6 +240,38 @@ excluindo a consulta por CRM via CFM (pendente de credenciamento pago):
   zerados mesmo tendo dados no XML. Confirmado diretamente no XSD oficial
   (`tissComplexTypesV4_03_00.xsd`, `tissGuiasV4_03_00.xsd`), não em suposição.
 
+## Fase 6c — Validação estrutural contra o XSD oficial ✅ Implementado
+
+Última fase pendente do roadmap anterior (excluindo a consulta por CRM via
+CFM, que segue bloqueada por exigir credenciamento pago).
+
+- **Fonte oficial**: "Componente de Comunicação" do Padrão TISS, baixado de
+  gov.br/ans (ZIP com os XSDs) — `atualizar-tiss-xsd.js` baixa e extrai só os
+  6 arquivos que a `mensagemTISS` v4.03.00 realmente usa (confirmado via
+  `schemaLocation` dentro do próprio XSD): `tissV4_03_00.xsd` (raiz),
+  `tissSimpleTypesV4_03_00.xsd`, `tissComplexTypesV4_03_00.xsd`,
+  `tissGuiasV4_03_00.xsd`, `tissAssinaturaDigital_v1.01.xsd`,
+  `xmldsig-core-schema.xsd` — em `public/tiss-xsd/`.
+- **Motor de validação**: [xmllint-wasm](https://github.com/noppa/xmllint-wasm)
+  (libxml2 real, compilado para WebAssembly), vendorizado em
+  `public/vendor/xmllint-wasm/` (MIT, ver `LICENSE` ali) — carregado sob
+  demanda via `import()` dinâmico só quando o usuário usa o validador
+  (~1,1 MB entre WASM e os XSDs, não afeta o carregamento inicial da página).
+  Testado e funcionando em Chromium, Firefox e WebKit via Playwright — a
+  ressalva do próprio README sobre Firefox não suportar "worker modules"
+  está desatualizada (Firefox já suporta desde a versão 114).
+- **Verificação de que funciona de verdade** (não só "não deu erro"):
+  validado contra ~15 arquivos reais do usuário (todos passam, como
+  esperado) e contra XMLs sintéticos deliberadamente quebrados — removendo
+  um elemento obrigatório (`registroANS`) e usando um valor de versão
+  inválido — confirmando que o motor really detecta problemas estruturais
+  reais, com mensagens de erro localizadas (elemento e o que era esperado).
+- Complementa, não substitui, as checagens já existentes (hash, versão,
+  códigos de tabela, valores por item) — é a camada mais rigorosa, mas
+  valida contra a versão 4.03.00; arquivos de versões anteriores (ex:
+  4.01.00) que já passaram nos testes reais sugerem boa compatibilidade
+  retroativa, mas isso não é uma garantia formal da ANS.
+
 ## Resumo executivo
 
 | Fase | Status | Esforço | Valor | Depende de dado pago? |
@@ -253,3 +285,4 @@ excluindo a consulta por CRM via CFM (pendente de credenciamento pago):
 | 5c. Grupos de despesa, profissionais e CNPJ | ✅ Feito | Médio | Alto | Não |
 | 5d. Detalhe por guia (abas) e busca por número | ✅ Feito | Baixo–médio | Alto | Não |
 | 6a. Histórico local, múltiplos arquivos (Unimed 0/2/5) e comparação | ✅ Feito | Médio | Alto | Não |
+| 6c. Validação estrutural contra o XSD oficial | ✅ Feito | Alto | Alto | Não |
