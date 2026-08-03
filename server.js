@@ -1,22 +1,15 @@
 require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
-const packageJson = require('./package.json');
-const changelog = require('./CHANGELOG.json');
 
 const app = express();
 app.use(express.json());
 app.use(express.static('public')); // serve os arquivos da tela (HTML/CSS/JS)
 
-// Versão atual do portal e histórico de mudanças (exibidos no rodapé da tela)
-app.get('/api/versao', (req, res) => {
-  res.json({ versaoAtual: packageJson.version, changelog });
-});
-
 // Lista todas as edições disponíveis (usado para montar os checkboxes na tela)
 app.get('/api/edicoes', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, nome, ano_inicio FROM edicoes ORDER BY ano_inicio, id');
+    const { rows } = await pool.query('SELECT id, nome, ano_inicio FROM edicoes ORDER BY ano_inicio');
     res.json(rows);
   } catch (err) {
     console.error('Erro ao buscar edições:', err);
@@ -63,20 +56,9 @@ const pool = new Pool({
  *     "pctUco": 0,
  *     "pctPorteAnestesico": 0,
  *     "valorFilme": 0,        // valor em R$ do m² do filme (informado pelo usuário)
- *     "pctFilme": 0,
- *     "pct1Auxiliar": 30,     // percentuais da equipe, sobre o valor de porte do cirurgião
- *     "pct2Auxiliar": 20,
- *     "pct3Auxiliar": 20,
- *     "pct4Auxiliar": 20,
- *     "pctInstrumentador": 10,
- *     "pctAuxAnestesista": 30
+ *     "pctFilme": 0
  *   }
  * }
- *
- * O honorário do cirurgião (porte + UCO + filme), o do anestesista (porte
- * anestésico) e o da equipe (auxiliares/instrumentador) são profissionais
- * distintos — por isso são calculados e retornados separadamente, sem somar
- * tudo num único total.
  */
 app.post('/api/consultar-procedimento', async (req, res) => {
   try {
@@ -91,13 +73,6 @@ app.post('/api/consultar-procedimento', async (req, res) => {
     const pctPorteAN = Number(ajustes.pctPorteAnestesico) || 0;
     const valorFilme = Number(ajustes.valorFilme) || 0;
     const pctFilme = Number(ajustes.pctFilme) || 0;
-
-    const pct1Auxiliar = Number(ajustes.pct1Auxiliar) || 0;
-    const pct2Auxiliar = Number(ajustes.pct2Auxiliar) || 0;
-    const pct3Auxiliar = Number(ajustes.pct3Auxiliar) || 0;
-    const pct4Auxiliar = Number(ajustes.pct4Auxiliar) || 0;
-    const pctInstrumentador = Number(ajustes.pctInstrumentador) || 0;
-    const pctAuxAnestesista = Number(ajustes.pctAuxAnestesista) || 0;
 
     // Monta o filtro de edições
     let filtroEdicao = '';
@@ -118,15 +93,13 @@ app.post('/api/consultar-procedimento', async (req, res) => {
         vp.porte,
         vp.fracao_porte,
         vp.valor_porte,
-        vp.total_porte,
         vp.uco,
         vp.porte_anestesico,
         vp.valor_porte_anestesico,
-        vp.total_porte_anestesico,
         vp.filme AS quantidade_filme,
-        vp.total_filme,
         vp.numero_auxiliares,
         vp.total_auxiliares,
+        vp.subtotal AS subtotal_original,
         (SELECT valor FROM tabela_porte tp WHERE tp.edicao_id = vp.edicao_id AND tp.porte = 'UCO') AS valor_uco_referencia
       FROM valores_procedimento vp
       JOIN edicoes e ON e.id = vp.edicao_id
@@ -141,298 +114,80 @@ app.post('/api/consultar-procedimento', async (req, res) => {
       return res.status(404).json({ erro: 'Código não encontrado nas edições selecionadas.' });
     }
 
-    // Aplica o cálculo em cada edição retornada.
-    // Regra (CALCULO_CBHPM.md): porte + UCO + filme compõem o valor do
-    // procedimento (honorário do cirurgião). Porte anestésico (anestesista) e
-    // auxiliares/instrumentador são honorários de OUTROS profissionais e nunca
-    // somam ao valor do procedimento — por isso vêm em blocos separados.
+    // Busca o mapeamento AMB/TUSS para esse código (pode ter mais de uma variante)
+    const { rows: mapeamento } = await pool.query(
+      `SELECT codigo_amb90, codigo_amb92, codigo_amb96, codigo_amb99, codigo_tuss
+       FROM mapeamento_amb_tuss
+       WHERE codigo_cbhpm = $1`,
+      [codigo]
+    );
+
+    // Aplica o cálculo em cada edição retornada
     const resultado = rows.map((r) => {
-      // Usa os totais já gravados da planilha como base (e não fração×valor_porte
-      // recalculado), pois as edições 2004-2017 embutem um fator de 10% no total
-      // do porte/porte anestésico que não aparece no valor unitário isoladamente.
       const valorPorte = Number(r.valor_porte) || 0;
       const fracaoPorte = Number(r.fracao_porte) || 0;
-      const totalPorteBase = Number(r.total_porte) || 0;
-      const totalPorte = totalPorteBase * (1 + pctPorte / 100);
+      const totalPorte = fracaoPorte * valorPorte * (1 + pctPorte / 100);
 
       const qtdUco = Number(r.uco) || 0;
       const valorUcoRef = Number(r.valor_uco_referencia) || 0;
       const totalUco = qtdUco * valorUcoRef * (1 + pctUco / 100);
 
+      const valorPorteAN = Number(r.valor_porte_anestesico) || 0;
+      const totalPorteAN = valorPorteAN * (1 + pctPorteAN / 100);
+
       const qtdFilme = Number(r.quantidade_filme) || 0;
       const totalFilme = qtdFilme * valorFilme * (1 + pctFilme / 100);
-      const totalFilmeBase = Number(r.total_filme) || 0;
 
-      const subtotalCirurgiao = totalPorte + totalUco + totalFilme;
-      const subtotalCirurgiaoOriginal = totalPorteBase + qtdUco * valorUcoRef + totalFilmeBase;
+      const totalAuxiliares = Number(r.total_auxiliares) || 0;
 
-      // Anestesista: honorário à parte, nunca somado ao valor do procedimento.
-      const valorPorteAN = Number(r.valor_porte_anestesico) || 0;
-      const totalPorteANBase = Number(r.total_porte_anestesico) || 0;
-      const totalPorteAN = totalPorteANBase * (1 + pctPorteAN / 100);
-
-      // Equipe (auxiliares/instrumentador): percentual configurável sobre o
-      // valor unitário do porte do cirurgião (base sem ajuste de %), também
-      // nunca somado ao valor do procedimento.
-      const papeis = [
-        { papel: '1º Auxiliar', percentual: pct1Auxiliar },
-        { papel: '2º Auxiliar', percentual: pct2Auxiliar },
-        { papel: '3º Auxiliar', percentual: pct3Auxiliar },
-        { papel: '4º Auxiliar', percentual: pct4Auxiliar },
-        { papel: 'Instrumentador', percentual: pctInstrumentador },
-        { papel: 'Auxiliar de Anestesista', percentual: pctAuxAnestesista },
-      ].map((p) => ({
-        ...p,
-        total: Number(((valorPorte * p.percentual) / 100).toFixed(2)),
-      }));
-      const totalEquipe = papeis.reduce((soma, p) => soma + p.total, 0);
+      const totalCalculado = totalPorte + totalUco + totalPorteAN + totalFilme + totalAuxiliares;
 
       return {
         edicao: r.edicao_nome,
         ano: r.ano_inicio,
         descricao: r.descricao,
-        cirurgiao: {
-          porte: {
-            classificacao: r.porte,
-            fracao: fracaoPorte,
-            valor_unitario: valorPorte,
-            percentual_aplicado: pctPorte,
-            total: Number(totalPorte.toFixed(2)),
-          },
-          uco: {
-            quantidade: qtdUco,
-            valor_unitario_referencia: valorUcoRef,
-            percentual_aplicado: pctUco,
-            total: Number(totalUco.toFixed(2)),
-          },
-          filme: {
-            quantidade_m2: qtdFilme,
-            valor_informado: valorFilme,
-            percentual_aplicado: pctFilme,
-            total: Number(totalFilme.toFixed(2)),
-          },
-          subtotal: Number(subtotalCirurgiao.toFixed(2)),
-          subtotal_original_planilha: Number(subtotalCirurgiaoOriginal.toFixed(2)),
+        porte: {
+          classificacao: r.porte,
+          fracao: fracaoPorte,
+          valor_unitario: valorPorte,
+          percentual_aplicado: pctPorte,
+          total: Number(totalPorte.toFixed(2)),
         },
-        anestesista: {
-          // Só se aplica quando o procedimento tem porte anestésico atribuído
-          // (classe "0"/vazia = procedimento não usa anestesia).
-          aplicavel: Boolean(r.porte_anestesico) && r.porte_anestesico !== '0',
+        uco: {
+          quantidade: qtdUco,
+          valor_unitario_referencia: valorUcoRef,
+          percentual_aplicado: pctUco,
+          total: Number(totalUco.toFixed(2)),
+        },
+        porte_anestesico: {
           classificacao: r.porte_anestesico,
           valor_unitario: valorPorteAN,
           percentual_aplicado: pctPorteAN,
           total: Number(totalPorteAN.toFixed(2)),
-          total_original_planilha: Number(totalPorteANBase.toFixed(2)),
         },
-        equipe: {
-          // Independente da anestesia: só se aplica quando o procedimento
-          // realmente prevê auxiliar(es) na tabela.
-          aplicavel: Number(r.numero_auxiliares) > 0,
-          quantidade_auxiliares_procedimento: r.numero_auxiliares,
-          valor_referencia_porte: valorPorte,
-          papeis,
-          total: Number(totalEquipe.toFixed(2)),
-          total_original_planilha: Number((Number(r.total_auxiliares) || 0).toFixed(2)),
+        filme: {
+          quantidade_m2: qtdFilme,
+          valor_informado: valorFilme,
+          percentual_aplicado: pctFilme,
+          total: Number(totalFilme.toFixed(2)),
         },
+        auxiliares: {
+          quantidade: r.numero_auxiliares,
+          total: totalAuxiliares,
+        },
+        subtotal_calculado: Number(totalCalculado.toFixed(2)),
+        subtotal_original_planilha: Number(r.subtotal_original),
       };
     });
 
-    res.json({ codigo, resultados: resultado });
+    res.json({ codigo, mapeamento_amb_tuss: mapeamento, resultados: resultado });
   } catch (err) {
     console.error('Erro na consulta:', err);
     res.status(500).json({ erro: 'Erro interno ao consultar procedimento.' });
   }
 });
 
-/**
- * POST /api/consultar-multiplos-procedimentos
- * Simula honorários quando mais de um procedimento é feito no mesmo ato
- * cirúrgico (mesma sessão), aplicando os redutores da CBHPM para o Porte do
- * cirurgião conforme a relação de cada procedimento com o principal:
- *   - principal: 100% do porte
- *   - mesma_via: percentual configurável (padrão 50%)
- *   - via_diferente: percentual configurável (padrão 70%)
- *   - equipe_diferente: percentual configurável (padrão 100%, equipe distinta fatura integral)
- *
- * UCO e Filme não sofrem redução (permanecem integrais para cada
- * procedimento). O Porte Anestésico é cobrado uma única vez por sessão
- * (maior valor entre os procedimentos, já que é uma anestesia só). A Equipe
- * (auxiliares/instrumentador) aplica seu percentual sobre a soma dos valores
- * de referência de porte já ponderados pela relação de cada procedimento
- * (o "total pago ao cirurgião" na sessão).
- *
- * Body esperado:
- * {
- *   "edicaoId": 12,
- *   "procedimentos": [
- *     { "codigo": 31309054, "relacao": "principal" },
- *     { "codigo": 12345678, "relacao": "mesma_via" }
- *   ],
- *   "ajustes": { ...mesmos campos de /api/consultar-procedimento...,
- *     "pctMesmaVia": 50, "pctViaDiferente": 70, "pctEquipeDiferente": 100 }
- * }
- */
-app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
-  try {
-    const { edicaoId, procedimentos, ajustes = {} } = req.body;
-
-    if (!edicaoId) {
-      return res.status(400).json({ erro: 'Informe a edição.' });
-    }
-    if (!Array.isArray(procedimentos) || procedimentos.length < 2) {
-      return res.status(400).json({ erro: 'Informe ao menos 2 procedimentos.' });
-    }
-    const principais = procedimentos.filter((p) => p.relacao === 'principal');
-    if (principais.length !== 1) {
-      return res.status(400).json({ erro: 'Marque exatamente um procedimento como principal.' });
-    }
-
-    const pctPorte = Number(ajustes.pctPorte) || 0;
-    const pctUco = Number(ajustes.pctUco) || 0;
-    const pctPorteAN = Number(ajustes.pctPorteAnestesico) || 0;
-    const valorFilme = Number(ajustes.valorFilme) || 0;
-    const pctFilme = Number(ajustes.pctFilme) || 0;
-    const pct1Auxiliar = Number(ajustes.pct1Auxiliar) || 0;
-    const pct2Auxiliar = Number(ajustes.pct2Auxiliar) || 0;
-    const pct3Auxiliar = Number(ajustes.pct3Auxiliar) || 0;
-    const pct4Auxiliar = Number(ajustes.pct4Auxiliar) || 0;
-    const pctInstrumentador = Number(ajustes.pctInstrumentador) || 0;
-    const pctAuxAnestesista = Number(ajustes.pctAuxAnestesista) || 0;
-
-    const pctRelacao = {
-      principal: 100,
-      mesma_via: ajustes.pctMesmaVia !== undefined ? Number(ajustes.pctMesmaVia) : 50,
-      via_diferente: ajustes.pctViaDiferente !== undefined ? Number(ajustes.pctViaDiferente) : 70,
-      equipe_diferente: ajustes.pctEquipeDiferente !== undefined ? Number(ajustes.pctEquipeDiferente) : 100,
-    };
-
-    const codigos = procedimentos.map((p) => Number(p.codigo));
-
-    const { rows } = await pool.query(
-      `SELECT
-        vp.codigo,
-        vp.descricao,
-        vp.porte,
-        vp.fracao_porte,
-        vp.valor_porte,
-        vp.total_porte,
-        vp.uco,
-        vp.porte_anestesico,
-        vp.valor_porte_anestesico,
-        vp.total_porte_anestesico,
-        vp.filme AS quantidade_filme,
-        vp.numero_auxiliares,
-        (SELECT valor FROM tabela_porte tp WHERE tp.edicao_id = vp.edicao_id AND tp.porte = 'UCO') AS valor_uco_referencia
-      FROM valores_procedimento vp
-      WHERE vp.edicao_id = $1 AND vp.codigo = ANY($2)`,
-      [edicaoId, codigos]
-    );
-
-    const porCodigo = new Map(rows.map((r) => [Number(r.codigo), r]));
-    const faltando = codigos.filter((c) => !porCodigo.has(c));
-    if (faltando.length > 0) {
-      return res.status(404).json({ erro: `Código(s) não encontrado(s) nesta edição: ${faltando.join(', ')}` });
-    }
-
-    let subtotalCirurgiaoSessao = 0;
-    let baseEquipeSessao = 0;
-    let maiorPorteAnestesico = 0;
-    let anestesistaAplicavel = false;
-    let equipeAplicavel = false;
-
-    const procedimentosCalculados = procedimentos.map((p) => {
-      const r = porCodigo.get(Number(p.codigo));
-      const relacaoPct = pctRelacao[p.relacao];
-      if (relacaoPct === undefined) {
-        throw Object.assign(new Error(`Relação inválida para o código ${p.codigo}: ${p.relacao}`), { status: 400 });
-      }
-
-      const valorPorte = Number(r.valor_porte) || 0;
-      const totalPorteBase = Number(r.total_porte) || 0;
-      const totalPorteAjustado = totalPorteBase * (1 + pctPorte / 100);
-      const portePago = totalPorteAjustado * (relacaoPct / 100);
-
-      const qtdUco = Number(r.uco) || 0;
-      const valorUcoRef = Number(r.valor_uco_referencia) || 0;
-      const totalUco = qtdUco * valorUcoRef * (1 + pctUco / 100);
-
-      const qtdFilme = Number(r.quantidade_filme) || 0;
-      const totalFilme = qtdFilme * valorFilme * (1 + pctFilme / 100);
-
-      const totalPorteANBase = Number(r.total_porte_anestesico) || 0;
-      const totalPorteAN = totalPorteANBase * (1 + pctPorteAN / 100);
-      const temAnestesia = Boolean(r.porte_anestesico) && r.porte_anestesico !== '0';
-
-      const equipeBaseProcedimento = valorPorte * (relacaoPct / 100);
-
-      subtotalCirurgiaoSessao += portePago + totalUco + totalFilme;
-      baseEquipeSessao += equipeBaseProcedimento;
-      if (temAnestesia) {
-        anestesistaAplicavel = true;
-        if (totalPorteAN > maiorPorteAnestesico) maiorPorteAnestesico = totalPorteAN;
-      }
-      if (Number(r.numero_auxiliares) > 0) equipeAplicavel = true;
-
-      return {
-        codigo: Number(p.codigo),
-        descricao: r.descricao,
-        relacao: p.relacao,
-        percentual_relacao: relacaoPct,
-        porte: {
-          classificacao: r.porte,
-          valor_unitario: valorPorte,
-          total_pago: Number(portePago.toFixed(2)),
-        },
-        uco: { quantidade: qtdUco, total: Number(totalUco.toFixed(2)) },
-        filme: { quantidade_m2: qtdFilme, total: Number(totalFilme.toFixed(2)) },
-        porte_anestesico: {
-          aplicavel: temAnestesia,
-          classificacao: r.porte_anestesico,
-          total: Number(totalPorteAN.toFixed(2)),
-        },
-      };
-    });
-
-    const papeis = [
-      { papel: '1º Auxiliar', percentual: pct1Auxiliar },
-      { papel: '2º Auxiliar', percentual: pct2Auxiliar },
-      { papel: '3º Auxiliar', percentual: pct3Auxiliar },
-      { papel: '4º Auxiliar', percentual: pct4Auxiliar },
-      { papel: 'Instrumentador', percentual: pctInstrumentador },
-      { papel: 'Auxiliar de Anestesista', percentual: pctAuxAnestesista },
-    ].map((p) => ({ ...p, total: Number(((baseEquipeSessao * p.percentual) / 100).toFixed(2)) }));
-    const totalEquipe = papeis.reduce((soma, p) => soma + p.total, 0);
-
-    res.json({
-      procedimentos: procedimentosCalculados,
-      sessao: {
-        cirurgiao: { subtotal: Number(subtotalCirurgiaoSessao.toFixed(2)) },
-        anestesista: {
-          aplicavel: anestesistaAplicavel,
-          total: Number(maiorPorteAnestesico.toFixed(2)),
-        },
-        equipe: {
-          aplicavel: equipeAplicavel,
-          base_calculo: Number(baseEquipeSessao.toFixed(2)),
-          papeis,
-          total: Number(totalEquipe.toFixed(2)),
-        },
-      },
-    });
-  } catch (err) {
-    if (err.status === 400) {
-      return res.status(400).json({ erro: err.message });
-    }
-    console.error('Erro na consulta de múltiplos procedimentos:', err);
-    res.status(500).json({ erro: 'Erro interno ao consultar múltiplos procedimentos.' });
-  }
-});
-
 const PORT = process.env.PORT || 3000;
-if (require.main === module) {
-  app.listen(PORT, () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
-}
-
-module.exports = app;
+app.listen(PORT, () => {
+  console.log(`Servidor rodando em http://localhost:${PORT}`);
+});
