@@ -13,6 +13,33 @@ let debounceTimer = null;
 let ultimaConsulta = null;
 let ultimaConsultaMultiplos = null;
 
+// ---------- Tema claro/escuro (localStorage, sem login) ----------
+// Sem preferência salva, segue prefers-color-scheme do sistema (ver
+// style.css). O botão grava uma escolha manual que passa a valer sempre
+// neste navegador, até o usuário trocar de novo.
+const TEMA_KEY = 'cbhpm_tema';
+const btnTemaEl = document.getElementById('btn-tema');
+
+function temaEfetivo() {
+  const salvo = localStorage.getItem(TEMA_KEY);
+  if (salvo === 'light' || salvo === 'dark') return salvo;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function aplicarTema(tema) {
+  document.documentElement.dataset.theme = tema;
+  btnTemaEl.textContent = tema === 'dark' ? '☀️' : '🌙';
+  btnTemaEl.title = tema === 'dark' ? 'Mudar para modo claro' : 'Mudar para modo escuro';
+}
+
+btnTemaEl.addEventListener('click', () => {
+  const novoTema = temaEfetivo() === 'dark' ? 'light' : 'dark';
+  localStorage.setItem(TEMA_KEY, novoTema);
+  aplicarTema(novoTema);
+});
+
+aplicarTema(temaEfetivo());
+
 // ---------- Abas ----------
 document.querySelectorAll('.tab-btn').forEach((btn) => {
   btn.addEventListener('click', () => {

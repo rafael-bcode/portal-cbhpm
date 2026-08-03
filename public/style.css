@@ -34,6 +34,35 @@
   }
 }
 
+/* Escolha manual (botão no topbar) — precisa vencer o prefers-color-scheme
+   acima quando o usuário discorda da preferência do sistema operacional.
+   [data-theme] tem mais especificidade que :root sozinho, então vence
+   independentemente da ordem no arquivo. */
+:root[data-theme="light"] {
+  --ink: #16232B;
+  --ink-soft: #52616C;
+  --paper: #F6F7F5;
+  --panel: #FFFFFF;
+  --border: #DCE3E0;
+  --teal: #0F6E5F;
+  --teal-dark: #0B4F45;
+  --teal-tint: #E4F1EE;
+  --amber: #C97A2B;
+  --amber-tint: #FBEEE0;
+}
+:root[data-theme="dark"] {
+  --ink: #E4E9EA;
+  --ink-soft: #93A3A8;
+  --paper: #10161A;
+  --panel: #1A2328;
+  --border: #2E3A3F;
+  --teal: #2FB39A;
+  --teal-dark: #7FD9C4;
+  --teal-tint: #17302C;
+  --amber: #E3A85E;
+  --amber-tint: #33291B;
+}
+
 * { box-sizing: border-box; }
 
 body {
@@ -68,8 +97,12 @@ body {
   font-size: 0.85rem;
   color: #A9B7BC;
 }
-.btn-ajuda {
+.topbar-actions {
   margin-left: auto;
+  display: flex;
+  gap: 8px;
+}
+.btn-ajuda {
   width: 24px;
   height: 24px;
   border-radius: 50%;
