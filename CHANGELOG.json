@@ -1,5 +1,14 @@
 [
   {
+    "versao": "1.9.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Nova aba 'Validador de XML TISS': confere um arquivo TISS inteiramente no navegador (nunca sai da máquina) — hash MD5 do epílogo, versão do Padrão (alerta se desatualizada em relação à 4.03.00, obrigatória desde 01/07/2026), tipos de guia, códigos de tabela, valores por item (quantidade × valor unitário × redução/acréscimo) e total de cada guia, além da operadora a partir do registro ANS.",
+      "Reconhece a convenção de algumas cooperativas Unimed de identificar o tipo de arquivo pelo primeiro dígito do nome (0 = resumo de internação/médicos não credenciados, 2 = SP-SADT credenciados, 5 = honorário individual credenciados) e confere se bate com o número do lote.",
+      "Não é um validador oficial certificado pela ANS — cobre checagens estruturais e aritméticas, não o schema XSD completo."
+    ]
+  },
+  {
     "versao": "1.8.0",
     "data": "2026-08-03",
     "mudancas": [

@@ -127,6 +127,41 @@ oficial seja implementada no futuro.
 
 Fontes: [TISS — ANS](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss), [Faturamento médico — ProDoctor](https://prodoctor.net/blog/faturamento-medico/), [Controle de glosas — Medicalsys](https://www.medicalsys.com.br/blog/controle-de-glosas-como-evitar-perdas-financeiras-e-aumentar-a-rentabilidade-da-sua-cl%C3%ADnica)
 
+## Fase 5b — Validador de XML TISS ✅ Implementado
+
+Nova aba "Validador de XML TISS" (ago/2026), inspirada no
+[validadortiss.com.br](https://app.validadortiss.com.br/#/) mas rodando
+inteiramente no navegador — o arquivo nunca é enviado a um servidor.
+Verifica:
+
+- **Hash MD5** do epílogo — algoritmo confirmado com o manual oficial da
+  ANS (Componente Organizacional, item 115: MD5 sobre a concatenação
+  literal do conteúdo das tags-folha, em ISO-8859-1) e testado contra
+  hashes reais de arquivos de produção, inclusive com acentuação (o que
+  descartou a alegação de um repositório de terceiro de que o encoding
+  correto seria UTF-8 — não é, é ISO-8859-1 mesmo, como diz o manual).
+- **Versão do Padrão** (`<ans:Padrao>`) — alerta se for anterior a 4.03.00,
+  obrigatória desde 01/07/2026 (Ofício-Circular nº 6/2025/COEST/GPIND/
+  DIRAD-DIDES/DIDES).
+- **Tipos de guia** encontrados no lote (guiaSP-SADT, guiaConsulta,
+  guiaResumoInternacao etc.).
+- **Códigos de tabela** (`codigoTabela`) contra o domínio oficial (00, 18,
+  19, 20, 22, 90, 98).
+- **Valores por item**: quantidade × valor unitário × redução/acréscimo
+  confere com o valor total do item.
+- **Total da guia**: soma dos componentes (`valorProcedimentos` +
+  `valorDiarias` + ... ) e soma dos itens conferem com `valorTotalGeral`.
+- **Operadora de destino**, a partir do registro ANS, usando a mesma base
+  de dados abertos da ANS já usada no Fase 3 (`operadoras-ans.json`).
+- **Convenção de nomenclatura de algumas cooperativas Unimed**: o primeiro
+  dígito do nome do arquivo (0 = resumo de internação/médicos não
+  credenciados, 2 = SP-SADT credenciados, 5 = honorário individual
+  credenciados) deve bater com o primeiro dígito de `<ans:numeroLote>` —
+  só é checado quando a operadora de destino é uma Unimed.
+
+**Não é** um validador oficial certificado pela ANS — não valida contra o
+schema XSD completo nem substitui a homologação da operadora.
+
 ## Resumo executivo
 
 | Fase | Status | Esforço | Valor | Depende de dado pago? |

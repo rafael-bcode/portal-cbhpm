@@ -1225,4 +1225,401 @@ formEl.addEventListener('submit', async (e) => {
   }
 });
 
+// ---------- Validador de XML TISS ----------
+// Roda inteiramente no navegador — o arquivo nunca é enviado a um servidor.
+// Não é um validador oficial certificado pela ANS: cobre checagens
+// estruturais e aritméticas documentadas no Componente Organizacional do
+// Padrão TISS (hash MD5, versão, tipos de guia, códigos de tabela, valores
+// por item e total da guia) e a convenção de nomenclatura de arquivo de
+// algumas operadoras Unimed (0/2/5).
+const validadorArquivoEl = document.getElementById('validador-arquivo');
+const validadorResultadoEl = document.getElementById('validador-resultado-area');
+
+const TISS_VERSOES_CONHECIDAS = ['4.00.00', '4.00.01', '4.01.00', '4.02.00', '4.03.00'];
+const TISS_VERSAO_VIGENTE = '4.03.00'; // obrigatória desde 01/07/2026 (Ofício-Circular nº 6/2025/COEST/GPIND/DIRAD-DIDES/DIDES)
+const TISS_CODIGOS_TABELA = {
+  '00': 'Tabela própria das operadoras',
+  '18': 'Diárias, taxas e gases medicinais',
+  '19': 'Materiais e OPME',
+  '20': 'Medicamentos',
+  '22': 'Procedimentos e eventos em saúde (TUSS)',
+  '90': 'Tabela própria — pacote odontológico',
+  '98': 'Tabela própria — pacotes',
+};
+const UNIMED_ROTULOS_ARQUIVO = {
+  '0': 'Resumo de internação e médicos não credenciados',
+  '2': 'SP-SADT credenciados',
+  '5': 'Honorário individual dos credenciados',
+};
+
+let operadorasAnsCache = null;
+async function carregarOperadorasAns() {
+  if (operadorasAnsCache) return operadorasAnsCache;
+  try {
+    const resp = await fetch('operadoras-ans.json');
+    operadorasAnsCache = await resp.json();
+  } catch {
+    operadorasAnsCache = {};
+  }
+  return operadorasAnsCache;
+}
+
+function detectarEncodingXml(bytes) {
+  const inicio = new TextDecoder('ascii').decode(bytes.slice(0, 200));
+  const m = inicio.match(/encoding=["']([\w-]+)["']/i);
+  if (!m) return 'utf-8';
+  const enc = m[1].toLowerCase();
+  return enc === 'iso-8859-1' || enc === 'latin1' ? 'iso-8859-1' : 'utf-8';
+}
+
+async function lerArquivoTiss(file) {
+  const buffer = await file.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  const encoding = detectarEncodingXml(bytes);
+  return new TextDecoder(encoding).decode(bytes);
+}
+
+// Algoritmo oficial do hash do epílogo TISS (Componente Organizacional, item
+// 115 "HASH MD-5"): MD5 sobre a concatenação literal do conteúdo de cada
+// tag-folha, na ordem em que aparecem, excluindo nomes de tags/atributos e a
+// própria tag <ans:hash>, codificado em ISO-8859-1. Verificado nesta sessão
+// contra hashes reais (inclusive com acentuação) antes de ser usado aqui.
+function calcularHashTiss(textoXml) {
+  const semProlog = textoXml.replace(/^<\?xml[^>]*\?>\s*/, '');
+  let concatenado = '';
+  const re = /<([A-Za-z][\w:.-]*)\b[^>]*>([^<]*)<\/\1>/g;
+  let m;
+  while ((m = re.exec(semProlog)) !== null) {
+    if (m[1] === 'ans:hash') continue;
+    concatenado += m[2];
+  }
+  const bytes = [];
+  for (let i = 0; i < concatenado.length; i++) {
+    const code = concatenado.charCodeAt(i);
+    bytes.push(code <= 0xff ? code : 0x3f);
+  }
+  return md5Hex(bytes);
+}
+
+function filhosTiss(el, nomeLocal) {
+  return el ? Array.from(el.children).filter((c) => c.localName === nomeLocal) : [];
+}
+function filhoTiss(el, nomeLocal) {
+  return filhosTiss(el, nomeLocal)[0] || null;
+}
+function textoDeTiss(el, nomeLocal) {
+  const f = filhoTiss(el, nomeLocal);
+  return f ? f.textContent.trim() : '';
+}
+function buscarProfundoTiss(el, nomeLocal) {
+  if (el.localName === nomeLocal) return el;
+  for (const filho of el.children) {
+    const achado = buscarProfundoTiss(filho, nomeLocal);
+    if (achado) return achado;
+  }
+  return null;
+}
+function numDeTiss(texto) {
+  if (texto === '' || texto === undefined || texto === null) return null;
+  const n = Number(String(texto).replace(',', '.'));
+  return Number.isFinite(n) ? n : null;
+}
+
+function analisarItemTiss(itemEl, procEl) {
+  const codigoTabela = textoDeTiss(procEl, 'codigoTabela');
+  const codigoProcedimento = textoDeTiss(procEl, 'codigoProcedimento');
+  const quantidade = numDeTiss(textoDeTiss(itemEl, 'quantidadeExecutada')) ?? 1;
+  const reducao = numDeTiss(textoDeTiss(itemEl, 'reducaoAcrescimo')) ?? 1;
+  const valorUnitario = numDeTiss(textoDeTiss(itemEl, 'valorUnitario'));
+  const valorTotal = numDeTiss(textoDeTiss(itemEl, 'valorTotal'));
+  const esperado = valorUnitario !== null ? Number((valorUnitario * quantidade * reducao).toFixed(2)) : null;
+  const ok = valorTotal !== null && esperado !== null ? Math.abs(valorTotal - esperado) <= 0.02 : null;
+  return { codigoTabela, codigoProcedimento, quantidade, reducao, valorUnitario, valorTotal, esperado, ok };
+}
+
+function analisarGuiaTiss(guiaEl, tipo) {
+  const cabecalho = filhoTiss(guiaEl, 'cabecalhoGuia') || filhoTiss(guiaEl, 'cabecalhoConsulta');
+  const registroANS = textoDeTiss(cabecalho, 'registroANS');
+  const numeroGuiaPrestador = textoDeTiss(cabecalho, 'numeroGuiaPrestador');
+
+  const itens = [];
+  const procedimentosExecutados = filhoTiss(guiaEl, 'procedimentosExecutados');
+  filhosTiss(procedimentosExecutados, 'procedimentoExecutado').forEach((pe) => {
+    const proc = filhoTiss(pe, 'procedimento');
+    if (proc) itens.push(analisarItemTiss(pe, proc));
+  });
+  const outrasDespesas = filhoTiss(guiaEl, 'outrasDespesas');
+  filhosTiss(outrasDespesas, 'despesa').forEach((d) => {
+    const servico = filhoTiss(d, 'servicosExecutados');
+    if (servico) itens.push(analisarItemTiss(servico, servico));
+  });
+
+  // guiaConsulta não tem quantidade/redução/valorTotal por item — só um
+  // valorProcedimento único embutido em dadosAtendimento/procedimento.
+  let consultaItem = null;
+  if (tipo === 'guiaConsulta') {
+    const dadosAtendimento = filhoTiss(guiaEl, 'dadosAtendimento');
+    const proc = filhoTiss(dadosAtendimento, 'procedimento');
+    if (proc) {
+      consultaItem = {
+        codigoTabela: textoDeTiss(proc, 'codigoTabela'),
+        codigoProcedimento: textoDeTiss(proc, 'codigoProcedimento'),
+        valorProcedimento: numDeTiss(textoDeTiss(proc, 'valorProcedimento')),
+      };
+    }
+  }
+
+  const valorTotalEl = filhoTiss(guiaEl, 'valorTotal');
+  let valorTotal = null;
+  if (valorTotalEl) {
+    const campos = ['valorProcedimentos', 'valorDiarias', 'valorTaxasAlugueis', 'valorMateriais', 'valorMedicamentos', 'valorOPME', 'valorGasesMedicinais'];
+    let soma = 0;
+    campos.forEach((c) => {
+      soma += numDeTiss(textoDeTiss(valorTotalEl, c)) || 0;
+    });
+    const valorTotalGeral = numDeTiss(textoDeTiss(valorTotalEl, 'valorTotalGeral'));
+    const somaItens = itens.reduce((s, it) => s + (it.valorTotal || 0), 0);
+    valorTotal = {
+      soma: Number(soma.toFixed(2)),
+      valorTotalGeral,
+      okComponentes: valorTotalGeral !== null ? Math.abs(soma - valorTotalGeral) <= 0.02 : null,
+      somaItens: Number(somaItens.toFixed(2)),
+      okItens: itens.length > 0 && valorTotalGeral !== null ? Math.abs(somaItens - valorTotalGeral) <= 0.02 : null,
+    };
+  }
+
+  return { tipo, registroANS, numeroGuiaPrestador, itens, consultaItem, valorTotal };
+}
+
+async function validarArquivoTiss(file) {
+  const textoXml = await lerArquivoTiss(file);
+  const hashCalculado = calcularHashTiss(textoXml);
+
+  const doc = new DOMParser().parseFromString(textoXml, 'text/xml');
+  const erroParse = doc.querySelector('parsererror');
+
+  const resultado = {
+    nomeArquivo: file.name,
+    tamanhoBytes: file.size,
+    erroParse: erroParse ? erroParse.textContent.trim() : null,
+    hash: { calculado: hashCalculado, declarado: null, ok: null },
+    versao: '',
+    operadoraDestino: { registro: '', nome: null },
+    prestadorOrigem: '',
+    numeroLote: '',
+    tiposGuia: {},
+    guias: [],
+    unimed: null,
+  };
+
+  if (resultado.erroParse) return resultado;
+
+  const raiz = doc.documentElement;
+  const cabecalho = filhoTiss(raiz, 'cabecalho');
+  const epilogo = filhoTiss(raiz, 'epilogo');
+
+  resultado.hash.declarado = epilogo ? textoDeTiss(epilogo, 'hash').toLowerCase() : '';
+  resultado.hash.ok = resultado.hash.declarado ? resultado.hash.declarado === hashCalculado : null;
+  resultado.versao = textoDeTiss(cabecalho, 'Padrao');
+
+  const origem = filhoTiss(cabecalho, 'origem');
+  const identPrestador = filhoTiss(origem, 'identificacaoPrestador');
+  if (identPrestador) {
+    const cnpj = textoDeTiss(identPrestador, 'CNPJ');
+    const codigoOperadora = textoDeTiss(identPrestador, 'codigoPrestadorNaOperadora');
+    resultado.prestadorOrigem = cnpj ? `CNPJ ${cnpj}` : codigoOperadora ? `Código na operadora ${codigoOperadora}` : '';
+  }
+
+  const destino = filhoTiss(cabecalho, 'destino');
+  resultado.operadoraDestino.registro = textoDeTiss(destino, 'registroANS');
+  const operadoras = await carregarOperadorasAns();
+  if (resultado.operadoraDestino.registro && operadoras[resultado.operadoraDestino.registro]) {
+    resultado.operadoraDestino.nome = operadoras[resultado.operadoraDestino.registro].razaoSocial;
+  }
+
+  const loteGuias = buscarProfundoTiss(raiz, 'loteGuias');
+  if (loteGuias) {
+    resultado.numeroLote = textoDeTiss(loteGuias, 'numeroLote');
+    const guiasTISS = filhoTiss(loteGuias, 'guiasTISS');
+    if (guiasTISS) {
+      Array.from(guiasTISS.children).forEach((guiaEl) => {
+        const tipo = guiaEl.localName;
+        resultado.tiposGuia[tipo] = (resultado.tiposGuia[tipo] || 0) + 1;
+        resultado.guias.push(analisarGuiaTiss(guiaEl, tipo));
+      });
+    }
+  }
+
+  const nomeOperadora = resultado.operadoraDestino.nome || '';
+  if (/unimed/i.test(nomeOperadora)) {
+    const digitoArquivo = (file.name.match(/^(\d)/) || [])[1] || null;
+    const digitoLoteMatch = resultado.numeroLote.match(/^(\d)/);
+    const digitoLote = digitoLoteMatch ? digitoLoteMatch[1] : null;
+    resultado.unimed = {
+      digitoArquivo,
+      digitoLote,
+      rotuloArquivo: digitoArquivo ? UNIMED_ROTULOS_ARQUIVO[digitoArquivo] || null : null,
+      bateComLote: digitoArquivo && digitoLote ? digitoArquivo === digitoLote : null,
+    };
+  }
+
+  return resultado;
+}
+
+function renderizarGuiaTiss(g) {
+  const itensProblema = g.itens.filter((it) => it.ok === false);
+  const totalProblema = g.valorTotal && (g.valorTotal.okComponentes === false || g.valorTotal.okItens === false);
+  const statusGeral = itensProblema.length === 0 && !totalProblema;
+
+  const linhasItens = g.itens
+    .map(
+      (it) => `
+      <div class="breakdown-row">
+        <span class="label">
+          ${it.codigoProcedimento || '—'}
+          <span class="detail">
+            tabela ${it.codigoTabela || '—'} · ${it.quantidade} × ${fmtMoeda(it.valorUnitario ?? 0)} × ${it.reducao}
+            ${it.ok === false ? `· esperado ${fmtMoeda(it.esperado)}` : ''}
+          </span>
+        </span>
+        <span class="value ${it.ok === false ? 'zero' : ''}">${fmtMoeda(it.valorTotal ?? 0)}</span>
+      </div>`
+    )
+    .join('');
+
+  const consultaHtml = g.consultaItem
+    ? `<div class="breakdown-row">
+        <span class="label">${g.consultaItem.codigoProcedimento || '—'} <span class="detail">tabela ${g.consultaItem.codigoTabela || '—'}</span></span>
+        <span class="value">${fmtMoeda(g.consultaItem.valorProcedimento ?? 0)}</span>
+      </div>`
+    : '';
+
+  const totalHtml = g.valorTotal
+    ? `<div class="total-row">
+        <span class="label">Total da guia ${totalProblema ? '⚠' : '✔'}</span>
+        <div style="text-align:right">
+          <div class="value">${fmtMoeda(g.valorTotal.valorTotalGeral ?? 0)}</div>
+          ${g.valorTotal.okComponentes === false ? `<div class="original">soma dos componentes do total: ${fmtMoeda(g.valorTotal.soma)}</div>` : ''}
+          ${g.valorTotal.okItens === false ? `<div class="original">soma dos itens: ${fmtMoeda(g.valorTotal.somaItens)}</div>` : ''}
+        </div>
+      </div>`
+    : '';
+
+  const qtdItens = g.itens.length || (g.consultaItem ? 1 : 0);
+
+  return `
+    <div class="edicao-card">
+      <div class="edicao-card-head">
+        <span class="nome">${g.tipo}${g.numeroGuiaPrestador ? ` — ${g.numeroGuiaPrestador}` : ''}</span>
+        <span class="ano">${statusGeral ? '✔' : '⚠'}</span>
+      </div>
+      ${
+        qtdItens > 0
+          ? `<details class="grupo grupo-principal" ${itensProblema.length > 0 ? 'open' : ''}>
+              <summary class="grupo-summary"><span class="grupo-nome">Itens (${qtdItens})</span></summary>
+              <div class="grupo-corpo"><div class="breakdown">${linhasItens}${consultaHtml}</div></div>
+            </details>`
+          : ''
+      }
+      ${totalHtml}
+    </div>`;
+}
+
+function renderizarValidadorTiss(resultado) {
+  if (resultado.erroParse) {
+    validadorResultadoEl.innerHTML = `<div class="msg erro">Arquivo não é um XML válido: ${resultado.erroParse}</div>`;
+    return;
+  }
+
+  const linhaHash = resultado.hash.declarado
+    ? resultado.hash.ok
+      ? `<div class="validador-linha ok">✔ Hash confere (${resultado.hash.declarado})</div>`
+      : `<div class="validador-linha erro">✘ Hash não confere — declarado ${resultado.hash.declarado}, calculado ${resultado.hash.calculado}. O conteúdo pode ter sido alterado após a geração do arquivo.</div>`
+    : `<div class="validador-linha aviso">— Arquivo não tem &lt;ans:hash&gt; no epílogo</div>`;
+
+  const versaoConhecida = TISS_VERSOES_CONHECIDAS.includes(resultado.versao);
+  const versaoAtual = resultado.versao === TISS_VERSAO_VIGENTE;
+  const linhaVersao = !resultado.versao
+    ? `<div class="validador-linha aviso">— Versão do Padrão (&lt;ans:Padrao&gt;) não informada</div>`
+    : !versaoConhecida
+    ? `<div class="validador-linha aviso">⚠ Versão "${resultado.versao}" não reconhecida</div>`
+    : versaoAtual
+    ? `<div class="validador-linha ok">✔ Versão ${resultado.versao} (vigente)</div>`
+    : `<div class="validador-linha aviso">⚠ Versão ${resultado.versao} desatualizada — a obrigatória desde 01/07/2026 é ${TISS_VERSAO_VIGENTE}</div>`;
+
+  const linhaOperadora = resultado.operadoraDestino.registro
+    ? `<div class="validador-linha">Operadora de destino (registro ANS ${resultado.operadoraDestino.registro}): <strong>${resultado.operadoraDestino.nome || 'não encontrada na base de operadoras ativas'}</strong></div>`
+    : '';
+  const linhaPrestador = resultado.prestadorOrigem
+    ? `<div class="validador-linha">Prestador de origem: ${resultado.prestadorOrigem}</div>`
+    : '';
+  const linhaLote = resultado.numeroLote ? `<div class="validador-linha">Lote: ${resultado.numeroLote}</div>` : '';
+
+  let linhaUnimed = '';
+  if (resultado.unimed && resultado.unimed.digitoArquivo) {
+    const u = resultado.unimed;
+    linhaUnimed = u.rotuloArquivo
+      ? u.bateComLote === false
+        ? `<div class="validador-linha erro">✘ Convenção Unimed: nome do arquivo indica tipo "${u.digitoArquivo}" (${u.rotuloArquivo}), mas o lote começa com "${u.digitoLote}" — não batem.</div>`
+        : `<div class="validador-linha ok">✔ Convenção Unimed: tipo "${u.digitoArquivo}" — ${u.rotuloArquivo}</div>`
+      : '';
+  }
+
+  const codigosTabelaEncontrados = new Set();
+  resultado.guias.forEach((g) => {
+    g.itens.forEach((it) => it.codigoTabela && codigosTabelaEncontrados.add(it.codigoTabela));
+    if (g.consultaItem && g.consultaItem.codigoTabela) codigosTabelaEncontrados.add(g.consultaItem.codigoTabela);
+  });
+  const codigosDesconhecidos = Array.from(codigosTabelaEncontrados).filter((c) => !TISS_CODIGOS_TABELA[c]);
+  const linhaCodigos =
+    codigosTabelaEncontrados.size === 0
+      ? ''
+      : codigosDesconhecidos.length > 0
+      ? `<div class="validador-linha aviso">⚠ Código(s) de tabela não reconhecido(s): ${codigosDesconhecidos.join(', ')}</div>`
+      : `<div class="validador-linha ok">✔ Códigos de tabela conhecidos: ${Array.from(codigosTabelaEncontrados)
+          .map((c) => `${c} (${TISS_CODIGOS_TABELA[c]})`)
+          .join('; ')}</div>`;
+
+  const tiposGuiaHtml = Object.entries(resultado.tiposGuia)
+    .map(([tipo, qtd]) => `<span class="pct-badge pct-badge-neutro">${tipo} × ${qtd}</span>`)
+    .join(' ');
+
+  const guiasHtml = resultado.guias.map(renderizarGuiaTiss).join('');
+
+  validadorResultadoEl.innerHTML = `
+    <div class="edicao-card">
+      <div class="edicao-card-head">
+        <span class="nome">${resultado.nomeArquivo}</span>
+        <span class="ano">${(resultado.tamanhoBytes / 1024).toFixed(1)} KB</span>
+      </div>
+      <div class="breakdown">
+        ${linhaHash}
+        ${linhaVersao}
+        ${linhaOperadora}
+        ${linhaPrestador}
+        ${linhaLote}
+        ${linhaUnimed}
+        ${linhaCodigos}
+      </div>
+      <div class="referencia-tabela">Guias encontradas: ${tiposGuiaHtml || '—'}</div>
+    </div>
+    <div class="cards-grid" style="margin-top:16px;">${guiasHtml}</div>
+  `;
+}
+
+if (validadorArquivoEl) {
+  validadorArquivoEl.addEventListener('change', async () => {
+    const file = validadorArquivoEl.files[0];
+    if (!file) return;
+    validadorResultadoEl.innerHTML = '<div class="msg vazio">Analisando…</div>';
+    try {
+      const resultado = await validarArquivoTiss(file);
+      renderizarValidadorTiss(resultado);
+    } catch (err) {
+      console.error(err);
+      validadorResultadoEl.innerHTML = `<div class="msg erro">Erro ao analisar o arquivo: ${err.message}</div>`;
+    }
+  });
+}
+
 carregarEdicoes();

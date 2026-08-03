@@ -641,6 +641,16 @@ body {
 .msg.erro { background: #FBE7E4; color: #A0341C; border: 1px solid #E9B4A8; }
 .msg.vazio { background: var(--panel); border: 1px dashed var(--border); color: var(--ink-soft); text-align: center; }
 
+.validador-linha {
+  padding: 6px 0;
+  font-size: 0.85rem;
+  border-bottom: 1px dashed var(--border);
+}
+.validador-linha:last-child { border-bottom: none; }
+.validador-linha.ok { color: var(--teal-dark); }
+.validador-linha.aviso { color: var(--amber); }
+.validador-linha.erro { color: #A0341C; font-weight: 600; }
+
 @media (max-width: 640px) {
   .container { padding: 20px 14px 60px; }
   .search-panel { padding: 18px; }

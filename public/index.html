@@ -97,6 +97,7 @@
   <div class="tabs">
     <button type="button" class="tab-btn active" data-tab="consulta">Consulta por procedimento</button>
     <button type="button" class="tab-btn" data-tab="multiplos">Múltiplos procedimentos</button>
+    <button type="button" class="tab-btn" data-tab="validador">Validador de XML TISS</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -343,6 +344,28 @@
 
   </div>
 
+  <div id="tab-validador" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Validador de XML TISS</h2>
+    </div>
+    <p class="ajustes-nota">
+      Confere um arquivo XML do Padrão TISS <strong>só no seu navegador</strong> — o arquivo nunca é enviado a
+      nenhum servidor. Verifica o hash MD5, a versão do Padrão, os tipos de guia, os códigos de tabela, os
+      valores por item e o total de cada guia, e mostra a operadora a partir do registro ANS. Não é um
+      validador oficial certificado pela ANS.
+    </p>
+    <div class="field">
+      <label for="validador-arquivo">Arquivo XML</label>
+      <input type="file" id="validador-arquivo" accept=".xml">
+    </div>
+  </section>
+
+  <section id="validador-resultado-area"></section>
+
+  </div>
+
 </main>
 
 <div id="modal-ajuda-mp" class="modal-overlay hidden">
@@ -370,6 +393,7 @@
 
 <div id="chart-tooltip" class="chart-tooltip hidden" role="tooltip"></div>
 
+<script src="md5.js"></script>
 <script src="app.js"></script>
 </body>
 </html>
