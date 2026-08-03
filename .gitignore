@@ -1,2 +1,11 @@
 .env
 node_modules/
+.claude/
+
+# Arquivos-fonte de importação (planilhas/PDFs oficiais e dumps intermediários).
+# São insumos únicos para popular o banco (Supabase) — a aplicação em si nunca
+# lê esses arquivos em runtime, então não precisam ficar no controle de versão.
+*.xlsx
+*.pdf
+*_dados.json
+resultado-teste.json

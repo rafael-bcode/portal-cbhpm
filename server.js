@@ -16,7 +16,7 @@ app.get('/api/versao', (req, res) => {
 // Lista todas as edições disponíveis (usado para montar os checkboxes na tela)
 app.get('/api/edicoes', async (req, res) => {
   try {
-    const { rows } = await pool.query('SELECT id, nome, ano_inicio FROM edicoes ORDER BY ano_inicio');
+    const { rows } = await pool.query('SELECT id, nome, ano_inicio FROM edicoes ORDER BY ano_inicio, id');
     res.json(rows);
   } catch (err) {
     console.error('Erro ao buscar edições:', err);
@@ -429,6 +429,10 @@ app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`Servidor rodando em http://localhost:${PORT}`);
-});
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Servidor rodando em http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
