@@ -36,6 +36,11 @@
       <p><strong>Porte Anestésico</strong> (honorário do anestesista) e <strong>Auxiliares/Instrumentador</strong> (equipe) são honorários de outros profissionais e por isso <strong>não entram</strong> nessa soma — são calculados e exibidos em blocos separados. O valor da equipe é um percentual configurável sobre o valor do porte do cirurgião.</p>
       <p>Os percentuais de ajuste (%) informados na simulação são aplicados sobre o respectivo componente.</p>
       <p><strong>Nota sobre as edições 2004–2017:</strong> nessas edições, a CBHPM já embutia um acréscimo de 10% no valor total de Porte e Porte Anestésico que não aparece no "valor de referência" exibido isoladamente. Por isso o total mostrado pode ser 10% maior que o valor de referência da linha, mesmo com 0% de ajuste — o total está correto e reflete o valor original daquela edição.</p>
+      <p class="ajustes-nota" style="margin-top:16px;">
+        <strong>Fontes e referências oficiais:</strong><br>
+        <a href="https://amb.org.br/cbhpm/" target="_blank" rel="noopener">CBHPM — Associação Médica Brasileira (AMB)</a>, publicadora oficial da classificação.<br>
+        <a href="https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss" target="_blank" rel="noopener">Padrão TISS — Agência Nacional de Saúde Suplementar (ANS)</a>, para o padrão de troca de informações que usa os códigos da CBHPM/TUSS.
+      </p>
     </div>
   </div>
 </div>
@@ -137,13 +142,18 @@
 
       <div class="field field-edicoes">
         <label>Edições</label>
-        <div class="edicoes-toolbar">
-          <button type="button" id="btn-todas" class="chip-btn">Todas</button>
-          <button type="button" id="btn-nenhuma" class="chip-btn">Nenhuma</button>
-        </div>
-        <div id="lista-edicoes" class="edicoes-grid">
-          <span class="loading-text">Carregando edições…</span>
-        </div>
+        <details class="ajustes edicoes-select">
+          <summary id="edicoes-resumo">Carregando edições…</summary>
+          <div class="edicoes-select-corpo">
+            <div class="edicoes-toolbar">
+              <button type="button" id="btn-todas" class="chip-btn">Todas</button>
+              <button type="button" id="btn-nenhuma" class="chip-btn">Nenhuma</button>
+            </div>
+            <div id="lista-edicoes" class="edicoes-grid">
+              <span class="loading-text">Carregando edições…</span>
+            </div>
+          </div>
+        </details>
       </div>
 
       <div class="field field-convenio">
@@ -414,6 +424,35 @@
         </div>
         <button type="button" id="btn-comparar-arquivos" class="btn-consultar">Comparar</button>
         <div id="comparar-resultado" style="margin-top:16px;"></div>
+      </div>
+    </details>
+
+    <details class="grupo grupo-principal" id="validador-versoes-bloco">
+      <summary class="grupo-summary"><span class="grupo-nome">Sobre as versões do Padrão TISS</span></summary>
+      <div class="grupo-corpo">
+        <p class="ajustes-nota" style="margin:10px 16px 0;">
+          Resumo das principais mudanças de cada versão recente, com base em comunicados oficiais e de operadoras —
+          não substitui a documentação completa. Para o detalhe oficial, veja o
+          <a href="https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-historico-das-versoes-dos-componentes-do-padrao-tiss" target="_blank" rel="noopener">histórico oficial de versões (ANS)</a>.
+        </p>
+        <div class="versoes-tiss-lista">
+          <div class="versao-tiss-item">
+            <div class="versao-tiss-nome">4.00.00 / 4.00.01</div>
+            <div class="versao-tiss-desc">Versão-base da geração 4.x do Padrão, substituindo a série 3.x; a 4.00.01 trouxe correções pontuais sobre a 4.00.00.</div>
+          </div>
+          <div class="versao-tiss-item">
+            <div class="versao-tiss-nome">4.01.00 <span class="versao-tiss-data">obrigatória desde o início de 2023</span></div>
+            <div class="versao-tiss-desc">Adequação à LGPD: remoção de campos com dados diretamente identificáveis do beneficiário (nome, número do CNS, template biométrico) de guias e recursos digitais; padronização obrigatória do nome do arquivo (registro ANS + ano/mês + sequencial); atualização de tabelas de terminologia (TUSS).</div>
+          </div>
+          <div class="versao-tiss-item">
+            <div class="versao-tiss-nome">4.02.00 <span class="versao-tiss-data">obrigatória desde a fatura de jan/2026</span></div>
+            <div class="versao-tiss-desc">Atualização das tabelas de domínio TUSS (Materiais e OPME, Medicamentos, Procedimentos e Eventos em Saúde, CBO, status de guias/protocolos, entre outras); passou a rejeitar arquivos nas versões antigas 3.04.01 e 3.05.00.</div>
+          </div>
+          <div class="versao-tiss-item">
+            <div class="versao-tiss-nome">4.03.00 <span class="versao-tiss-data">obrigatória desde a fatura de jul/2026 — vigente hoje</span></div>
+            <div class="versao-tiss-desc">CNPJ passa a aceitar formato alfanumérico (IN RFB nº 2.229/2024); campos para nome social do beneficiário; novas exclusões de nome do beneficiário em recursos digitais; componente de comunicação atualizado, com bloqueio automático de versões obsoletas; novas tabelas TUSS (incluindo Glosas).</div>
+          </div>
+        </div>
       </div>
     </details>
   </section>

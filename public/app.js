@@ -337,6 +337,22 @@ document.addEventListener('keydown', (e) => {
 
 carregarVersao();
 
+// Resumo mostrado fechado no seletor de edições (ex: "Todas as 21 edições
+// selecionadas") — evita que a tela abra sempre com a parede de 21
+// checkboxes à mostra; o painel completo fica a um clique.
+function atualizarResumoEdicoes() {
+  const resumoEl = document.getElementById('edicoes-resumo');
+  if (!resumoEl) return;
+  const total = edicoesDisponiveis.length;
+  const marcadas = document.querySelectorAll('input[name="edicao"]:checked').length;
+  resumoEl.textContent =
+    marcadas === 0
+      ? 'Nenhuma edição selecionada'
+      : marcadas === total
+      ? `Todas as ${total} edições selecionadas`
+      : `${marcadas} de ${total} edições selecionadas`;
+}
+
 // Carrega a lista de edições e monta os checkboxes
 async function carregarEdicoes() {
   try {
@@ -353,6 +369,7 @@ async function carregarEdicoes() {
       )
       .join('');
 
+    atualizarResumoEdicoes();
     sugerirDefaultsAuxiliares();
     popularSelectEdicaoMp();
   } catch (err) {
@@ -363,14 +380,19 @@ async function carregarEdicoes() {
 
 document.getElementById('btn-todas').addEventListener('click', () => {
   document.querySelectorAll('input[name="edicao"]').forEach((cb) => (cb.checked = true));
+  atualizarResumoEdicoes();
   sugerirDefaultsAuxiliares();
 });
 document.getElementById('btn-nenhuma').addEventListener('click', () => {
   document.querySelectorAll('input[name="edicao"]').forEach((cb) => (cb.checked = false));
+  atualizarResumoEdicoes();
   sugerirDefaultsAuxiliares();
 });
 listaEdicoesEl.addEventListener('change', (e) => {
-  if (e.target.matches('input[name="edicao"]')) sugerirDefaultsAuxiliares();
+  if (e.target.matches('input[name="edicao"]')) {
+    atualizarResumoEdicoes();
+    sugerirDefaultsAuxiliares();
+  }
 });
 
 // ---------- Sugestão automática dos % de auxiliar conforme a era da edição ----------
@@ -424,6 +446,11 @@ let mpDebounceTimer = null;
 
 function popularSelectEdicaoMp() {
   mpEdicaoSelectEl.innerHTML = edicoesDisponiveis.map((e) => `<option value="${e.id}">${e.nome}</option>`).join('');
+  // edicoesDisponiveis vem ordenada por ano_inicio — a última é a mais
+  // recente, e é essa que deve abrir selecionada (não a mais antiga, que é
+  // o padrão natural de um <select> sem valor explícito).
+  const maisRecente = edicoesDisponiveis[edicoesDisponiveis.length - 1];
+  if (maisRecente) mpEdicaoSelectEl.value = maisRecente.id;
   aplicarDefaultsAuxiliarMp();
 }
 
@@ -1578,6 +1605,7 @@ function analisarGuiaTiss(guiaEl, tipo) {
         quantidade: 1,
         valorTotal: numDeTiss(textoDeTiss(proc, 'valorProcedimento')),
         grupo: GRUPO_CONSULTAS,
+        profissionais: executanteConsulta ? [executanteConsulta] : [],
       };
     }
   }
@@ -1677,11 +1705,17 @@ async function validarArquivoTiss(file) {
         const tipo = guiaEl.localName;
         resultado.tiposGuia[tipo] = (resultado.tiposGuia[tipo] || 0) + 1;
         const guia = analisarGuiaTiss(guiaEl, tipo);
-        guia.profissionais.forEach((p) => {
+        const enriquecerProfissional = (p) => {
           p.conselhoNome = TISS_CONSELHOS[p.conselho] || (p.conselho ? `Conselho ${p.conselho}` : '');
           p.cboDescricao = cboMedicos[p.cbo] || '';
           p.grauPartDescricao = TISS_GRAU_PARTICIPACAO[p.grauPart] || '';
-        });
+        };
+        // Enriquece tanto a lista agregada da guia (aba Profissionais) quanto
+        // o(s) profissional(is) de cada item individual (coluna Profissional
+        // na tabela de cada grupo) — são objetos separados.
+        guia.profissionais.forEach(enriquecerProfissional);
+        guia.itens.forEach((it) => it.profissionais.forEach(enriquecerProfissional));
+        if (guia.consultaItem) guia.consultaItem.profissionais.forEach(enriquecerProfissional);
         resultado.guias.push(guia);
       });
     }
@@ -1705,33 +1739,16 @@ async function validarArquivoTiss(file) {
   return resultado;
 }
 
+// Card compacto na grade (resumo + link para o detalhe): o detalhe item a
+// item e os profissionais já ficam completos e melhor organizados (por
+// grupo, em abas) no modal aberto ao clicar no card — repetir tudo aqui
+// inline só duplicava a informação e poluía a tela.
 function renderizarGuiaTiss(g, indice) {
   const itensProblema = g.itens.filter((it) => it.ok === false);
   const totalProblema = g.valorTotal && (g.valorTotal.okComponentes === false || g.valorTotal.okItens === false);
   const statusGeral = itensProblema.length === 0 && !totalProblema;
-
-  const linhasItens = g.itens
-    .map(
-      (it) => `
-      <div class="breakdown-row">
-        <span class="label">
-          ${escaparHtml(it.codigoProcedimento) || '—'}
-          <span class="detail">
-            tabela ${escaparHtml(it.codigoTabela) || '—'} · ${it.quantidade} × ${fmtMoeda(it.valorUnitario ?? 0)} × ${it.reducao}
-            ${it.ok === false ? `· esperado ${fmtMoeda(it.esperado)}` : ''}
-          </span>
-        </span>
-        <span class="value ${it.ok === false ? 'zero' : ''}">${fmtMoeda(it.valorTotal ?? 0)}</span>
-      </div>`
-    )
-    .join('');
-
-  const consultaHtml = g.consultaItem
-    ? `<div class="breakdown-row">
-        <span class="label">${escaparHtml(g.consultaItem.codigoProcedimento) || '—'} <span class="detail">tabela ${escaparHtml(g.consultaItem.codigoTabela) || '—'}</span></span>
-        <span class="value">${fmtMoeda(g.consultaItem.valorTotal ?? 0)}</span>
-      </div>`
-    : '';
+  const qtdItens = g.itens.length || (g.consultaItem ? 1 : 0);
+  const qtdProfissionais = (g.profissionais || []).length;
 
   const totalHtml = g.valorTotal
     ? `<div class="total-row">
@@ -1744,23 +1761,10 @@ function renderizarGuiaTiss(g, indice) {
       </div>`
     : '';
 
-  const qtdItens = g.itens.length || (g.consultaItem ? 1 : 0);
-
-  const profissionaisHtml = (g.profissionais || [])
-    .map((p) => {
-      const crm = p.numeroConselho
-        ? `${escaparHtml(p.conselhoNome) || 'Conselho ' + (escaparHtml(p.conselho) || '?')} nº ${escaparHtml(p.numeroConselho)}${p.uf ? '/' + escaparHtml(p.uf) : ''}`
-        : '';
-      const cbo = p.cbo ? `CBO ${escaparHtml(p.cbo)}${p.cboDescricao ? ` (${escaparHtml(p.cboDescricao)})` : ''}` : '';
-      const funcao = escaparHtml(p.grauPartDescricao) || escaparHtml(p.papel);
-      const detalhes = [crm, cbo].filter(Boolean).join(' · ');
-      return `
-        <div class="breakdown-row">
-          <span class="label">${escaparHtml(p.nome) || '—'} <span class="detail">${detalhes || '—'}</span></span>
-          <span class="value zero">${funcao}</span>
-        </div>`;
-    })
-    .join('');
+  const resumoPartes = [
+    qtdItens > 0 ? `${qtdItens} item${qtdItens === 1 ? '' : 'ns'}` : '',
+    qtdProfissionais > 0 ? `${qtdProfissionais} profissional${qtdProfissionais === 1 ? '' : 'is'}` : '',
+  ].filter(Boolean);
 
   return `
     <div class="edicao-card">
@@ -1768,22 +1772,7 @@ function renderizarGuiaTiss(g, indice) {
         <span class="nome">${escaparHtml(g.tipo)}${g.numeroGuiaPrestador ? ` — ${escaparHtml(g.numeroGuiaPrestador)}` : ''}</span>
         <span class="ano">${statusGeral ? '✔' : '⚠'}</span>
       </div>
-      ${
-        profissionaisHtml
-          ? `<details class="grupo grupo-secundario">
-              <summary class="grupo-summary"><span class="grupo-nome">Profissionais (${g.profissionais.length})</span></summary>
-              <div class="grupo-corpo"><div class="breakdown">${profissionaisHtml}</div></div>
-            </details>`
-          : ''
-      }
-      ${
-        qtdItens > 0
-          ? `<details class="grupo grupo-principal" ${itensProblema.length > 0 ? 'open' : ''}>
-              <summary class="grupo-summary"><span class="grupo-nome">Itens (${qtdItens})</span></summary>
-              <div class="grupo-corpo"><div class="breakdown">${linhasItens}${consultaHtml}</div></div>
-            </details>`
-          : ''
-      }
+      ${resumoPartes.length ? `<div class="edicao-card-desc">${resumoPartes.join(' · ')}</div>` : ''}
       ${totalHtml}
     </div>`;
 }
@@ -1874,15 +1863,30 @@ function renderizarGruposDespesa(resultado) {
 // Tela de detalhe de uma guia (aberta ao clicar no card da guia): quebra
 // SÓ os itens daquela guia em abas por grupo de despesa, mais uma aba de
 // profissionais e uma de resumo/total — em vez de misturar tudo do XML.
+// Profissional(is) de um item, formatado para a coluna da tabela — mostra
+// nome + função (grau de participação) de cada um, já que um procedimento
+// pode ter mais de um profissional (ex: cirurgião + auxiliar).
+function formatarProfissionaisItemHtml(profissionais) {
+  if (!profissionais || profissionais.length === 0) return '—';
+  return profissionais
+    .map((p) => {
+      const nome = escaparHtml(p.nome) || '—';
+      const funcao = escaparHtml(p.grauPartDescricao);
+      return funcao ? `${nome} <span class="detail">(${funcao})</span>` : nome;
+    })
+    .join('<br>');
+}
+
 function renderizarTabelaGrupoModal(itensGrupo) {
   const subtotal = itensGrupo.reduce((s, it) => s + (it.valorTotal || 0), 0);
   const linhasHtml = itensGrupo
     .map(
       (it) => `
       <tr>
-        <td>${escaparHtml(it.dataExecucao) || '—'}</td>
+        <td class="col-data">${it.dataExecucao ? escaparHtml(formatarDataBR(it.dataExecucao)) : '—'}</td>
         <td>${escaparHtml(it.codigoProcedimento) || '—'}</td>
         <td>${escaparHtml(it.descricaoProcedimento) || '—'}</td>
+        <td>${formatarProfissionaisItemHtml(it.profissionais)}</td>
         <td style="text-align:right">${it.quantidade ?? 1}</td>
         <td style="text-align:right">${fmtMoeda(it.valorTotal ?? 0)}</td>
       </tr>`
@@ -1890,10 +1894,10 @@ function renderizarTabelaGrupoModal(itensGrupo) {
     .join('');
   return `
     <div style="overflow-x:auto;">
-      <table class="guia-doc-tabela">
-        <thead><tr><th>Data</th><th>Código</th><th>Descrição</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
+      <table class="guia-doc-tabela guia-doc-tabela-itens">
+        <thead><tr><th>Data</th><th>Código</th><th>Descrição</th><th>Profissional</th><th style="text-align:right">Qtd.</th><th style="text-align:right">Valor</th></tr></thead>
         <tbody>${linhasHtml}</tbody>
-        <tfoot><tr><td colspan="4" style="text-align:right; font-weight:700;">Subtotal</td><td style="text-align:right; font-weight:700;">${fmtMoeda(subtotal)}</td></tr></tfoot>
+        <tfoot><tr><td colspan="5" style="text-align:right; font-weight:700;">Subtotal</td><td style="text-align:right; font-weight:700;">${fmtMoeda(subtotal)}</td></tr></tfoot>
       </table>
     </div>`;
 }
@@ -2455,6 +2459,56 @@ function compararGuiasTiss(resultadoA, resultadoB) {
   return linhas;
 }
 
+// Confere se os dois arquivos parecem realmente ser do mesmo "par"
+// (operadora e prestador) antes de comparar — evita comparar, por engano,
+// o XML de uma operadora/convênio com o de outra, ou de um prestador com o
+// de outro. Não bloqueia a comparação (o usuário pode ter um motivo
+// legítimo pra comparar mesmo assim), só avisa com destaque. Lote não é
+// exigido igual: um reenvio após glosa normalmente muda de lote.
+function analisarCompatibilidadeComparacao(resultadoA, resultadoB) {
+  const registroA = resultadoA.operadoraDestino.registro;
+  const registroB = resultadoB.operadoraDestino.registro;
+  const mesmaOperadora = registroA && registroB ? registroA === registroB : null;
+
+  const prestadorA = resultadoA.prestadorOrigem;
+  const prestadorB = resultadoB.prestadorOrigem;
+  const mesmoPrestador = prestadorA && prestadorB ? prestadorA === prestadorB : null;
+
+  const chaveGuia = (g, i) => g.numeroGuiaPrestador || `${g.tipo} #${i + 1}`;
+  const chavesA = new Set(resultadoA.guias.map(chaveGuia));
+  const chavesB = new Set(resultadoB.guias.map(chaveGuia));
+  const emComum = Array.from(chavesA).filter((c) => chavesB.has(c)).length;
+
+  return { mesmaOperadora, mesmoPrestador, emComum };
+}
+
+function renderizarAvisoCompatibilidadeComparacao(resultadoA, resultadoB) {
+  const c = analisarCompatibilidadeComparacao(resultadoA, resultadoB);
+  const avisos = [];
+  if (c.mesmaOperadora === false) {
+    avisos.push(
+      `✘ Os arquivos são para operadoras diferentes (${escaparHtml(resultadoA.operadoraDestino.nome || resultadoA.operadoraDestino.registro) || '?'} × ${escaparHtml(resultadoB.operadoraDestino.nome || resultadoB.operadoraDestino.registro) || '?'}).`
+    );
+  }
+  if (c.mesmoPrestador === false) {
+    avisos.push(`✘ Os arquivos são de prestadores diferentes (${escaparHtml(resultadoA.prestadorOrigem)} × ${escaparHtml(resultadoB.prestadorOrigem)}).`);
+  }
+  if (c.emComum === 0) {
+    avisos.push('⚠ Nenhuma guia em comum entre os dois arquivos — confira se são do mesmo envio antes de interpretar o resultado abaixo.');
+  }
+  if (avisos.length === 0) return '';
+  return `
+    <div class="edicao-card" style="margin-bottom:16px;">
+      <div class="edicao-card-head">
+        <span class="nome">⚠ Os arquivos podem não ser comparáveis</span>
+      </div>
+      <div class="breakdown">
+        ${avisos.map((a) => `<div class="validador-linha erro">${a}</div>`).join('')}
+        <div class="validador-linha aviso">Lote A: ${escaparHtml(resultadoA.numeroLote) || '—'} · Lote B: ${escaparHtml(resultadoB.numeroLote) || '—'}</div>
+      </div>
+    </div>`;
+}
+
 function renderizarComparacaoTiss(resultadoA, resultadoB) {
   const totalA = valorTotalArquivo(resultadoA);
   const totalB = valorTotalArquivo(resultadoB);
@@ -2515,6 +2569,7 @@ function renderizarComparacaoTiss(resultadoA, resultadoB) {
       : `<div class="validador-linha aviso">⚠ Total aumentou ${fmtMoeda(diferenca)} de A para B</div>`;
 
   compararResultadoEl.innerHTML = `
+    ${renderizarAvisoCompatibilidadeComparacao(resultadoA, resultadoB)}
     <div class="edicao-card" style="margin-bottom:16px;">
       <div class="edicao-card-head">
         <span class="nome">${escaparHtml(resultadoA.nomeArquivo)} → ${escaparHtml(resultadoB.nomeArquivo)}</span>

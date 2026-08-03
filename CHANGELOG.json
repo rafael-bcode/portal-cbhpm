@@ -1,5 +1,24 @@
 [
   {
+    "versao": "1.14.1",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Validador de XML TISS: a tabela de cada grupo (dentro do modal da guia) agora mostra o profissional (nome + função) de cada procedimento/item — antes só dava pra ver o profissional na aba separada 'Profissionais', sem saber qual médico executou qual procedimento quando havia mais de um na mesma guia.",
+      "Modal da guia: aumenta a largura para caber a coluna de profissional sem quebrar linha, e formata a data de cada item como DD/MM/AAAA."
+    ]
+  },
+  {
+    "versao": "1.14.0",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Corrige a edição padrão em 'Múltiplos procedimentos', que abria na 3ª Edição - 2004 (a mais antiga) em vez da mais recente — quem não percebesse e calculasse direto simulava com preços desatualizados.",
+      "Simplifica os cards de guia no Validador de XML TISS: removido o detalhe de itens/profissionais duplicado dentro de cada card (já disponível, melhor organizado por abas, no modal ao clicar no card) — cards bem mais compactos.",
+      "Consulta por procedimento: o seletor de 21 edições vira um painel fechado por padrão, com um resumo (ex: 'Todas as 21 edições selecionadas') — a grade completa fica a um clique, deixando a tela bem mais limpa.",
+      "Validador de XML TISS: a comparação entre dois arquivos agora avisa quando os arquivos parecem não ser comparáveis (operadoras diferentes, prestadores diferentes ou nenhuma guia em comum) antes de mostrar o resultado, para evitar interpretar por engano a comparação de arquivos de convênios/prestadores diferentes.",
+      "Adiciona referências oficiais (CBHPM/AMB e Padrão TISS/ANS) no modal de ajuda, e um resumo das principais mudanças de cada versão recente do Padrão TISS (4.01.00 a 4.03.00) na aba do Validador, com link para o histórico oficial da ANS."
+    ]
+  },
+  {
     "versao": "1.13.1",
     "data": "2026-08-03",
     "mudancas": [
