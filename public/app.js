@@ -2732,13 +2732,47 @@ function renderizarCardSigtap(item) {
     </div>`;
 }
 
+let ultimaConsultaSigtap = [];
+
+function exportarSigtapCsv(itens) {
+  const linhas = [
+    ['Código', 'Nome', 'Complexidade', 'Sexo', 'Faixa etária', 'Financiamento', 'Sub tipo de financiamento', 'SH (R$)', 'SA (R$)', 'SP (R$)'],
+  ];
+  itens.forEach((item) => {
+    linhas.push([
+      item.codigo,
+      item.nome,
+      rotuloComplexidadeSigtap(item.complexidade),
+      rotuloSexoSigtap(item.sexo),
+      faixaEtariaSigtap(item),
+      item.financiamento_nome || '',
+      item.sub_tipo_financiamento_nome || '',
+      item.vl_sh === null || item.vl_sh === undefined ? '' : numCsv(item.vl_sh),
+      item.vl_sa === null || item.vl_sa === undefined ? '' : numCsv(item.vl_sa),
+      item.vl_sp === null || item.vl_sp === undefined ? '' : numCsv(item.vl_sp),
+    ]);
+  });
+  baixarCsv('sigtap-procedimentos.csv', linhas);
+}
+
 function renderizarResultadoSigtap(itens) {
+  ultimaConsultaSigtap = itens;
   if (itens.length === 0) {
     sigtapResultadoAreaEl.innerHTML = '<div class="msg vazio">Nenhum procedimento SIGTAP encontrado.</div>';
     return;
   }
-  sigtapResultadoAreaEl.innerHTML = `<div class="cards-grid">${itens.map(renderizarCardSigtap).join('')}</div>`;
+  sigtapResultadoAreaEl.innerHTML = `
+    <div class="resultado-acoes">
+      <button type="button" id="btn-exportar-sigtap-csv" class="acao-btn">⬇ Excel</button>
+    </div>
+    <div class="cards-grid">${itens.map(renderizarCardSigtap).join('')}</div>`;
 }
+
+sigtapResultadoAreaEl.addEventListener('click', (e) => {
+  if (e.target.closest('#btn-exportar-sigtap-csv')) {
+    exportarSigtapCsv(ultimaConsultaSigtap);
+  }
+});
 
 async function buscarSigtap(termo) {
   try {
@@ -2763,6 +2797,132 @@ if (sigtapBuscaEl) {
     }
 
     debounceTimerSigtap = setTimeout(() => buscarSigtap(termo), 300);
+  });
+}
+
+// ---------- Tabelas de Domínio TISS ----------
+const tissTabelasBuscaEl = document.getElementById('tiss-tabelas-busca');
+const tissTabelasResultadoAreaEl = document.getElementById('tiss-tabelas-resultado-area');
+let debounceTimerTissTabelas = null;
+let tissTabelasDominioCache = null;
+
+async function carregarTissTabelasDominio() {
+  if (tissTabelasDominioCache) return tissTabelasDominioCache;
+  const resp = await fetch('/tiss-tabelas-dominio.json');
+  const dados = await resp.json();
+  tissTabelasDominioCache = dados.tabelas;
+  return tissTabelasDominioCache;
+}
+
+function renderizarBlocoTissTabela(tabela, linhas, totalReal) {
+  const linhasHtml = linhas
+    .map(([codigo, descricao]) => `<tr><td class="codigo">${escaparHtml(codigo)}</td><td>${escaparHtml(descricao)}</td></tr>`)
+    .join('');
+  const nota =
+    totalReal > linhas.length
+      ? `<p class="tiss-tabela-nota">Mostrando ${linhas.length} de ${totalReal} resultados desta tabela — refine a busca para ver mais.</p>`
+      : '';
+  return `
+    <div class="tiss-tabela-bloco">
+      <h3 class="tiss-tabela-titulo">Tabela ${tabela.numero} — ${escaparHtml(tabela.nome)}</h3>
+      ${nota}
+      <div class="tiss-tabela-scroll">
+        <table class="tiss-tabela-tabela">
+          <thead><tr><th>Código</th><th>Descrição</th></tr></thead>
+          <tbody>${linhasHtml}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+async function buscarTissTabelas(termo) {
+  const tabelas = await carregarTissTabelasDominio();
+  const termoLower = termo.toLowerCase();
+  const soNumero = termo.trim().match(/^(?:tabela\s+)?(\d+)$/i);
+
+  let blocos = [];
+  if (soNumero) {
+    const tabela = tabelas.find((t) => t.numero === Number(soNumero[1]));
+    if (tabela) blocos.push(renderizarBlocoTissTabela(tabela, tabela.linhas.slice(0, 300), tabela.linhas.length));
+  }
+
+  if (blocos.length === 0) {
+    tabelas.forEach((t) => {
+      const nomeCasa = t.nome.toLowerCase().includes(termoLower);
+      const linhasFiltradas = t.linhas.filter(
+        ([codigo, descricao]) => nomeCasa || codigo.toLowerCase().includes(termoLower) || descricao.toLowerCase().includes(termoLower)
+      );
+      if (linhasFiltradas.length) blocos.push(renderizarBlocoTissTabela(t, linhasFiltradas.slice(0, 80), linhasFiltradas.length));
+    });
+  }
+
+  if (blocos.length === 0) {
+    tissTabelasResultadoAreaEl.innerHTML = '<div class="msg vazio">Nenhum resultado encontrado nas tabelas de domínio TISS.</div>';
+    return;
+  }
+  tissTabelasResultadoAreaEl.innerHTML = blocos.join('');
+}
+
+if (tissTabelasBuscaEl) {
+  tissTabelasBuscaEl.addEventListener('input', () => {
+    const termo = tissTabelasBuscaEl.value.trim();
+    clearTimeout(debounceTimerTissTabelas);
+
+    if (termo.length < 2) {
+      tissTabelasResultadoAreaEl.innerHTML = '';
+      return;
+    }
+
+    debounceTimerTissTabelas = setTimeout(() => buscarTissTabelas(termo), 300);
+  });
+}
+
+// ---------- CID-10 ----------
+const cid10BuscaEl = document.getElementById('cid10-busca');
+const cid10ResultadoAreaEl = document.getElementById('cid10-resultado-area');
+let debounceTimerCid10 = null;
+
+function renderizarCardCid10(item) {
+  const codigoFormatado = item.codigo.length === 4 ? `${item.codigo.slice(0, 3)}.${item.codigo.slice(3)}` : item.codigo;
+  return `
+    <div class="cid10-card">
+      <div class="cid10-card-head"><span class="codigo">${escaparHtml(codigoFormatado)}</span></div>
+      <div class="cid10-card-nome">${escaparHtml(item.nome)}</div>
+      ${item.categoria_nome ? `<div class="cid10-card-categoria">${escaparHtml(item.categoria_nome)}</div>` : ''}
+    </div>`;
+}
+
+function renderizarResultadoCid10(itens) {
+  if (itens.length === 0) {
+    cid10ResultadoAreaEl.innerHTML = '<div class="msg vazio">Nenhum código CID-10 encontrado.</div>';
+    return;
+  }
+  cid10ResultadoAreaEl.innerHTML = `<div class="cards-grid">${itens.map(renderizarCardCid10).join('')}</div>`;
+}
+
+async function buscarCid10(termo) {
+  try {
+    const resp = await fetch(`/api/cid10/buscar?q=${encodeURIComponent(termo)}`);
+    if (!resp.ok) throw new Error('Falha na requisição.');
+    const itens = await resp.json();
+    renderizarResultadoCid10(itens);
+  } catch (err) {
+    console.error(err);
+    cid10ResultadoAreaEl.innerHTML = '<div class="msg erro">Erro ao buscar códigos CID-10.</div>';
+  }
+}
+
+if (cid10BuscaEl) {
+  cid10BuscaEl.addEventListener('input', () => {
+    const termo = cid10BuscaEl.value.trim();
+    clearTimeout(debounceTimerCid10);
+
+    if (termo.length < 2) {
+      cid10ResultadoAreaEl.innerHTML = '';
+      return;
+    }
+
+    debounceTimerCid10 = setTimeout(() => buscarCid10(termo), 300);
   });
 }
 

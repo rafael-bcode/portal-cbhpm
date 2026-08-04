@@ -491,6 +491,39 @@ app.get('/api/sigtap/buscar', async (req, res) => {
   }
 });
 
+// Busca CID-10 por código exato (subcategoria ou categoria) ou por trecho do
+// nome. Buscar pelo código de uma categoria (ex: "J45") traz também todas as
+// suas subcategorias (J45.0, J45.1...). Categorias sem subcategoria própria
+// (códigos "folha" de 3 caracteres) entram na busca por texto/código também.
+app.get('/api/cid10/buscar', async (req, res) => {
+  try {
+    const termo = (req.query.q || '').trim();
+    if (termo.length < 2) {
+      return res.json([]);
+    }
+    const codigoBusca = termo.toUpperCase().replace(/[.\s]/g, '');
+
+    const { rows } = await pool.query(
+      `SELECT 4 AS nivel, s.codigo, s.nome, c.nome AS categoria_nome, s.codigo_categoria AS categoria_codigo
+       FROM cid10_subcategoria s
+       JOIN cid10_categoria c ON c.codigo = s.codigo_categoria
+       WHERE s.codigo = $1 OR s.codigo_categoria = $1 OR s.nome ILIKE $2
+       UNION ALL
+       SELECT 3 AS nivel, c.codigo, c.nome, NULL AS categoria_nome, NULL AS categoria_codigo
+       FROM cid10_categoria c
+       WHERE (c.codigo = $1 OR c.nome ILIKE $2)
+         AND NOT EXISTS (SELECT 1 FROM cid10_subcategoria s2 WHERE s2.codigo_categoria = c.codigo)
+       ORDER BY nivel DESC, codigo
+       LIMIT 100`,
+      [codigoBusca, `%${termo}%`]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca CID-10:', err);
+    res.status(500).json({ erro: 'Erro ao buscar códigos CID-10.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => {

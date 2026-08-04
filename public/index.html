@@ -117,6 +117,8 @@
     <button type="button" class="tab-btn" data-tab="multiplos">Múltiplos procedimentos</button>
     <button type="button" class="tab-btn" data-tab="validador">Validador de XML TISS</button>
     <button type="button" class="tab-btn" data-tab="sigtap">SUS / SIGTAP</button>
+    <button type="button" class="tab-btn" data-tab="tiss-tabelas">Tabelas TISS</button>
+    <button type="button" class="tab-btn" data-tab="cid10">CID-10</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -482,6 +484,53 @@
   </section>
 
   <section id="sigtap-resultado-area"></section>
+
+  </div>
+
+  <div id="tab-tiss-tabelas" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Tabelas de Domínio do Padrão TISS</h2>
+    </div>
+    <p class="ajustes-nota">
+      Pesquisa nas tabelas de domínio oficiais do Padrão TISS/ANS (códigos de glosa, CBO, unidades de medida,
+      dentes, etc.). Busque por um <strong>código</strong>, um <strong>trecho da descrição</strong> ou pelo
+      <strong>número da tabela</strong> (ex: "Tabela 38" ou apenas "38").
+    </p>
+    <div class="field field-busca">
+      <label for="tiss-tabelas-busca">Código, descrição ou número da tabela</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="tiss-tabelas-busca" placeholder="Ex: 1001, glosa, CBO, Tabela 60" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="tiss-tabelas-resultado-area"></section>
+
+  </div>
+
+  <div id="tab-cid10" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>CID-10 — Classificação Internacional de Doenças</h2>
+    </div>
+    <p class="ajustes-nota">
+      Consulta a CID-10 (10ª revisão), usada no campo de diagnóstico das guias TISS. Busque pelo
+      <strong>código</strong> (ex: "J45" traz também as subcategorias) ou por um <strong>trecho do nome</strong>
+      da doença. O Brasil segue utilizando a CID-10; a CID-11 tem implantação prevista pela OMS/ANS apenas a
+      partir de 2027 e ainda não é usada no Padrão TISS.
+    </p>
+    <div class="field field-busca">
+      <label for="cid10-busca">Código ou nome da doença</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="cid10-busca" placeholder="Ex: J45, E119 ou diabetes" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="cid10-resultado-area"></section>
 
   </div>
 

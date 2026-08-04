@@ -1,6 +1,6 @@
 {
   "name": "cons_cbhpm",
-  "version": "1.15.0",
+  "version": "1.16.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -16,5 +16,8 @@
     "express": "^5.2.1",
     "pg": "^8.22.0",
     "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "playwright": "^1.62.1"
   }
 }

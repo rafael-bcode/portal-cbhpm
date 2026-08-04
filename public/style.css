@@ -725,6 +725,81 @@ body {
   color: var(--teal-dark);
 }
 
+/* ---------- Tabelas de Domínio TISS ---------- */
+.tiss-tabela-bloco {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+.tiss-tabela-titulo {
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0;
+}
+.tiss-tabela-nota {
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  background: var(--teal-tint);
+}
+.tiss-tabela-scroll { overflow-x: auto; }
+.tiss-tabela-tabela { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+.tiss-tabela-tabela th {
+  text-align: left;
+  padding: 8px 16px;
+  background: var(--teal-tint);
+  color: var(--teal-dark);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+.tiss-tabela-tabela td {
+  padding: 7px 16px;
+  border-top: 1px dashed var(--border);
+  vertical-align: top;
+}
+.tiss-tabela-tabela td.codigo {
+  font-family: var(--mono);
+  font-weight: 600;
+  color: var(--teal-dark);
+  white-space: nowrap;
+}
+
+/* ---------- CID-10 ---------- */
+.cid10-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.cid10-card-head {
+  background: var(--navy);
+  padding: 10px 16px;
+}
+.cid10-card-head .codigo {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: #fff;
+}
+.cid10-card-nome {
+  padding: 12px 16px 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.35;
+}
+.cid10-card-categoria {
+  padding: 0 16px 12px;
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+}
+
 .versoes-tiss-lista { padding: 4px 16px 12px; display: flex; flex-direction: column; gap: 14px; }
 .versao-tiss-item { border-left: 3px solid var(--teal); padding-left: 12px; }
 .versao-tiss-nome {

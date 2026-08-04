@@ -1,5 +1,15 @@
 [
   {
+    "versao": "1.16.0",
+    "data": "2026-08-04",
+    "mudancas": [
+      "Adiciona a aba 'Tabelas TISS': pesquisa nas tabelas de domínio oficiais do Padrão TISS/ANS (mensagens de glosa, CBO, unidades de medida, dentes, vias de administração etc.) por código, texto ou número da tabela.",
+      "Adiciona a aba 'CID-10': consulta à Classificação Internacional de Doenças (10ª revisão, fonte DATASUS) por código ou nome — buscar o código de uma categoria (ex: 'J45') já traz as subcategorias. A CID-11 ainda não é usada no Padrão TISS (implantação prevista pela ANS só a partir de 2027), por isso não foi incluída.",
+      "Validador de XML TISS: a decodificação de CBO (especialidade do profissional) agora usa a lista oficial da Tabela 24 do TISS (167 ocupações) em vez de só a família de médicos do CBO do Ministério do Trabalho — passa a reconhecer também dentistas, fisioterapeutas, enfermeiros e outros profissionais informados nas guias.",
+      "SUS / SIGTAP: adiciona exportação dos resultados da busca para Excel/CSV, no mesmo padrão das outras telas do sistema."
+    ]
+  },
+  {
     "versao": "1.15.0",
     "data": "2026-08-04",
     "mudancas": [
