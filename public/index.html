@@ -3,21 +3,58 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portal CBHPM — Consulta de Valores</title>
+<title>CBHPM+ — Central de Faturamento em Saúde</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-inner">
-    <span class="logo-mark">CBHPM</span>
-    <span class="logo-sub">Consulta de valores por edição</span>
+    <span class="logo-mark">CBHPM+</span>
+    <span class="logo-sub">Central de Faturamento em Saúde</span>
     <div class="topbar-actions">
       <button type="button" id="btn-tema" class="btn-ajuda" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">🌙</button>
-      <button type="button" id="btn-ajuda" class="btn-ajuda" title="Como o valor é calculado?" aria-label="Como o valor é calculado?">?</button>
     </div>
   </div>
 </header>
+
+<div id="modal-versoes-tiss" class="modal-overlay hidden">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h3>Versões do Padrão TISS</h3>
+      <button type="button" id="btn-fechar-versoes-tiss" class="btn-fechar" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p class="ajustes-nota">
+        Resumo das principais mudanças de cada versão recente, com base em comunicados oficiais e de operadoras —
+        não substitui a documentação completa. Para o detalhe oficial, veja o
+        <a href="https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-historico-das-versoes-dos-componentes-do-padrao-tiss" target="_blank" rel="noopener">histórico oficial de versões (ANS)</a>.
+      </p>
+      <div class="versoes-tiss-lista">
+        <div class="versao-tiss-item versao-tiss-item-desatualizada">
+          <div class="versao-tiss-nome">3.05.00 <span class="versao-tiss-data">publicada em mai/2020 — desde jan/2026 não é mais aceita pela ANS</span></div>
+          <div class="versao-tiss-desc">Última versão relevante da série 3.x, anterior à 4.x; tornou obrigatórios diversos campos de identificação do beneficiário e atualizou a tabela TUSS. Hoje é histórica — a partir da 4.02.00 a ANS passou a rejeitar arquivos nessa versão. Mantida aqui só como referência, útil se você ainda receber um arquivo antigo de algum sistema legado.</div>
+        </div>
+        <div class="versao-tiss-item">
+          <div class="versao-tiss-nome">4.00.00 / 4.00.01</div>
+          <div class="versao-tiss-desc">Versão-base da geração 4.x do Padrão, substituindo a série 3.x; a 4.00.01 trouxe correções pontuais sobre a 4.00.00.</div>
+        </div>
+        <div class="versao-tiss-item">
+          <div class="versao-tiss-nome">4.01.00 <span class="versao-tiss-data">obrigatória desde o início de 2023</span></div>
+          <div class="versao-tiss-desc">Adequação à LGPD: remoção de campos com dados diretamente identificáveis do beneficiário (nome, número do CNS, template biométrico) de guias e recursos digitais; padronização obrigatória do nome do arquivo (registro ANS + ano/mês + sequencial); atualização de tabelas de terminologia (TUSS).</div>
+        </div>
+        <div class="versao-tiss-item">
+          <div class="versao-tiss-nome">4.02.00 <span class="versao-tiss-data">obrigatória desde a fatura de jan/2026</span></div>
+          <div class="versao-tiss-desc">Atualização das tabelas de domínio TUSS (Materiais e OPME, Medicamentos, Procedimentos e Eventos em Saúde, CBO, status de guias/protocolos, entre outras); passou a rejeitar arquivos nas versões antigas 3.04.01 e 3.05.00.</div>
+        </div>
+        <div class="versao-tiss-item">
+          <div class="versao-tiss-nome">4.03.00 <span class="versao-tiss-data">obrigatória desde a fatura de jul/2026 — vigente hoje</span></div>
+          <div class="versao-tiss-desc">CNPJ passa a aceitar formato alfanumérico (IN RFB nº 2.229/2024); campos para nome social do beneficiário; novas exclusões de nome do beneficiário em recursos digitais; componente de comunicação atualizado, com bloqueio automático de versões obsoletas; novas tabelas TUSS (incluindo Glosas).</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <div id="modal-ajuda" class="modal-overlay hidden">
   <div class="modal-box">
@@ -124,6 +161,10 @@
   <div id="tab-consulta" class="tab-panel">
 
   <section class="search-panel">
+    <div class="mp-header">
+      <h2>Consulta por procedimento</h2>
+      <button type="button" id="btn-ajuda" class="btn-ajuda" title="Como o valor é calculado?" aria-label="Como o valor é calculado?">?</button>
+    </div>
     <form id="form-consulta">
       <div class="field field-favoritos hidden" id="bloco-favoritos">
         <label>Favoritos</label>
@@ -375,6 +416,7 @@
   <section class="search-panel">
     <div class="mp-header">
       <h2>Validador de XML TISS</h2>
+      <button type="button" id="btn-versoes-tiss" class="chip-btn" title="Versões do Padrão TISS" aria-label="Versões do Padrão TISS">Versões TISS</button>
     </div>
     <p class="ajustes-nota">
       Confere um arquivo XML do Padrão TISS <strong>só no seu navegador</strong> — o arquivo nunca é enviado a
@@ -430,34 +472,6 @@
       </div>
     </details>
 
-    <details class="grupo grupo-principal" id="validador-versoes-bloco">
-      <summary class="grupo-summary"><span class="grupo-nome">Sobre as versões do Padrão TISS</span></summary>
-      <div class="grupo-corpo">
-        <p class="ajustes-nota" style="margin:10px 16px 0;">
-          Resumo das principais mudanças de cada versão recente, com base em comunicados oficiais e de operadoras —
-          não substitui a documentação completa. Para o detalhe oficial, veja o
-          <a href="https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-historico-das-versoes-dos-componentes-do-padrao-tiss" target="_blank" rel="noopener">histórico oficial de versões (ANS)</a>.
-        </p>
-        <div class="versoes-tiss-lista">
-          <div class="versao-tiss-item">
-            <div class="versao-tiss-nome">4.00.00 / 4.00.01</div>
-            <div class="versao-tiss-desc">Versão-base da geração 4.x do Padrão, substituindo a série 3.x; a 4.00.01 trouxe correções pontuais sobre a 4.00.00.</div>
-          </div>
-          <div class="versao-tiss-item">
-            <div class="versao-tiss-nome">4.01.00 <span class="versao-tiss-data">obrigatória desde o início de 2023</span></div>
-            <div class="versao-tiss-desc">Adequação à LGPD: remoção de campos com dados diretamente identificáveis do beneficiário (nome, número do CNS, template biométrico) de guias e recursos digitais; padronização obrigatória do nome do arquivo (registro ANS + ano/mês + sequencial); atualização de tabelas de terminologia (TUSS).</div>
-          </div>
-          <div class="versao-tiss-item">
-            <div class="versao-tiss-nome">4.02.00 <span class="versao-tiss-data">obrigatória desde a fatura de jan/2026</span></div>
-            <div class="versao-tiss-desc">Atualização das tabelas de domínio TUSS (Materiais e OPME, Medicamentos, Procedimentos e Eventos em Saúde, CBO, status de guias/protocolos, entre outras); passou a rejeitar arquivos nas versões antigas 3.04.01 e 3.05.00.</div>
-          </div>
-          <div class="versao-tiss-item">
-            <div class="versao-tiss-nome">4.03.00 <span class="versao-tiss-data">obrigatória desde a fatura de jul/2026 — vigente hoje</span></div>
-            <div class="versao-tiss-desc">CNPJ passa a aceitar formato alfanumérico (IN RFB nº 2.229/2024); campos para nome social do beneficiário; novas exclusões de nome do beneficiário em recursos digitais; componente de comunicação atualizado, com bloqueio automático de versões obsoletas; novas tabelas TUSS (incluindo Glosas).</div>
-          </div>
-        </div>
-      </div>
-    </details>
   </section>
 
   <section id="validador-resultado-area"></section>
@@ -469,6 +483,7 @@
   <section class="search-panel">
     <div class="mp-header">
       <h2>SUS / SIGTAP — consulta de procedimentos</h2>
+      <div id="sigtap-competencia-area" class="sigtap-competencia-area"></div>
     </div>
     <p class="ajustes-nota">
       Consulta a tabela SIGTAP (Sistema de Gerenciamento da Tabela de Procedimentos, Medicamentos e OPM do
@@ -494,16 +509,22 @@
       <h2>Tabelas de Domínio do Padrão TISS</h2>
     </div>
     <p class="ajustes-nota">
-      Pesquisa nas tabelas de domínio oficiais do Padrão TISS/ANS (códigos de glosa, CBO, unidades de medida,
-      dentes, etc.). Busque por um <strong>código</strong>, um <strong>trecho da descrição</strong> ou pelo
-      <strong>número da tabela</strong> (ex: "Tabela 38" ou apenas "38").
+      Tabelas de domínio oficiais do Padrão TISS/ANS (códigos de glosa, CBO, unidades de medida, dentes, etc.).
+      Escolha uma tabela para ver todos os itens dela, paginados — e opcionalmente filtre dentro dela.
     </p>
-    <div class="field field-busca">
-      <label for="tiss-tabelas-busca">Código, descrição ou número da tabela</label>
+    <div class="field">
+      <label for="tiss-tabelas-select">Tabela de domínio</label>
+      <select id="tiss-tabelas-select">
+        <option value="">Selecione uma tabela…</option>
+      </select>
+    </div>
+    <div class="field field-busca hidden" id="tiss-tabelas-filtro-campo">
+      <label for="tiss-tabelas-filtro">Filtrar dentro da tabela (código ou descrição)</label>
       <div class="busca-wrapper" style="max-width:520px;">
-        <input type="text" id="tiss-tabelas-busca" placeholder="Ex: 1001, glosa, CBO, Tabela 60" autocomplete="off">
+        <input type="text" id="tiss-tabelas-filtro" placeholder="Ex: 1001 ou beneficiário" autocomplete="off">
       </div>
     </div>
+    <p class="ajustes-nota" id="tiss-tabelas-fonte" style="margin-top:14px; font-size:0.72rem;"></p>
   </section>
 
   <section id="tiss-tabelas-resultado-area"></section>

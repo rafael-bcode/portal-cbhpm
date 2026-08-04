@@ -3,6 +3,7 @@ const express = require('express');
 const { Pool } = require('pg');
 const packageJson = require('./package.json');
 const changelog = require('./CHANGELOG.json');
+const { competenciaLegivel, buscarUltimaDisponivelGitHub, atualizarSigtap } = require('./sigtap-atualizador');
 
 const app = express();
 app.use(express.json());
@@ -488,6 +489,63 @@ app.get('/api/sigtap/buscar', async (req, res) => {
   } catch (err) {
     console.error('Erro na busca SIGTAP:', err);
     res.status(500).json({ erro: 'Erro ao buscar procedimentos SIGTAP.' });
+  }
+});
+
+// Competência atual da Tabela Unificada SIGTAP carregada no banco, e se há
+// uma competência mais nova disponível no espelho GitHub (RenatoKR/SIGTAP,
+// sincronizado diariamente com o FTP oficial do DATASUS).
+app.get('/api/sigtap/status', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT competencia, atualizado_em FROM sigtap_metadata WHERE id = 1');
+    const atual = rows[0] || null;
+
+    let ultimaDisponivel = null;
+    let erroVerificacao = null;
+    try {
+      const ultima = await buscarUltimaDisponivelGitHub();
+      ultimaDisponivel = ultima.competencia;
+    } catch (err) {
+      console.error('Erro ao verificar atualização SIGTAP no GitHub:', err);
+      erroVerificacao = 'Não foi possível verificar atualizações agora.';
+    }
+
+    res.json({
+      competencia: atual ? atual.competencia : null,
+      competenciaLegivel: atual ? competenciaLegivel(atual.competencia) : null,
+      atualizadoEm: atual ? atual.atualizado_em : null,
+      ultimaDisponivel,
+      ultimaDisponivelLegivel: ultimaDisponivel ? competenciaLegivel(ultimaDisponivel) : null,
+      atualizacaoDisponivel: Boolean(atual && ultimaDisponivel && ultimaDisponivel > atual.competencia),
+      erroVerificacao,
+    });
+  } catch (err) {
+    console.error('Erro ao consultar status do SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao consultar status do SIGTAP.' });
+  }
+});
+
+// Baixa e reimporta a Tabela Unificada SIGTAP mais recente do espelho
+// GitHub. Protegido por senha simples (SIGTAP_UPDATE_SENHA no .env) — evita
+// que qualquer visitante do portal dispare downloads e reescrita do banco.
+app.post('/api/sigtap/atualizar', async (req, res) => {
+  try {
+    const { senha } = req.body || {};
+    if (!process.env.SIGTAP_UPDATE_SENHA || senha !== process.env.SIGTAP_UPDATE_SENHA) {
+      return res.status(401).json({ erro: 'Senha inválida.' });
+    }
+
+    const resultado = await atualizarSigtap(pool);
+    res.json({
+      ok: true,
+      competencia: resultado.competencia,
+      competenciaLegivel: competenciaLegivel(resultado.competencia),
+      arquivo: resultado.arquivo,
+      resumo: resultado.resumo,
+    });
+  } catch (err) {
+    console.error('Erro ao atualizar SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao atualizar a base SIGTAP: ' + err.message });
   }
 });
 

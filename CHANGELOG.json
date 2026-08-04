@@ -1,5 +1,17 @@
 [
   {
+    "versao": "1.17.0",
+    "data": "2026-08-04",
+    "mudancas": [
+      "Portal rebatizado para 'CBHPM+ — Central de Faturamento em Saúde', refletindo que já não é só consulta CBHPM (agora inclui SIGTAP, CID-10, Tabelas TISS e Validador).",
+      "SUS / SIGTAP: cada resultado passa a trazer classificação completa oficial (Grupo, Sub-Grupo, Forma de Organização, Financiamento, Sub Tipo de Financiamento, Instrumento de Registro, Modalidade de Atendimento e Atributos Complementares), via tabelas de domínio importadas da Tabela Unificada SIGTAP/DATASUS.",
+      "SUS / SIGTAP: adiciona atualização da base direto do portal — mostra a competência (mês/ano) atualmente carregada e, quando há uma versão mais nova disponível no espelho oficial do SIGTAP, permite atualizar com um clique (protegido por senha, evita disparo acidental).",
+      "Aba 'Tabelas TISS' reformulada: em vez de uma busca única ambígua, agora é escolher a tabela de domínio (com contagem de itens) e navegar pelos itens dela, paginados (10/20/50 por página) com filtro opcional dentro da tabela escolhida.",
+      "Resumo das versões do Padrão TISS vira um botão próprio no cabeçalho da aba Validador (antes era um acordeão no meio da tela) e ganha a versão 3.05.00, marcada como desatualizada (a ANS passou a rejeitá-la a partir da 4.02.00).",
+      "O ícone de ajuda 'Como o valor é calculado?' sai do topo genérico do site e vai para dentro do cabeçalho da aba 'Consulta por procedimento', a que ele realmente se refere."
+    ]
+  },
+  {
     "versao": "1.16.0",
     "data": "2026-08-04",
     "mudancas": [

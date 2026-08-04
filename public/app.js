@@ -566,6 +566,22 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') modalAjudaMpEl.classList.add('hidden');
 });
 
+// ---------- Modal de versões do Padrão TISS ----------
+const modalVersoesTissEl = document.getElementById('modal-versoes-tiss');
+function abrirModalVersoesTiss() {
+  modalVersoesTissEl.classList.remove('hidden');
+}
+document.getElementById('btn-versoes-tiss').addEventListener('click', abrirModalVersoesTiss);
+document.getElementById('btn-fechar-versoes-tiss').addEventListener('click', () => {
+  modalVersoesTissEl.classList.add('hidden');
+});
+modalVersoesTissEl.addEventListener('click', (e) => {
+  if (e.target === modalVersoesTissEl) modalVersoesTissEl.classList.add('hidden');
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') modalVersoesTissEl.classList.add('hidden');
+});
+
 function renderizarResultadoMultiplos(data) {
   if (data.erro) {
     mpResultadoAreaEl.innerHTML = `<div class="msg erro">${data.erro}</div>`;
@@ -2662,7 +2678,58 @@ if (btnCompararArquivos) {
 // ---------- SUS / SIGTAP ----------
 const sigtapBuscaEl = document.getElementById('sigtap-busca');
 const sigtapResultadoAreaEl = document.getElementById('sigtap-resultado-area');
+const sigtapCompetenciaAreaEl = document.getElementById('sigtap-competencia-area');
 let debounceTimerSigtap = null;
+
+async function carregarStatusSigtap() {
+  if (!sigtapCompetenciaAreaEl) return;
+  try {
+    const resp = await fetch('/api/sigtap/status');
+    const status = await resp.json();
+    renderizarStatusSigtap(status);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderizarStatusSigtap(status) {
+  const badge = status.competenciaLegivel
+    ? `<span class="sigtap-competencia-badge">Competência: ${escaparHtml(status.competenciaLegivel)}</span>`
+    : '';
+  const botaoAtualizar = status.atualizacaoDisponivel
+    ? `<button type="button" id="btn-sigtap-atualizar" class="chip-btn disponivel">Atualizar para ${escaparHtml(status.ultimaDisponivelLegivel)}</button>`
+    : '';
+  sigtapCompetenciaAreaEl.innerHTML = badge + botaoAtualizar;
+
+  const btn = document.getElementById('btn-sigtap-atualizar');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      const senha = window.prompt('Senha para atualizar a base SIGTAP:');
+      if (!senha) return;
+      btn.disabled = true;
+      btn.textContent = 'Atualizando…';
+      try {
+        const resp = await fetch('/api/sigtap/atualizar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha }),
+        });
+        const dados = await resp.json();
+        if (!resp.ok) throw new Error(dados.erro || 'Falha ao atualizar.');
+        window.alert(`Base SIGTAP atualizada para ${dados.competenciaLegivel}.`);
+        await carregarStatusSigtap();
+        if (sigtapBuscaEl.value.trim().length >= 2) buscarSigtap(sigtapBuscaEl.value.trim());
+      } catch (err) {
+        console.error(err);
+        window.alert(`Erro ao atualizar: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = `Atualizar para ${status.ultimaDisponivelLegivel}`;
+      }
+    });
+  }
+}
+
+carregarStatusSigtap();
 
 const ROTULOS_COMPLEXIDADE_SIGTAP = { '1': 'Atenção Básica', '2': 'Média Complexidade', '3': 'Alta Complexidade' };
 const ROTULOS_SEXO_SIGTAP = { M: 'Masculino', F: 'Feminino', I: 'Indiferente', N: 'Não se aplica' };
@@ -2801,79 +2868,129 @@ if (sigtapBuscaEl) {
 }
 
 // ---------- Tabelas de Domínio TISS ----------
-const tissTabelasBuscaEl = document.getElementById('tiss-tabelas-busca');
+const tissTabelasSelectEl = document.getElementById('tiss-tabelas-select');
+const tissTabelasFiltroCampoEl = document.getElementById('tiss-tabelas-filtro-campo');
+const tissTabelasFiltroEl = document.getElementById('tiss-tabelas-filtro');
 const tissTabelasResultadoAreaEl = document.getElementById('tiss-tabelas-resultado-area');
 let debounceTimerTissTabelas = null;
 let tissTabelasDominioCache = null;
+let tissTabelaAtual = null;
+let tissTabelaLinhasFiltradas = [];
+let tissTabelaPagina = 1;
+let tissTabelaPorPagina = 10;
 
 async function carregarTissTabelasDominio() {
   if (tissTabelasDominioCache) return tissTabelasDominioCache;
   const resp = await fetch('/tiss-tabelas-dominio.json');
   const dados = await resp.json();
   tissTabelasDominioCache = dados.tabelas;
+  const fonteEl = document.getElementById('tiss-tabelas-fonte');
+  if (fonteEl && dados.fonte) fonteEl.textContent = `Fonte: ${dados.fonte}`;
   return tissTabelasDominioCache;
 }
 
-function renderizarBlocoTissTabela(tabela, linhas, totalReal) {
-  const linhasHtml = linhas
+function renderizarPaginaTissTabela() {
+  if (!tissTabelaAtual) {
+    tissTabelasResultadoAreaEl.innerHTML = '';
+    return;
+  }
+
+  if (tissTabelaLinhasFiltradas.length === 0) {
+    tissTabelasResultadoAreaEl.innerHTML = '<div class="msg vazio">Nenhum item encontrado com esse filtro.</div>';
+    return;
+  }
+
+  const totalPaginas = Math.ceil(tissTabelaLinhasFiltradas.length / tissTabelaPorPagina);
+  tissTabelaPagina = Math.min(Math.max(tissTabelaPagina, 1), totalPaginas);
+  const inicio = (tissTabelaPagina - 1) * tissTabelaPorPagina;
+  const pagina = tissTabelaLinhasFiltradas.slice(inicio, inicio + tissTabelaPorPagina);
+
+  const linhasHtml = pagina
     .map(([codigo, descricao]) => `<tr><td class="codigo">${escaparHtml(codigo)}</td><td>${escaparHtml(descricao)}</td></tr>`)
     .join('');
-  const nota =
-    totalReal > linhas.length
-      ? `<p class="tiss-tabela-nota">Mostrando ${linhas.length} de ${totalReal} resultados desta tabela — refine a busca para ver mais.</p>`
-      : '';
-  return `
+
+  tissTabelasResultadoAreaEl.innerHTML = `
     <div class="tiss-tabela-bloco">
-      <h3 class="tiss-tabela-titulo">Tabela ${tabela.numero} — ${escaparHtml(tabela.nome)}</h3>
-      ${nota}
+      <h3 class="tiss-tabela-titulo">Tabela ${tissTabelaAtual.numero} — ${escaparHtml(tissTabelaAtual.nome)}</h3>
       <div class="tiss-tabela-scroll">
         <table class="tiss-tabela-tabela">
           <thead><tr><th>Código</th><th>Descrição</th></tr></thead>
           <tbody>${linhasHtml}</tbody>
         </table>
       </div>
+      <div class="tiss-tabela-paginacao">
+        <button type="button" class="chip-btn" id="tiss-tabela-pag-anterior" ${tissTabelaPagina <= 1 ? 'disabled' : ''}>‹ Anterior</button>
+        <span class="pagina-info">Página ${tissTabelaPagina} de ${totalPaginas} (${tissTabelaLinhasFiltradas.length} ${tissTabelaLinhasFiltradas.length === 1 ? 'item' : 'itens'})</span>
+        <button type="button" class="chip-btn" id="tiss-tabela-pag-proxima" ${tissTabelaPagina >= totalPaginas ? 'disabled' : ''}>Próxima ›</button>
+        <label class="pagina-por-pagina">
+          Por página:
+          <select id="tiss-tabela-select-por-pagina">
+            ${[10, 20, 50].map((n) => `<option value="${n}" ${n === tissTabelaPorPagina ? 'selected' : ''}>${n}</option>`).join('')}
+          </select>
+        </label>
+      </div>
     </div>`;
+
+  document.getElementById('tiss-tabela-pag-anterior').addEventListener('click', () => {
+    tissTabelaPagina -= 1;
+    renderizarPaginaTissTabela();
+  });
+  document.getElementById('tiss-tabela-pag-proxima').addEventListener('click', () => {
+    tissTabelaPagina += 1;
+    renderizarPaginaTissTabela();
+  });
+  document.getElementById('tiss-tabela-select-por-pagina').addEventListener('change', (e) => {
+    tissTabelaPorPagina = Number(e.target.value);
+    tissTabelaPagina = 1;
+    renderizarPaginaTissTabela();
+  });
 }
 
-async function buscarTissTabelas(termo) {
+function aplicarFiltroTissTabela() {
+  if (!tissTabelaAtual) return;
+  const termo = tissTabelasFiltroEl.value.trim().toLowerCase();
+  tissTabelaLinhasFiltradas = termo
+    ? tissTabelaAtual.linhas.filter(
+        ([codigo, descricao]) => codigo.toLowerCase().includes(termo) || descricao.toLowerCase().includes(termo)
+      )
+    : tissTabelaAtual.linhas;
+  tissTabelaPagina = 1;
+  renderizarPaginaTissTabela();
+}
+
+async function inicializarSelectTissTabelas() {
+  if (!tissTabelasSelectEl) return;
   const tabelas = await carregarTissTabelasDominio();
-  const termoLower = termo.toLowerCase();
-  const soNumero = termo.trim().match(/^(?:tabela\s+)?(\d+)$/i);
-
-  let blocos = [];
-  if (soNumero) {
-    const tabela = tabelas.find((t) => t.numero === Number(soNumero[1]));
-    if (tabela) blocos.push(renderizarBlocoTissTabela(tabela, tabela.linhas.slice(0, 300), tabela.linhas.length));
-  }
-
-  if (blocos.length === 0) {
-    tabelas.forEach((t) => {
-      const nomeCasa = t.nome.toLowerCase().includes(termoLower);
-      const linhasFiltradas = t.linhas.filter(
-        ([codigo, descricao]) => nomeCasa || codigo.toLowerCase().includes(termoLower) || descricao.toLowerCase().includes(termoLower)
-      );
-      if (linhasFiltradas.length) blocos.push(renderizarBlocoTissTabela(t, linhasFiltradas.slice(0, 80), linhasFiltradas.length));
-    });
-  }
-
-  if (blocos.length === 0) {
-    tissTabelasResultadoAreaEl.innerHTML = '<div class="msg vazio">Nenhum resultado encontrado nas tabelas de domínio TISS.</div>';
-    return;
-  }
-  tissTabelasResultadoAreaEl.innerHTML = blocos.join('');
+  const opcoes = tabelas
+    .slice()
+    .sort((a, b) => a.numero - b.numero)
+    .map((t) => `<option value="${t.numero}">${t.numero} — ${escaparHtml(t.nome)} (${t.linhas.length})</option>`)
+    .join('');
+  tissTabelasSelectEl.insertAdjacentHTML('beforeend', opcoes);
 }
 
-if (tissTabelasBuscaEl) {
-  tissTabelasBuscaEl.addEventListener('input', () => {
-    const termo = tissTabelasBuscaEl.value.trim();
-    clearTimeout(debounceTimerTissTabelas);
+if (tissTabelasSelectEl) {
+  inicializarSelectTissTabelas();
 
-    if (termo.length < 2) {
+  tissTabelasSelectEl.addEventListener('change', async () => {
+    const numero = Number(tissTabelasSelectEl.value);
+    if (!numero) {
+      tissTabelaAtual = null;
+      tissTabelaLinhasFiltradas = [];
+      tissTabelasFiltroCampoEl.classList.add('hidden');
       tissTabelasResultadoAreaEl.innerHTML = '';
       return;
     }
+    const tabelas = await carregarTissTabelasDominio();
+    tissTabelaAtual = tabelas.find((t) => t.numero === numero) || null;
+    tissTabelasFiltroCampoEl.classList.remove('hidden');
+    tissTabelasFiltroEl.value = '';
+    aplicarFiltroTissTabela();
+  });
 
-    debounceTimerTissTabelas = setTimeout(() => buscarTissTabelas(termo), 300);
+  tissTabelasFiltroEl.addEventListener('input', () => {
+    clearTimeout(debounceTimerTissTabelas);
+    debounceTimerTissTabelas = setTimeout(aplicarFiltroTissTabela, 250);
   });
 }
 
