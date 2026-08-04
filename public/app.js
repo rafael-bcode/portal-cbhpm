@@ -2659,4 +2659,111 @@ if (btnCompararArquivos) {
   });
 }
 
+// ---------- SUS / SIGTAP ----------
+const sigtapBuscaEl = document.getElementById('sigtap-busca');
+const sigtapResultadoAreaEl = document.getElementById('sigtap-resultado-area');
+let debounceTimerSigtap = null;
+
+const ROTULOS_COMPLEXIDADE_SIGTAP = { '1': 'Atenção Básica', '2': 'Média Complexidade', '3': 'Alta Complexidade' };
+const ROTULOS_SEXO_SIGTAP = { M: 'Masculino', F: 'Feminino', I: 'Indiferente', N: 'Não se aplica' };
+
+function rotuloComplexidadeSigtap(c) {
+  return ROTULOS_COMPLEXIDADE_SIGTAP[c] || 'Não classificada';
+}
+
+function rotuloSexoSigtap(s) {
+  return ROTULOS_SEXO_SIGTAP[s] || 'Não se aplica';
+}
+
+function faixaEtariaSigtap(item) {
+  const min = item.idade_minima_legivel;
+  const max = item.idade_maxima_legivel;
+  if (min && max) return `${min} a ${max}`;
+  if (min || max) return min || max;
+  return 'Não definida';
+}
+
+function fmtMoedaSigtap(v) {
+  return v === null || v === undefined ? '—' : fmtMoeda(v);
+}
+
+function classificacaoSigtap(item) {
+  const partes = [item.grupo_nome, item.sub_grupo_nome, item.forma_organizacao_nome].filter(Boolean);
+  return partes.length ? partes.join(' › ') : null;
+}
+
+function listaSigtap(arr) {
+  return Array.isArray(arr) && arr.length ? arr.join(', ') : null;
+}
+
+function renderizarCardSigtap(item) {
+  const classificacao = classificacaoSigtap(item);
+  const instrumentos = listaSigtap(item.instrumentos_registro);
+  const modalidades = listaSigtap(item.modalidades_atendimento);
+  const atributos = listaSigtap(item.atributos_complementares);
+
+  const linhasExtras = [
+    item.financiamento_nome ? `<div class="breakdown-row"><span class="label">Financiamento</span><span class="value wrap">${escaparHtml(item.financiamento_nome)}</span></div>` : '',
+    item.sub_tipo_financiamento_nome ? `<div class="breakdown-row"><span class="label">Sub tipo de financiamento</span><span class="value wrap">${escaparHtml(item.sub_tipo_financiamento_nome)}</span></div>` : '',
+    instrumentos ? `<div class="breakdown-row"><span class="label">Instrumento de registro</span><span class="value wrap">${escaparHtml(instrumentos)}</span></div>` : '',
+    modalidades ? `<div class="breakdown-row"><span class="label">Modalidade de atendimento</span><span class="value wrap">${escaparHtml(modalidades)}</span></div>` : '',
+    atributos ? `<div class="breakdown-row"><span class="label">Atributos complementares</span><span class="value wrap">${escaparHtml(atributos)}</span></div>` : '',
+  ].join('');
+
+  return `
+    <div class="sigtap-card">
+      <div class="sigtap-card-head">
+        <span class="codigo">${escaparHtml(item.codigo)}</span>
+        <span class="sigtap-badge sigtap-badge-${escaparHtml(item.complexidade || '0')}">${rotuloComplexidadeSigtap(item.complexidade)}</span>
+      </div>
+      <div class="sigtap-card-nome">${escaparHtml(item.nome)}</div>
+      ${classificacao ? `<div class="sigtap-card-classificacao">${escaparHtml(classificacao)}</div>` : ''}
+      <div class="breakdown">
+        <div class="breakdown-row"><span class="label">Sexo</span><span class="value">${rotuloSexoSigtap(item.sexo)}</span></div>
+        <div class="breakdown-row"><span class="label">Faixa etária</span><span class="value">${escaparHtml(faixaEtariaSigtap(item))}</span></div>
+        <div class="breakdown-row"><span class="label">Permanência máxima</span><span class="value">${item.qt_dias_permanencia ? `${item.qt_dias_permanencia} dia(s)` : '—'}</span></div>
+        ${linhasExtras}
+      </div>
+      <div class="sigtap-card-valores">
+        <div class="valor-item"><span class="valor-label">SH</span><span class="valor-num">${fmtMoedaSigtap(item.vl_sh)}</span></div>
+        <div class="valor-item"><span class="valor-label">SA</span><span class="valor-num">${fmtMoedaSigtap(item.vl_sa)}</span></div>
+        <div class="valor-item"><span class="valor-label">SP</span><span class="valor-num">${fmtMoedaSigtap(item.vl_sp)}</span></div>
+      </div>
+    </div>`;
+}
+
+function renderizarResultadoSigtap(itens) {
+  if (itens.length === 0) {
+    sigtapResultadoAreaEl.innerHTML = '<div class="msg vazio">Nenhum procedimento SIGTAP encontrado.</div>';
+    return;
+  }
+  sigtapResultadoAreaEl.innerHTML = `<div class="cards-grid">${itens.map(renderizarCardSigtap).join('')}</div>`;
+}
+
+async function buscarSigtap(termo) {
+  try {
+    const resp = await fetch(`/api/sigtap/buscar?q=${encodeURIComponent(termo)}`);
+    if (!resp.ok) throw new Error('Falha na requisição.');
+    const itens = await resp.json();
+    renderizarResultadoSigtap(itens);
+  } catch (err) {
+    console.error(err);
+    sigtapResultadoAreaEl.innerHTML = '<div class="msg erro">Erro ao buscar procedimentos SIGTAP.</div>';
+  }
+}
+
+if (sigtapBuscaEl) {
+  sigtapBuscaEl.addEventListener('input', () => {
+    const termo = sigtapBuscaEl.value.trim();
+    clearTimeout(debounceTimerSigtap);
+
+    if (termo.length < 2) {
+      sigtapResultadoAreaEl.innerHTML = '';
+      return;
+    }
+
+    debounceTimerSigtap = setTimeout(() => buscarSigtap(termo), 300);
+  });
+}
+
 carregarEdicoes();

@@ -436,6 +436,61 @@ app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
   }
 });
 
+// Busca procedimentos SIGTAP por código exato ou por trecho do nome (ILIKE)
+app.get('/api/sigtap/buscar', async (req, res) => {
+  try {
+    const termo = (req.query.q || '').trim();
+    if (termo.length < 2) {
+      return res.json([]);
+    }
+
+    const { rows } = await pool.query(
+      `SELECT
+         sp.codigo, sp.nome, sp.complexidade, sp.sexo,
+         sp.qt_maxima_execucao, sp.qt_dias_permanencia, sp.qt_pontos, sp.tempo_permanencia,
+         sp.idade_minima_legivel, sp.idade_maxima_legivel,
+         sp.vl_sh, sp.vl_sa, sp.vl_sp,
+         fin.nome AS financiamento_nome,
+         rub.nome AS sub_tipo_financiamento_nome,
+         g.nome  AS grupo_nome,
+         sg.nome AS sub_grupo_nome,
+         fo.nome AS forma_organizacao_nome,
+         COALESCE(reg.lista, '{}') AS instrumentos_registro,
+         COALESCE(mod.lista, '{}') AS modalidades_atendimento,
+         COALESCE(det.lista, '{}') AS atributos_complementares
+       FROM sigtap_procedimentos sp
+       LEFT JOIN sigtap_financiamento fin     ON fin.codigo = sp.financiamento
+       LEFT JOIN sigtap_rubrica rub           ON rub.codigo = sp.rubrica
+       LEFT JOIN sigtap_grupo g               ON g.codigo  = LEFT(sp.codigo, 2)
+       LEFT JOIN sigtap_sub_grupo sg          ON sg.codigo = LEFT(sp.codigo, 4)
+       LEFT JOIN sigtap_forma_organizacao fo  ON fo.codigo = LEFT(sp.codigo, 6)
+       LEFT JOIN LATERAL (
+         SELECT array_agg(r.nome ORDER BY r.nome) AS lista
+         FROM sigtap_procedimento_registro spr JOIN sigtap_registro r ON r.codigo = spr.codigo_registro
+         WHERE spr.codigo_procedimento = sp.codigo
+       ) reg ON true
+       LEFT JOIN LATERAL (
+         SELECT array_agg(m.nome ORDER BY m.nome) AS lista
+         FROM sigtap_procedimento_modalidade spm JOIN sigtap_modalidade m ON m.codigo = spm.codigo_modalidade
+         WHERE spm.codigo_procedimento = sp.codigo
+       ) mod ON true
+       LEFT JOIN LATERAL (
+         SELECT array_agg(d.nome ORDER BY d.nome) AS lista
+         FROM sigtap_procedimento_detalhe spd JOIN sigtap_detalhe d ON d.codigo = spd.codigo_detalhe
+         WHERE spd.codigo_procedimento = sp.codigo
+       ) det ON true
+       WHERE sp.codigo = $1 OR sp.nome ILIKE $2
+       ORDER BY (sp.codigo = $1) DESC, sp.nome
+       LIMIT 50`,
+      [termo, `%${termo}%`]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao buscar procedimentos SIGTAP.' });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => {

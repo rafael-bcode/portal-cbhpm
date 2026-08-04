@@ -583,6 +583,13 @@ body {
 .breakdown-row .detail { font-family: var(--mono); font-size: 0.72rem; color: #94A0A6; display: block; }
 .breakdown-row .value { font-family: var(--mono); font-weight: 600; white-space: nowrap; }
 .breakdown-row .value.zero { color: #B7BFC2; font-weight: 400; }
+.breakdown-row .value.wrap {
+  white-space: normal;
+  text-align: right;
+  font-family: var(--sans);
+  font-weight: 500;
+  max-width: 62%;
+}
 .breakdown-row .pct-badge {
   font-family: var(--mono);
   font-size: 0.68rem;
@@ -639,6 +646,84 @@ body {
 .grupo-secundario .grupo-valor { color: var(--amber); }
 
 .grupo-corpo { padding-bottom: 4px; }
+
+/* ---------- Cards SIGTAP ---------- */
+.sigtap-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.sigtap-card-head {
+  background: var(--navy);
+  color: #fff;
+  padding: 10px 16px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+.sigtap-card-head .codigo {
+  font-family: var(--mono);
+  font-size: 0.8rem;
+  color: #A9B7BC;
+}
+.sigtap-badge {
+  font-family: var(--sans);
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+  background: var(--teal-tint);
+  color: var(--teal-dark);
+}
+.sigtap-badge-3 { background: var(--amber-tint); color: var(--amber); }
+.sigtap-card-nome {
+  padding: 12px 16px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  border-bottom: 1px solid var(--border);
+}
+.sigtap-card-classificacao {
+  padding: 8px 16px;
+  font-size: 0.74rem;
+  color: var(--ink-soft);
+  border-bottom: 1px dashed var(--border);
+}
+.sigtap-card-valores {
+  margin-top: auto;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: var(--teal-tint);
+  border-top: 1px dashed var(--border);
+}
+.sigtap-card-valores .valor-item {
+  padding: 10px 8px;
+  text-align: center;
+  border-left: 1px dashed var(--border);
+}
+.sigtap-card-valores .valor-item:first-child { border-left: none; }
+.sigtap-card-valores .valor-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: var(--teal-dark);
+  margin-bottom: 2px;
+}
+.sigtap-card-valores .valor-num {
+  display: block;
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--teal-dark);
+}
 
 .versoes-tiss-lista { padding: 4px 16px 12px; display: flex; flex-direction: column; gap: 14px; }
 .versao-tiss-item { border-left: 3px solid var(--teal); padding-left: 12px; }

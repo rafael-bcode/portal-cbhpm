@@ -116,6 +116,7 @@
     <button type="button" class="tab-btn active" data-tab="consulta">Consulta por procedimento</button>
     <button type="button" class="tab-btn" data-tab="multiplos">Múltiplos procedimentos</button>
     <button type="button" class="tab-btn" data-tab="validador">Validador de XML TISS</button>
+    <button type="button" class="tab-btn" data-tab="sigtap">SUS / SIGTAP</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -458,6 +459,29 @@
   </section>
 
   <section id="validador-resultado-area"></section>
+
+  </div>
+
+  <div id="tab-sigtap" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>SUS / SIGTAP — consulta de procedimentos</h2>
+    </div>
+    <p class="ajustes-nota">
+      Consulta a tabela SIGTAP (Sistema de Gerenciamento da Tabela de Procedimentos, Medicamentos e OPM do
+      Sistema Único de Saúde). Busque pelo <strong>código exato</strong> do procedimento ou por um
+      <strong>trecho do nome</strong>.
+    </p>
+    <div class="field field-busca">
+      <label for="sigtap-busca">Código ou nome do procedimento</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="sigtap-busca" placeholder="Ex: 0301010013 ou Consulta médica" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="sigtap-resultado-area"></section>
 
   </div>
 

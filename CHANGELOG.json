@@ -1,5 +1,12 @@
 [
   {
+    "versao": "1.15.0",
+    "data": "2026-08-04",
+    "mudancas": [
+      "Adiciona a aba 'SUS / SIGTAP': consulta a procedimentos da Tabela Unificada do SUS (SIGTAP) por código exato ou trecho do nome. Cada resultado mostra classificação completa (grupo, sub-grupo e forma de organização), complexidade, sexo, faixa etária, permanência máxima, financiamento, sub tipo de financiamento, instrumentos de registro, modalidades de atendimento, atributos complementares e os valores de Serviço Hospitalar (SH), Ambulatorial (SA) e Profissional (SP)."
+    ]
+  },
+  {
     "versao": "1.14.2",
     "data": "2026-08-03",
     "mudancas": [
