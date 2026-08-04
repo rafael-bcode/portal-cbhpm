@@ -1,5 +1,13 @@
 [
   {
+    "versao": "1.14.2",
+    "data": "2026-08-03",
+    "mudancas": [
+      "Validador de XML TISS: corrige a Tabela de Domínio 25 'Código da Despesa' usada no agrupamento por tipo de despesa — a tabela anterior tinha 9 códigos com descrições erradas (ex: 03 como 'Gases Medicinais', 07 como 'OPME'); a oficial tem só 6 códigos (01 Gases medicinais, 02 Medicamentos, 03 Materiais, 05 Diárias, 07 Taxas e aluguéis, 08 OPME), conferida contra dois PDFs oficiais 'Tabelas de Domínio do Padrão TISS' e a imagem da Tabela 25 enviada pelo usuário.",
+      "Conferência Unimed 0/2/5: corrige o cálculo do 'lote-base' usado para comparar os 3 arquivos de um mesmo envio — antes comparava só o resto do número do lote sem checar se o dígito inicial batia com o tipo de arquivo, gerando falso positivo quando um arquivo tipo '0' tinha lote começando com dígito coincidente. Agora só marca o lote como comparável quando o dígito realmente confere (arquivo '0' usa o lote inteiro; '2'/'5' usam o lote sem o dígito do tipo, só se esse dígito bater)."
+    ]
+  },
+  {
     "versao": "1.14.1",
     "data": "2026-08-03",
     "mudancas": [

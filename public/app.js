@@ -1292,19 +1292,20 @@ const UNIMED_ROTULOS_ARQUIVO = {
   '2': 'SP-SADT credenciados',
   '5': 'Honorário individual dos credenciados',
 };
-// Tabela de Domínio "Tipo de Despesa" (codigoDespesa, elemento <ans:despesa>
-// dentro de <ans:outrasDespesas>) — confirmada pelo usuário via captura de
-// tela do manual oficial do Padrão TISS.
+// Tabela de Domínio 25 "Código da Despesa" (codigoDespesa, elemento
+// <ans:despesa> dentro de <ans:outrasDespesas>) — a tabela anterior estava
+// errada (03 não é "Gases Medicinais", 07 não é "OPME") e um arquivo real
+// do usuário expôs o erro (agulha/seringa/luva vinham com código 03,
+// taxas de aplicação vinham com código 07). Corrigida com dois PDFs
+// oficiais independentes ("Tabelas de Domínio do Padrão TISS", versões
+// 3.02.00 e 4.02.00) — só existem 6 códigos nessa tabela, não 9.
 const TISS_CODIGOS_DESPESA = {
-  '01': 'Material',
-  '02': 'Medicamento',
-  '03': 'Gases Medicinais',
-  '04': 'Taxas Diversas',
+  '01': 'Gases medicinais',
+  '02': 'Medicamentos',
+  '03': 'Materiais',
   '05': 'Diárias',
-  '06': 'Aluguéis',
-  '07': 'OPME (Órteses, Próteses e Materiais Especiais)',
-  '08': 'Medicamentos de Alto Custo',
-  '09': 'Outros',
+  '07': 'Taxas e aluguéis',
+  '08': 'OPME',
 };
 // Tabela de Domínio 26 "Conselho Profissional" e Tabela de Domínio 35
 // "Grau de Participação" do Padrão TISS — verificadas por extração de texto
@@ -1726,11 +1727,29 @@ async function validarArquivoTiss(file) {
     const digitoArquivo = (file.name.match(/^(\d)/) || [])[1] || null;
     const digitoLoteMatch = resultado.numeroLote.match(/^(\d)/);
     const digitoLote = digitoLoteMatch ? digitoLoteMatch[1] : null;
+    // Só faz sentido comparar o dígito do nome do arquivo com o do lote
+    // para os tipos "2" e "5": nesses casos o lote é o número-base do
+    // lote "0" com o dígito do tipo prefixado na frente (ex: base 33628 →
+    // lote "233628" no arquivo 2, "533628" no arquivo 5). O arquivo "0" é
+    // o lote original — o número pode começar com qualquer dígito (é só o
+    // sequencial do sistema que gerou o lote), então não há conferência
+    // possível a partir de um único arquivo "0" (confirmado pelo usuário,
+    // que viu um falso positivo com lote "33628" num arquivo tipo "0").
+    const bateComLote = digitoArquivo && digitoArquivo !== '0' && digitoLote ? digitoArquivo === digitoLote : null;
+    // Lote-base, para comparar entre os 3 arquivos de um mesmo envio: no
+    // "0" é o lote inteiro; no "2"/"5" é o lote sem o dígito do tipo à
+    // frente — só quando esse dígito realmente confere.
+    let loteBase = null;
+    if (resultado.numeroLote) {
+      if (digitoArquivo === '0') loteBase = resultado.numeroLote;
+      else if (digitoArquivo && digitoLote === digitoArquivo) loteBase = resultado.numeroLote.slice(1);
+    }
     resultado.unimed = {
       digitoArquivo,
       digitoLote,
       rotuloArquivo: digitoArquivo ? UNIMED_ROTULOS_ARQUIVO[digitoArquivo] || null : null,
-      bateComLote: digitoArquivo && digitoLote ? digitoArquivo === digitoLote : null,
+      bateComLote,
+      loteBase,
     };
   }
 
@@ -2063,13 +2082,14 @@ function renderizarValidadorTiss(resultado, containerEl) {
   const linhaLote = resultado.numeroLote ? `<div class="validador-linha">Lote: ${escaparHtml(resultado.numeroLote)}</div>` : '';
 
   let linhaUnimed = '';
-  if (resultado.unimed && resultado.unimed.digitoArquivo) {
+  if (resultado.unimed && resultado.unimed.digitoArquivo && resultado.unimed.rotuloArquivo) {
     const u = resultado.unimed;
-    linhaUnimed = u.rotuloArquivo
-      ? u.bateComLote === false
+    linhaUnimed =
+      u.bateComLote === false
         ? `<div class="validador-linha erro">✘ Convenção Unimed: nome do arquivo indica tipo "${escaparHtml(u.digitoArquivo)}" (${escaparHtml(u.rotuloArquivo)}), mas o lote começa com "${escaparHtml(u.digitoLote)}" — não batem.</div>`
-        : `<div class="validador-linha ok">✔ Convenção Unimed: tipo "${escaparHtml(u.digitoArquivo)}" — ${escaparHtml(u.rotuloArquivo)}</div>`
-      : '';
+        : u.bateComLote === true
+        ? `<div class="validador-linha ok">✔ Convenção Unimed: tipo "${escaparHtml(u.digitoArquivo)}" — ${escaparHtml(u.rotuloArquivo)} (bate com o lote)</div>`
+        : `<div class="validador-linha">— Convenção Unimed: tipo "${escaparHtml(u.digitoArquivo)}" — ${escaparHtml(u.rotuloArquivo)} (lote original — carregue junto com os arquivos 2 e 5 do mesmo envio para conferir)</div>`;
   }
 
   const codigosTabelaEncontrados = new Set();
@@ -2299,13 +2319,19 @@ function analisarCrossCheckUnimed(resultados) {
   const registros = new Set(comDigito.map((x) => x.resultado.operadoraDestino.registro || ''));
   const mesmaOperadora = registros.size === 1;
 
-  const restos = comDigito.map((x) => (x.resultado.numeroLote || '').slice(1));
-  const mesmoLoteBase = restos.every((r) => r === restos[0]) && restos[0] !== '';
+  // Lote-base: no arquivo "0" é o lote inteiro; no "2"/"5" é o lote sem o
+  // dígito do tipo prefixado (só quando esse dígito realmente bate — ver
+  // resultado.unimed.loteBase). Precisa bater entre TODOS os arquivos do
+  // grupo — se algum não deu pra determinar (ex: lote do "2" não começa
+  // com "2"), o próprio card daquele arquivo já mostra o erro específico.
+  const semBaseDefinida = comDigito.filter((x) => x.unimed.loteBase === null);
+  const bases = comDigito.map((x) => x.unimed.loteBase);
+  const mesmoLoteBase = semBaseDefinida.length === 0 && bases.every((b) => b === bases[0]) && bases[0] !== '';
 
   const digitos = comDigito.map((x) => x.unimed.digitoArquivo);
   const digitosRepetidos = digitos.length !== new Set(digitos).size;
 
-  return { comDigito, mesmaOperadora, mesmoLoteBase, digitosRepetidos, restoLote: restos[0] || null };
+  return { comDigito, mesmaOperadora, mesmoLoteBase, digitosRepetidos, semBaseDefinida, loteBase: bases[0] || null };
 }
 
 function renderizarCrossCheckArquivos(resultados) {
@@ -2328,7 +2354,13 @@ function renderizarCrossCheckArquivos(resultados) {
           ${cc.mesmaOperadora ? '✔ Todos os arquivos com a convenção Unimed 0/2/5 são para a mesma operadora' : '✘ Os arquivos com a convenção Unimed 0/2/5 apontam para operadoras diferentes — confira se pertencem ao mesmo envio'}
         </div>
         <div class="validador-linha ${cc.mesmoLoteBase ? 'ok' : 'erro'}">
-          ${cc.mesmoLoteBase ? `✔ Mesmo lote-base entre os arquivos (final "${escaparHtml(cc.restoLote)}")` : '✘ Os números de lote não têm o mesmo final — pode não ser o mesmo envio dividido em 0/2/5'}
+          ${
+            cc.mesmoLoteBase
+              ? `✔ Mesmo lote-base entre os arquivos (base "${escaparHtml(cc.loteBase)}")`
+              : cc.semBaseDefinida.length > 0
+              ? `✘ Não foi possível determinar o lote-base de ${cc.semBaseDefinida.length === 1 ? 'um dos arquivos' : 'alguns dos arquivos'} (o lote não começa com o dígito do tipo esperado)`
+              : '✘ Os arquivos têm lotes-base diferentes — pode não ser o mesmo envio dividido em 0/2/5'
+          }
         </div>
         ${cc.digitosRepetidos ? `<div class="validador-linha aviso">⚠ Mais de um arquivo com o mesmo dígito inicial — confira se não carregou o mesmo tipo duas vezes</div>` : ''}
       </div>
