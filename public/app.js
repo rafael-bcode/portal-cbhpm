@@ -1390,6 +1390,10 @@ const TISS_MOTIVO_ENCERRAMENTO = {
   '64': 'Alta da mãe/puérpera com óbito fetal', '65': 'Óbito da gestante e do concepto',
   '66': 'Óbito da mãe/puérpera e alta do recém-nascido', '67': 'Óbito da mãe/puérpera e permanência do recém-nascido',
 };
+// Tabelas 41, 55 e 57 — usadas na impressão da guia de Resumo de Internação.
+const TISS_REGIME_INTERNACAO = { '1': 'Hospitalar', '2': 'Hospital-dia', '3': 'Domiciliar' };
+const TISS_TIPO_FATURAMENTO = { '1': 'Parcial', '2': 'Final', '3': 'Complementar', '4': 'Total' };
+const TISS_TIPO_INTERNACAO = { '1': 'Clínica', '2': 'Cirúrgica', '3': 'Obstétrica', '4': 'Pediátrica', '5': 'Psiquiátrica' };
 const TISS_UF_SIGLA = {
   '11': 'RO', '12': 'AC', '13': 'AM', '14': 'RR', '15': 'PA', '16': 'AP', '17': 'TO',
   '21': 'MA', '22': 'PI', '23': 'CE', '24': 'RN', '25': 'PB', '26': 'PE', '27': 'AL', '28': 'SE', '29': 'BA',
@@ -2311,6 +2315,238 @@ function montarHtmlImpressaoSPSADT(dados, contexto) {
     </div>`;
 }
 
+// Extrai da guia Resumo de Internação (elemento XML bruto) os campos usados
+// na impressão no layout oficial ANS (formulário "21.203 v008" — Padrão
+// TISS Componente de Conteúdo e Estrutura). Estrutura confirmada no XSD
+// oficial (ctm_internacaoResumoGuia, tissGuiasV4_03_00.xsd) e no modelo em
+// PDF fornecido.
+function extrairDadosImpressaoResumoInternacao(guiaEl) {
+  const cabecalho = filhoTiss(guiaEl, 'cabecalhoGuia');
+  const autorizacao = filhoTiss(guiaEl, 'dadosAutorizacao');
+  const beneficiario = filhoTiss(guiaEl, 'dadosBeneficiario');
+  const dadosExecutante = filhoTiss(guiaEl, 'dadosExecutante');
+  const dadosInternacao = filhoTiss(guiaEl, 'dadosInternacao');
+  const dadosSaida = filhoTiss(guiaEl, 'dadosSaidaInternacao');
+  const valorTotalEl = filhoTiss(guiaEl, 'valorTotal');
+
+  const diagnosticos = filhosTiss(dadosSaida, 'diagnostico').map((d) => d.textContent.trim());
+  const declaracao = filhoTiss(dadosInternacao, 'declaracoes');
+
+  const procedimentos = filhosTiss(filhoTiss(guiaEl, 'procedimentosExecutados'), 'procedimentoExecutado').map((pe) => {
+    const proc = filhoTiss(pe, 'procedimento');
+    const equipe = filhosTiss(pe, 'identEquipe')
+      .map((ie) => extrairProfissionalTiss(filhoTiss(ie, 'identificacaoEquipe')))
+      .filter(Boolean);
+    return {
+      data: textoDeTiss(pe, 'dataExecucao'),
+      horaInicial: textoDeTiss(pe, 'horaInicial'),
+      horaFinal: textoDeTiss(pe, 'horaFinal'),
+      codigoTabela: proc ? textoDeTiss(proc, 'codigoTabela') : '',
+      codigoProcedimento: proc ? textoDeTiss(proc, 'codigoProcedimento') : '',
+      descricaoProcedimento: proc ? textoDeTiss(proc, 'descricaoProcedimento') : '',
+      quantidade: textoDeTiss(pe, 'quantidadeExecutada'),
+      viaAcesso: textoDeTiss(pe, 'viaAcesso'),
+      tecnica: textoDeTiss(pe, 'tecnicaUtilizada'),
+      fator: textoDeTiss(pe, 'reducaoAcrescimo'),
+      valorUnitario: numDeTiss(textoDeTiss(pe, 'valorUnitario')),
+      valorTotal: numDeTiss(textoDeTiss(pe, 'valorTotal')),
+      equipe,
+    };
+  });
+
+  const equipeConsolidada = [];
+  procedimentos.forEach((p) =>
+    p.equipe.forEach((eq) => {
+      if (!equipeConsolidada.some((e) => e.numeroConselho === eq.numeroConselho && e.grauPart === eq.grauPart)) {
+        equipeConsolidada.push(eq);
+      }
+    })
+  );
+
+  return {
+    registroANS: textoDeTiss(cabecalho, 'registroANS'),
+    numeroGuiaPrestador: textoDeTiss(cabecalho, 'numeroGuiaPrestador'),
+    numeroGuiaSolicitacaoInternacao: textoDeTiss(guiaEl, 'numeroGuiaSolicitacaoInternacao'),
+    numeroGuiaOperadora: textoDeTiss(autorizacao, 'numeroGuiaOperadora'),
+    dataAutorizacao: textoDeTiss(autorizacao, 'dataAutorizacao'),
+    senha: textoDeTiss(autorizacao, 'senha'),
+    dataValidadeSenha: textoDeTiss(autorizacao, 'dataValidadeSenha'),
+    numeroCarteira: textoDeTiss(beneficiario, 'numeroCarteira'),
+    atendimentoRN: textoDeTiss(beneficiario, 'atendimentoRN'),
+    executante: extrairContratadoTiss(filhoTiss(dadosExecutante, 'contratadoExecutante')),
+    cnes: textoDeTiss(dadosExecutante, 'CNES'),
+    caraterAtendimento: textoDeTiss(dadosInternacao, 'caraterAtendimento'),
+    tipoFaturamento: textoDeTiss(dadosInternacao, 'tipoFaturamento'),
+    dataInicioFaturamento: textoDeTiss(dadosInternacao, 'dataInicioFaturamento'),
+    horaInicioFaturamento: textoDeTiss(dadosInternacao, 'horaInicioFaturamento'),
+    dataFinalFaturamento: textoDeTiss(dadosInternacao, 'dataFinalFaturamento'),
+    horaFinalFaturamento: textoDeTiss(dadosInternacao, 'horaFinalFaturamento'),
+    tipoInternacao: textoDeTiss(dadosInternacao, 'tipoInternacao'),
+    regimeInternacao: textoDeTiss(dadosInternacao, 'regimeInternacao'),
+    declaracaoNascido: textoDeTiss(declaracao, 'declaracaoNascido'),
+    diagnosticoObito: textoDeTiss(declaracao, 'diagnosticoObito'),
+    declaracaoObito: textoDeTiss(declaracao, 'declaracaoObito'),
+    indicadorDORN: textoDeTiss(declaracao, 'indicadorDORN'),
+    cidPrincipal: diagnosticos[0] || '',
+    cid2: diagnosticos[1] || '',
+    cid3: diagnosticos[2] || '',
+    cid4: diagnosticos[3] || '',
+    indicacaoAcidente: textoDeTiss(dadosSaida, 'indicadorAcidente'),
+    motivoEncerramento: textoDeTiss(dadosSaida, 'motivoEncerramento'),
+    procedimentos,
+    equipeConsolidada,
+    observacao: textoDeTiss(guiaEl, 'observacao'),
+    valores: {
+      procedimentos: numDeTiss(textoDeTiss(valorTotalEl, 'valorProcedimentos')),
+      diarias: numDeTiss(textoDeTiss(valorTotalEl, 'valorDiarias')),
+      taxasAlugueis: numDeTiss(textoDeTiss(valorTotalEl, 'valorTaxasAlugueis')),
+      materiais: numDeTiss(textoDeTiss(valorTotalEl, 'valorMateriais')),
+      medicamentos: numDeTiss(textoDeTiss(valorTotalEl, 'valorMedicamentos')),
+      opme: numDeTiss(textoDeTiss(valorTotalEl, 'valorOPME')),
+      gasesMedicinais: numDeTiss(textoDeTiss(valorTotalEl, 'valorGasesMedicinais')),
+      total: numDeTiss(textoDeTiss(valorTotalEl, 'valorTotalGeral')),
+    },
+  };
+}
+
+function montarHtmlImpressaoResumoInternacao(dados, contexto) {
+  const procedimentosHtml = dados.procedimentos
+    .map(
+      (p) => `
+      <tr>
+        <td>${escaparHtml(p.data ? formatarDataBR(p.data) : '—')}</td>
+        <td>${escaparHtml(p.horaInicial || '—')} a ${escaparHtml(p.horaFinal || '—')}</td>
+        <td>${escaparHtml(p.codigoTabela || '—')}</td>
+        <td>${escaparHtml(p.codigoProcedimento || '—')}</td>
+        <td>${escaparHtml(p.descricaoProcedimento || '—')}</td>
+        <td class="go-num">${escaparHtml(p.quantidade || '—')}</td>
+        <td>${escaparHtml(TISS_VIA_ACESSO[p.viaAcesso] || p.viaAcesso || '—')}</td>
+        <td>${escaparHtml(TISS_TECNICA_UTILIZADA[p.tecnica] || p.tecnica || '—')}</td>
+        <td class="go-num">${escaparHtml(p.fator || '—')}</td>
+        <td class="go-num">${p.valorUnitario !== null ? fmtMoeda(p.valorUnitario) : '—'}</td>
+        <td class="go-num">${p.valorTotal !== null ? fmtMoeda(p.valorTotal) : '—'}</td>
+      </tr>`
+    )
+    .join('');
+
+  const equipeHtml = dados.equipeConsolidada
+    .map(
+      (eq) => `
+      <tr>
+        <td>${escaparHtml(TISS_GRAU_PARTICIPACAO[eq.grauPart] || eq.grauPart || '—')}</td>
+        <td>${escaparHtml(eq.nome || '—')}</td>
+        <td>${escaparHtml(TISS_CONSELHOS[eq.conselho] || eq.conselho || '—')}</td>
+        <td>${escaparHtml(eq.numeroConselho || '—')}</td>
+        <td>${escaparHtml(TISS_UF_SIGLA[eq.uf] || eq.uf || '—')}</td>
+        <td>${escaparHtml(eq.cbo || '—')}</td>
+      </tr>`
+    )
+    .join('');
+
+  return `
+    <div class="guia-oficial">
+      <div class="go-cabecalho">
+        <div class="go-cabecalho-prestador">
+          <div class="go-prestador">${escaparHtml(contexto.razaoSocialExecutante || contexto.prestadorOrigem || 'Prestador não identificado')}</div>
+          <div class="go-operadora">${escaparHtml(contexto.operadoraNome || (contexto.registroOperadora ? `Operadora — registro ANS ${contexto.registroOperadora}` : 'Operadora não identificada'))}</div>
+        </div>
+        <div class="go-titulo">GUIA DE RESUMO DE INTERNAÇÃO</div>
+        <div class="go-campo go-campo-guia-prestador">
+          <span class="go-rotulo">2 - Nº guia no prestador</span>
+          <span class="go-valor">${escaparHtml(dados.numeroGuiaPrestador || '—')}</span>
+        </div>
+      </div>
+      <p class="go-aviso">Reprodução do layout oficial do Padrão TISS/ANS a partir dos dados do XML já validado neste portal — não substitui a guia original nem é enviada a nenhuma operadora. Nome, validade da carteira e CNS do beneficiário não existem mais no XML desde a v4.00.00 (LGPD). Nome do contratado (campo 14) buscado pelo CNPJ na BrasilAPI ao clicar em imprimir.</p>
+
+      <div class="go-grid go-grid-2">
+        ${campoOficial('1 - Registro ANS', dados.registroANS)}
+        ${campoOficial('3 - Nº guia de solicitação de internação', dados.numeroGuiaSolicitacaoInternacao)}
+      </div>
+      <div class="go-grid go-grid-4">
+        ${campoOficial('4 - Data da autorização', dados.dataAutorizacao ? formatarDataBR(dados.dataAutorizacao) : '')}
+        ${campoOficial('5 - Senha', dados.senha)}
+        ${campoOficial('6 - Data de validade da senha', dados.dataValidadeSenha ? formatarDataBR(dados.dataValidadeSenha) : '')}
+        ${campoOficial('7 - Nº guia atribuído pela operadora', dados.numeroGuiaOperadora)}
+      </div>
+
+      <div class="go-secao-titulo">Dados do beneficiário</div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('8 - Nº da carteira', dados.numeroCarteira)}
+        <div class="go-campo"><span class="go-rotulo">9 - Validade da carteira</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        <div class="go-campo"><span class="go-rotulo">10 - Nome</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        <div class="go-campo"><span class="go-rotulo">11 - Cartão Nacional de Saúde</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        ${campoOficial('12 - Atendimento a RN', dados.atendimentoRN === 'S' ? 'Sim' : dados.atendimentoRN === 'N' ? 'Não' : dados.atendimentoRN)}
+      </div>
+
+      <div class="go-secao-titulo">Dados do contratado executante</div>
+      <div class="go-grid go-grid-3">
+        ${campoOficial(`13 - ${dados.executante.rotulo || 'Código na operadora'}`, dados.executante.valor)}
+        ${campoOficial('14 - Nome do contratado', contexto.razaoSocialExecutante || contexto.prestadorOrigem)}
+        ${campoOficial('15 - Código CNES', dados.cnes)}
+      </div>
+
+      <div class="go-secao-titulo">Dados da internação</div>
+      <div class="go-grid go-grid-4">
+        ${campoOficial('16 - Caráter do atendimento', TISS_CARATER_ATENDIMENTO[dados.caraterAtendimento] || dados.caraterAtendimento)}
+        ${campoOficial('17 - Tipo de faturamento', TISS_TIPO_FATURAMENTO[dados.tipoFaturamento] || dados.tipoFaturamento)}
+        ${campoOficial('18/19 - Início do faturamento', dados.dataInicioFaturamento ? `${formatarDataBR(dados.dataInicioFaturamento)} ${dados.horaInicioFaturamento || ''}` : '')}
+        ${campoOficial('20/21 - Fim do faturamento', dados.dataFinalFaturamento ? `${formatarDataBR(dados.dataFinalFaturamento)} ${dados.horaFinalFaturamento || ''}` : '')}
+        ${campoOficial('22 - Tipo de internação', TISS_TIPO_INTERNACAO[dados.tipoInternacao] || dados.tipoInternacao)}
+        ${campoOficial('23 - Regime de internação', TISS_REGIME_INTERNACAO[dados.regimeInternacao] || dados.regimeInternacao)}
+      </div>
+
+      <div class="go-secao-titulo">Diagnósticos e encerramento</div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('24 - CID 10 principal', dados.cidPrincipal)}
+        ${campoOficial('25 - CID 10 (2)', dados.cid2)}
+        ${campoOficial('26 - CID 10 (3)', dados.cid3)}
+        ${campoOficial('27 - CID 10 (4)', dados.cid4)}
+        ${campoOficial('28 - Indicação de acidente', TISS_INDICADOR_ACIDENTE[dados.indicacaoAcidente] || dados.indicacaoAcidente)}
+        ${campoOficial('29 - Motivo de encerramento da internação', TISS_MOTIVO_ENCERRAMENTO[dados.motivoEncerramento] || dados.motivoEncerramento)}
+        ${campoOficial('30 - Nº declaração de nascido vivo', dados.declaracaoNascido)}
+        ${campoOficial('31 - CID 10 óbito', dados.diagnosticoObito)}
+        ${campoOficial('32 - Nº declaração de óbito', dados.declaracaoObito)}
+        ${campoOficial('33 - Indicador D.O. de RN', dados.indicadorDORN === 'S' ? 'Sim' : dados.indicadorDORN === 'N' ? 'Não' : dados.indicadorDORN)}
+      </div>
+
+      <div class="go-secao-titulo">Procedimentos e exames realizados (34 a 47)</div>
+      <table class="go-tabela">
+        <thead>
+          <tr>
+            <th>Data</th><th>Horário</th><th>Tabela</th><th>Código</th><th>Descrição</th>
+            <th>Qtde.</th><th>Via</th><th>Téc.</th><th>Fator</th><th>Valor unit. (R$)</th><th>Valor total (R$)</th>
+          </tr>
+        </thead>
+        <tbody>${procedimentosHtml || '<tr><td colspan="11" class="go-vazio">Nenhum procedimento executado informado</td></tr>'}</tbody>
+      </table>
+
+      <div class="go-secao-titulo">Identificação da equipe (46 a 53)</div>
+      <table class="go-tabela">
+        <thead><tr><th>Grau de participação</th><th>Nome</th><th>Conselho</th><th>Nº conselho</th><th>UF</th><th>CBO</th></tr></thead>
+        <tbody>${equipeHtml || '<tr><td colspan="6" class="go-vazio">Nenhum profissional executante informado</td></tr>'}</tbody>
+      </table>
+
+      ${dados.observacao ? `<div class="go-secao-titulo">65 - Observações / Justificativa</div><p class="go-observacao">${escaparHtml(dados.observacao)}</p>` : ''}
+
+      <div class="go-secao-titulo">Totais</div>
+      <div class="go-totais">
+        <div class="go-campo"><span class="go-rotulo">54 - Procedimentos (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.procedimentos || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">55 - Diárias (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.diarias || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">56 - Taxas e aluguéis (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.taxasAlugueis || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">57 - Materiais (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.materiais || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">58 - OPME (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.opme || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">59 - Medicamentos (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.medicamentos || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">60 - Gases medicinais (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.gasesMedicinais || 0)}</span></div>
+        <div class="go-campo go-campo-total"><span class="go-rotulo">61 - Total geral (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.total || 0)}</span></div>
+      </div>
+
+      <div class="go-assinaturas">
+        <div class="go-assinatura">62 — Data / 63 - Assinatura do contratado</div>
+        <div class="go-assinatura">64 - Assinatura do(s) auditor(es) da operadora</div>
+      </div>
+    </div>`;
+}
+
 function abrirModalGuiaValidador(guia) {
   const modalEl = document.getElementById('modal-validador-guia');
   const tituloEl = document.getElementById('validador-guia-titulo');
@@ -2321,11 +2557,16 @@ function abrirModalGuiaValidador(guia) {
 
   tituloEl.textContent = `${guia.tipo}${guia.numeroGuiaPrestador ? ` — ${guia.numeroGuiaPrestador}` : ''}`;
 
-  // Impressão no layout oficial ANS: só implementada para guiaSP-SADT por
-  // enquanto (Consulta, Resumo de Internação e Honorário Individual ficam
-  // para uma próxima leva — layouts diferentes cada um).
+  // Impressão no layout oficial ANS: cada tipo de guia tem seu próprio
+  // formulário/layout — Consulta e Honorário Individual ficam para uma
+  // próxima leva.
+  const IMPRESSAO_GUIA_OFICIAL = {
+    'guiaSP-SADT': { extrair: extrairDadosImpressaoSPSADT, montar: montarHtmlImpressaoSPSADT },
+    guiaResumoInternacao: { extrair: extrairDadosImpressaoResumoInternacao, montar: montarHtmlImpressaoResumoInternacao },
+  };
   if (btnImprimirEl) {
-    if (guia.tipo === 'guiaSP-SADT' && guia.elementoXml) {
+    const impressao = IMPRESSAO_GUIA_OFICIAL[guia.tipo];
+    if (impressao && guia.elementoXml) {
       btnImprimirEl.classList.remove('hidden');
       btnImprimirEl.textContent = '🖨 Imprimir no layout ANS';
       btnImprimirEl.onclick = async () => {
@@ -2348,9 +2589,9 @@ function abrirModalGuiaValidador(guia) {
             btnImprimirEl.textContent = '🖨 Imprimir no layout ANS';
           }
         }
-        const dados = extrairDadosImpressaoSPSADT(guia.elementoXml);
+        const dados = impressao.extrair(guia.elementoXml);
         const guiaPrintAreaEl = document.getElementById('guia-print-area');
-        guiaPrintAreaEl.innerHTML = montarHtmlImpressaoSPSADT(dados, contexto);
+        guiaPrintAreaEl.innerHTML = impressao.montar(dados, contexto);
         document.body.classList.add('modo-guia');
         window.print();
       };

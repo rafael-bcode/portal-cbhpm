@@ -1,5 +1,13 @@
 [
   {
+    "versao": "1.20.0",
+    "data": "2026-08-05",
+    "mudancas": [
+      "Validador de XML TISS: guias do tipo Resumo de Internação ganham o mesmo botão 'Imprimir no layout ANS' já disponível para SP/SADT — reproduz o formulário oficial '21.203' (Padrão TISS, Componente de Conteúdo e Estrutura) em página única paisagem: identificação da guia, autorização, beneficiário, contratado executante, dados da internação, diagnósticos (CID) e motivo de encerramento, procedimentos executados, equipe e totais (incluindo diárias).",
+      "Testado ponta a ponta com XML real de internação (operadora Bradesco Saúde), inclusive o caso sem CNPJ do prestador (usa 'código na operadora' como identificador, sem tentar buscar CNPJ)."
+    ]
+  },
+  {
     "versao": "1.19.0",
     "data": "2026-08-05",
     "mudancas": [
