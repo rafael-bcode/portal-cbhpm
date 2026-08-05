@@ -1380,13 +1380,14 @@ body {
 
 @media print {
   html, body { width: 100%; height: 100%; }
-  .guia-oficial { font-size: 7px; }
-  .go-cabecalho { padding-bottom: 4px; margin-bottom: 2px; }
-  .go-secao-titulo { margin-top: 4px; padding: 1px 6px; }
-  .go-campo { min-height: 16px; padding: 1px 5px; }
-  .go-tabela th, .go-tabela td { padding: 1px 4px; }
-  .go-assinaturas { margin-top: 5px; gap: 20px; }
+  .guia-oficial { font-size: 6.6px; }
+  .go-cabecalho { padding-bottom: 3px; margin-bottom: 1px; }
+  .go-secao-titulo { margin-top: 3px; padding: 1px 6px; }
+  .go-campo { min-height: 14px; padding: 1px 5px; }
+  .go-tabela th, .go-tabela td { padding: 0.5px 4px; }
+  .go-assinaturas { margin-top: 4px; gap: 20px; }
   .go-assinatura { padding-top: 2px; }
-  .go-aviso { margin: 3px 0 4px; }
-  .go-observacao { min-height: 12px; padding: 3px 6px; }
+  .go-aviso { margin: 2px 0 3px; }
+  .go-observacao { min-height: 10px; padding: 2px 6px; }
+  .go-totais { margin-top: 0; }
 }

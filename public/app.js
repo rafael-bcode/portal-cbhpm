@@ -1394,6 +1394,20 @@ const TISS_MOTIVO_ENCERRAMENTO = {
 const TISS_REGIME_INTERNACAO = { '1': 'Hospitalar', '2': 'Hospital-dia', '3': 'Domiciliar' };
 const TISS_TIPO_FATURAMENTO = { '1': 'Parcial', '2': 'Final', '3': 'Complementar', '4': 'Total' };
 const TISS_TIPO_INTERNACAO = { '1': 'Clínica', '2': 'Cirúrgica', '3': 'Obstétrica', '4': 'Pediátrica', '5': 'Psiquiátrica' };
+// Tabela 60 (Unidade de Medida) — usada no Anexo de Outras Despesas
+// (campo 13, unidadeMedida). Extraída de public/tiss-tabelas-dominio.json
+// (já verificado contra fonte oficial), só a sigla (não a descrição longa).
+const TISS_UNIDADE_MEDIDA = {
+  '001': 'AMP', '002': 'BUI', '003': 'BG', '004': 'BOLS', '005': 'CX', '006': 'CAP', '007': 'CARP',
+  '008': 'COM', '009': 'DOSE', '010': 'DRG', '011': 'ENV', '012': 'FLAC', '013': 'FR', '014': 'FA',
+  '015': 'GAL', '016': 'GLOB', '017': 'GTS', '018': 'G', '019': 'L', '020': 'MCG', '021': 'MUI',
+  '022': 'MG', '023': 'ML', '024': 'OVL', '025': 'PAS', '026': 'LT', '027': 'PER', '028': 'PIL',
+  '029': 'PT', '030': 'KG', '031': 'SER', '032': 'SUP', '033': 'TABLE', '034': 'TUB', '035': 'TB',
+  '036': 'UN', '037': 'UI', '038': 'CM', '039': 'CONJ', '040': 'KIT', '041': 'MÇ', '042': 'M',
+  '043': 'PC', '044': 'PÇ', '045': 'RL', '046': 'GY', '047': 'CGY', '048': 'PAR', '049': 'ADES',
+  '050': 'COM EFEV', '051': 'COM MST', '052': 'SACHE', '053': 'M', '054': 'M²', '055': 'M³',
+  '056': 'MG/peso', '057': 'MG/M²', '058': 'CAL', '059': 'UI/M²', '060': 'UI/ML', '061': 'CM³',
+};
 const TISS_UF_SIGLA = {
   '11': 'RO', '12': 'AC', '13': 'AM', '14': 'RR', '15': 'PA', '16': 'AP', '17': 'TO',
   '21': 'MA', '22': 'PI', '23': 'CE', '24': 'RN', '25': 'PB', '26': 'PE', '27': 'AL', '28': 'SE', '29': 'BA',
@@ -2073,6 +2087,68 @@ function extrairContratadoTiss(el) {
   return { rotulo: '', valor: '' };
 }
 
+// Anexo de Outras Despesas ("21.202 v008") — usado tanto na guia SP/SADT
+// quanto na de Resumo de Internação (mesma estrutura XML, <outrasDespesas>
+// <despesa>, ct_outrasDespesas no XSD oficial), por isso é extraído por uma
+// função à parte e reaproveitado nas duas impressões.
+function extrairOutrasDespesasTiss(guiaEl) {
+  const outrasDespesas = filhoTiss(guiaEl, 'outrasDespesas');
+  return filhosTiss(outrasDespesas, 'despesa').map((d) => {
+    const servico = filhoTiss(d, 'servicosExecutados');
+    return {
+      codigoDespesa: textoDeTiss(d, 'codigoDespesa'),
+      data: servico ? textoDeTiss(servico, 'dataExecucao') : '',
+      horaInicial: servico ? textoDeTiss(servico, 'horaInicial') : '',
+      horaFinal: servico ? textoDeTiss(servico, 'horaFinal') : '',
+      codigoTabela: servico ? textoDeTiss(servico, 'codigoTabela') : '',
+      codigoProcedimento: servico ? textoDeTiss(servico, 'codigoProcedimento') : '',
+      descricaoProcedimento: servico ? textoDeTiss(servico, 'descricaoProcedimento') : '',
+      quantidade: servico ? textoDeTiss(servico, 'quantidadeExecutada') : '',
+      unidadeMedida: servico ? textoDeTiss(servico, 'unidadeMedida') : '',
+      fator: servico ? textoDeTiss(servico, 'reducaoAcrescimo') : '',
+      valorUnitario: servico ? numDeTiss(textoDeTiss(servico, 'valorUnitario')) : null,
+      valorTotal: servico ? numDeTiss(textoDeTiss(servico, 'valorTotal')) : null,
+      registroAnvisa: servico ? textoDeTiss(servico, 'registroANVISA') : '',
+      refFabricante: servico ? textoDeTiss(servico, 'codigoRefFabricante') : '',
+      autorizacaoFuncionamento: servico ? textoDeTiss(servico, 'autorizacaoFuncionamento') : '',
+    };
+  });
+}
+
+function renderizarTabelaOutrasDespesas(despesas) {
+  if (!despesas || despesas.length === 0) return '';
+  const linhasHtml = despesas
+    .map(
+      (d) => `
+      <tr>
+        <td>${escaparHtml(TISS_CODIGOS_DESPESA[d.codigoDespesa] || d.codigoDespesa || '—')}</td>
+        <td>${escaparHtml(d.data ? formatarDataBR(d.data) : '—')}</td>
+        <td>${escaparHtml(d.horaInicial || '—')} a ${escaparHtml(d.horaFinal || '—')}</td>
+        <td>${escaparHtml(d.codigoTabela || '—')}</td>
+        <td>${escaparHtml(d.codigoProcedimento || '—')}</td>
+        <td>${escaparHtml(d.descricaoProcedimento || '—')}</td>
+        <td class="go-num">${escaparHtml(d.quantidade || '—')}</td>
+        <td>${escaparHtml(TISS_UNIDADE_MEDIDA[d.unidadeMedida] || d.unidadeMedida || '—')}</td>
+        <td class="go-num">${escaparHtml(d.fator || '—')}</td>
+        <td class="go-num">${d.valorUnitario !== null ? fmtMoeda(d.valorUnitario) : '—'}</td>
+        <td class="go-num">${d.valorTotal !== null ? fmtMoeda(d.valorTotal) : '—'}</td>
+        <td>${escaparHtml(d.registroAnvisa || '—')}</td>
+      </tr>`
+    )
+    .join('');
+  return `
+    <div class="go-secao-titulo">Anexo — outras despesas (materiais, medicamentos, taxas, OPME, gases e diárias)</div>
+    <table class="go-tabela">
+      <thead>
+        <tr>
+          <th>Cód. despesa</th><th>Data</th><th>Horário</th><th>Tabela</th><th>Código</th><th>Descrição</th>
+          <th>Qtde.</th><th>Unid.</th><th>Fator</th><th>Valor unit. (R$)</th><th>Valor total (R$)</th><th>Registro ANVISA</th>
+        </tr>
+      </thead>
+      <tbody>${linhasHtml}</tbody>
+    </table>`;
+}
+
 // Extrai da guia SP/SADT (elemento XML bruto) todos os campos usados na
 // impressão no layout oficial ANS (formulário em papel, numerado 1 a 68 —
 // "Padrão TISS - Componente de Conteúdo e Estrutura"). É um extrator à
@@ -2152,6 +2228,7 @@ function extrairDadosImpressaoSPSADT(guiaEl) {
     motivoEncerramento: textoDeTiss(dadosAtendimento, 'motivoEncerramento'),
     procedimentos,
     equipeConsolidada,
+    outrasDespesas: extrairOutrasDespesasTiss(guiaEl),
     observacao: textoDeTiss(guiaEl, 'observacao'),
     valores: {
       procedimentos: numDeTiss(textoDeTiss(valorTotalEl, 'valorProcedimentos')),
@@ -2294,6 +2371,8 @@ function montarHtmlImpressaoSPSADT(dados, contexto) {
         <tbody>${equipeHtml || '<tr><td colspan="6" class="go-vazio">Nenhum profissional executante informado</td></tr>'}</tbody>
       </table>
 
+      ${renderizarTabelaOutrasDespesas(dados.outrasDespesas)}
+
       ${dados.observacao ? `<div class="go-secao-titulo">58 - Observação / Justificativa</div><p class="go-observacao">${escaparHtml(dados.observacao)}</p>` : ''}
 
       <div class="go-secao-titulo">Totais</div>
@@ -2395,6 +2474,7 @@ function extrairDadosImpressaoResumoInternacao(guiaEl) {
     motivoEncerramento: textoDeTiss(dadosSaida, 'motivoEncerramento'),
     procedimentos,
     equipeConsolidada,
+    outrasDespesas: extrairOutrasDespesasTiss(guiaEl),
     observacao: textoDeTiss(guiaEl, 'observacao'),
     valores: {
       procedimentos: numDeTiss(textoDeTiss(valorTotalEl, 'valorProcedimentos')),
@@ -2525,6 +2605,8 @@ function montarHtmlImpressaoResumoInternacao(dados, contexto) {
         <thead><tr><th>Grau de participação</th><th>Nome</th><th>Conselho</th><th>Nº conselho</th><th>UF</th><th>CBO</th></tr></thead>
         <tbody>${equipeHtml || '<tr><td colspan="6" class="go-vazio">Nenhum profissional executante informado</td></tr>'}</tbody>
       </table>
+
+      ${renderizarTabelaOutrasDespesas(dados.outrasDespesas)}
 
       ${dados.observacao ? `<div class="go-secao-titulo">65 - Observações / Justificativa</div><p class="go-observacao">${escaparHtml(dados.observacao)}</p>` : ''}
 

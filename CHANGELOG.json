@@ -1,5 +1,13 @@
 [
   {
+    "versao": "1.21.0",
+    "data": "2026-08-05",
+    "mudancas": [
+      "Impressão no layout ANS (SP/SADT e Resumo de Internação) passa a incluir o Anexo de Outras Despesas ('21.202') quando presente no XML — materiais, medicamentos, taxas/aluguéis, OPME, gases e diárias lançados à parte dos procedimentos principais, com código de despesa, unidade de medida e registro ANVISA.",
+      "Testado com XML validado ponta a ponta incluindo o anexo, mantendo página única paisagem."
+    ]
+  },
+  {
     "versao": "1.20.0",
     "data": "2026-08-05",
     "mudancas": [
