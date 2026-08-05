@@ -1354,6 +1354,48 @@ const TISS_GRAU_PARTICIPACAO = {
   '12': 'Clínico',
   '13': 'Intensivista',
 };
+// Tabelas de domínio 23, 36, 48, 50, 52, 59 e 61 do Padrão TISS — usadas na
+// impressão da guia SP/SADT no layout oficial ANS. Extraídas diretamente de
+// public/tiss-tabelas-dominio.json (já verificado contra fonte oficial —
+// ver aba Tabelas TISS), não são palpite. Tabela 50 (Tipo de Atendimento)
+// tem só os códigos confirmados na nossa fonte; a crítica oficial da ANS
+// (dicionário de glosas, código 1602) cita outros códigos (05,06,07,11,14–22)
+// que não estão em public/tiss-tabelas-dominio.json — por isso o fallback
+// abaixo mostra o código bruto quando não encontrado, em vez de inventar.
+const TISS_CARATER_ATENDIMENTO = { '1': 'Eletivo', '2': 'Urgência/Emergência' };
+const TISS_INDICADOR_ACIDENTE = { '0': 'Trabalho', '1': 'Trânsito', '2': 'Outros', '9': 'Não Acidente' };
+const TISS_TECNICA_UTILIZADA = { '1': 'Convencional', '2': 'Vídeo', '3': 'Robótica' };
+const TISS_TIPO_ATENDIMENTO = {
+  '01': 'Remoção', '02': 'Pequena Cirurgia', '03': 'Outras Terapias', '04': 'Consulta',
+  '08': 'Quimioterapia', '09': 'Radioterapia', '10': 'Terapia Renal Substitutiva (TRS)',
+  '13': 'Pequeno atendimento (sutura, gesso e outros)', '23': 'Exame',
+};
+const TISS_TIPO_CONSULTA = { '1': 'Primeira Consulta', '2': 'Retorno', '3': 'Pré-natal', '4': 'Por encaminhamento' };
+const TISS_VIA_ACESSO = { '1': 'Única', '2': 'Mesma via', '3': 'Diferentes vias' };
+const TISS_REGIME_ATENDIMENTO = { '01': 'Ambulatorial', '02': 'Domiciliar', '03': 'Internação', '04': 'Pronto-socorro', '05': 'TELESSAÚDE' };
+const TISS_MOTIVO_ENCERRAMENTO = {
+  '11': 'Alta Curado', '12': 'Alta Melhorado', '14': 'Alta a pedido',
+  '15': 'Alta com previsão de retorno para acompanhamento do paciente',
+  '16': 'Alta por Evasão', '18': 'Alta por outros motivos', '19': 'Alta de Paciente Agudo em Psiquiatria',
+  '21': 'Permanência, por características próprias da doença', '22': 'Permanência, por intercorrência',
+  '23': 'Permanência, por impossibilidade sócio-familiar',
+  '24': 'Permanência, por processo de doação de órgãos/tecidos/células - doador vivo',
+  '25': 'Permanência, por processo de doação de órgãos/tecidos/células - doador morto',
+  '26': 'Permanência, por mudança de procedimento', '27': 'Permanência, por reoperação', '28': 'Permanência, outros motivos',
+  '31': 'Transferido para outro estabelecimento', '32': 'Transferência para internação domiciliar',
+  '41': 'Óbito com declaração de óbito fornecida pelo médico assistente',
+  '42': 'Óbito com declaração de óbito fornecida pelo IML', '43': 'Óbito com declaração de óbito fornecida pelo SVO',
+  '51': 'Encerramento administrativo', '61': 'Alta da mãe/puérpera e do recém-nascido',
+  '62': 'Alta da mãe/puérpera e permanência do recém-nascido', '63': 'Alta da mãe/puérpera e óbito do recém-nascido',
+  '64': 'Alta da mãe/puérpera com óbito fetal', '65': 'Óbito da gestante e do concepto',
+  '66': 'Óbito da mãe/puérpera e alta do recém-nascido', '67': 'Óbito da mãe/puérpera e permanência do recém-nascido',
+};
+const TISS_UF_SIGLA = {
+  '11': 'RO', '12': 'AC', '13': 'AM', '14': 'RR', '15': 'PA', '16': 'AP', '17': 'TO',
+  '21': 'MA', '22': 'PI', '23': 'CE', '24': 'RN', '25': 'PB', '26': 'PE', '27': 'AL', '28': 'SE', '29': 'BA',
+  '31': 'MG', '32': 'ES', '33': 'RJ', '35': 'SP', '41': 'PR', '42': 'SC', '43': 'RS',
+  '50': 'MS', '51': 'MT', '52': 'GO', '53': 'DF', '98': 'EX',
+};
 const GRUPO_PROCEDIMENTOS = 'Procedimentos (honorários)';
 const GRUPO_CONSULTAS = 'Consultas';
 const ORDEM_GRUPOS_DESPESA = [
@@ -1733,6 +1775,17 @@ async function validarArquivoTiss(file) {
         guia.profissionais.forEach(enriquecerProfissional);
         guia.itens.forEach((it) => it.profissionais.forEach(enriquecerProfissional));
         if (guia.consultaItem) guia.consultaItem.profissionais.forEach(enriquecerProfissional);
+        // Guarda o elemento XML bruto e o contexto do arquivo (prestador/
+        // operadora) na própria guia — usado pela impressão no layout
+        // oficial ANS (extrai campos que o parser "enxuto" acima não
+        // guarda, como senha, CNES, indicação clínica etc.).
+        guia.elementoXml = guiaEl;
+        guia.contextoArquivo = {
+          prestadorOrigem: resultado.prestadorOrigem,
+          prestadorOrigemCnpj: resultado.prestadorOrigemCnpj,
+          operadoraNome: resultado.operadoraDestino.nome,
+          registroOperadora: resultado.operadoraDestino.registro,
+        };
         resultado.guias.push(guia);
       });
     }
@@ -1818,13 +1871,17 @@ function renderizarGuiaTiss(g, indice) {
 // paciente) à BrasilAPI (https://brasilapi.com.br), um agregador público e
 // gratuito de dados abertos. Confirmado CORS aberto (access-control-allow-
 // origin: *) antes de usar.
+const cnpjBrasilApiCache = {};
 async function buscarCnpjBrasilApi(cnpj) {
+  if (cnpjBrasilApiCache[cnpj]) return cnpjBrasilApiCache[cnpj];
   const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
   if (!resp.ok) {
     if (resp.status === 404) throw new Error('CNPJ não encontrado');
     throw new Error(`HTTP ${resp.status}`);
   }
-  return resp.json();
+  const dados = await resp.json();
+  cnpjBrasilApiCache[cnpj] = dados;
+  return dados;
 }
 
 function itensDaGuia(guia) {
@@ -1997,14 +2054,311 @@ function renderizarResumoGuiaModal(guia) {
     ${totalHtml}`;
 }
 
+// Identifica um "contratado" (choice codigoPrestadorNaOperadora | cpfContratado
+// | cnpjContratado, ct_contratadoDados do XSD oficial) e devolve rótulo + valor
+// prontos para exibição, já que o campo impresso na guia oficial é só um
+// ("Código na Operadora") mas o XML pode trazer qualquer um dos 3.
+function extrairContratadoTiss(el) {
+  if (!el) return { rotulo: '', valor: '' };
+  const codigo = textoDeTiss(el, 'codigoPrestadorNaOperadora');
+  if (codigo) return { rotulo: 'Código na operadora', valor: codigo };
+  const cnpj = textoDeTiss(el, 'cnpjContratado');
+  if (cnpj) return { rotulo: 'CNPJ', valor: cnpj };
+  const cpf = textoDeTiss(el, 'cpfContratado');
+  if (cpf) return { rotulo: 'CPF', valor: cpf };
+  return { rotulo: '', valor: '' };
+}
+
+// Extrai da guia SP/SADT (elemento XML bruto) todos os campos usados na
+// impressão no layout oficial ANS (formulário em papel, numerado 1 a 68 —
+// "Padrão TISS - Componente de Conteúdo e Estrutura"). É um extrator à
+// parte de analisarGuiaTiss (que só pega o necessário pra conferência) pois
+// o formulário oficial pede campos que a conferência não usa (senha, CNES,
+// indicação clínica, dados de autorização etc.).
+function extrairDadosImpressaoSPSADT(guiaEl) {
+  const cabecalho = filhoTiss(guiaEl, 'cabecalhoGuia');
+  const autorizacao = filhoTiss(guiaEl, 'dadosAutorizacao');
+  const beneficiario = filhoTiss(guiaEl, 'dadosBeneficiario');
+  const dadosSolicitante = filhoTiss(guiaEl, 'dadosSolicitante');
+  const profissionalSolicitante = extrairProfissionalTiss(filhoTiss(dadosSolicitante, 'profissionalSolicitante'));
+  const dadosSolicitacao = filhoTiss(guiaEl, 'dadosSolicitacao');
+  const dadosExecutante = filhoTiss(guiaEl, 'dadosExecutante');
+  const dadosAtendimento = filhoTiss(guiaEl, 'dadosAtendimento');
+  const valorTotalEl = filhoTiss(guiaEl, 'valorTotal');
+
+  const procedimentos = filhosTiss(filhoTiss(guiaEl, 'procedimentosExecutados'), 'procedimentoExecutado').map((pe) => {
+    const proc = filhoTiss(pe, 'procedimento');
+    const equipe = filhosTiss(pe, 'equipeSadt').map((eq) => ({
+      grauPart: textoDeTiss(eq, 'grauPart'),
+      nome: textoDeTiss(eq, 'nomeProf'),
+      conselho: textoDeTiss(eq, 'conselho'),
+      numeroConselho: textoDeTiss(eq, 'numeroConselhoProfissional'),
+      uf: textoDeTiss(eq, 'UF'),
+      cbo: textoDeTiss(eq, 'CBOS'),
+    }));
+    return {
+      sequencial: textoDeTiss(pe, 'sequencialItem'),
+      data: textoDeTiss(pe, 'dataExecucao'),
+      horaInicial: textoDeTiss(pe, 'horaInicial'),
+      horaFinal: textoDeTiss(pe, 'horaFinal'),
+      codigoTabela: proc ? textoDeTiss(proc, 'codigoTabela') : '',
+      codigoProcedimento: proc ? textoDeTiss(proc, 'codigoProcedimento') : '',
+      descricaoProcedimento: proc ? textoDeTiss(proc, 'descricaoProcedimento') : '',
+      quantidade: textoDeTiss(pe, 'quantidadeExecutada'),
+      viaAcesso: textoDeTiss(pe, 'viaAcesso'),
+      tecnica: textoDeTiss(pe, 'tecnicaUtilizada'),
+      fator: textoDeTiss(pe, 'reducaoAcrescimo'),
+      valorUnitario: numDeTiss(textoDeTiss(pe, 'valorUnitario')),
+      valorTotal: numDeTiss(textoDeTiss(pe, 'valorTotal')),
+      equipe,
+    };
+  });
+
+  const equipeConsolidada = [];
+  procedimentos.forEach((p) =>
+    p.equipe.forEach((eq) => {
+      if (!equipeConsolidada.some((e) => e.numeroConselho === eq.numeroConselho && e.grauPart === eq.grauPart)) {
+        equipeConsolidada.push(eq);
+      }
+    })
+  );
+
+  return {
+    registroANS: textoDeTiss(cabecalho, 'registroANS'),
+    numeroGuiaPrestador: textoDeTiss(cabecalho, 'numeroGuiaPrestador'),
+    guiaPrincipal: textoDeTiss(cabecalho, 'guiaPrincipal'),
+    numeroGuiaOperadora: textoDeTiss(autorizacao, 'numeroGuiaOperadora'),
+    dataAutorizacao: textoDeTiss(autorizacao, 'dataAutorizacao'),
+    senha: textoDeTiss(autorizacao, 'senha'),
+    dataValidadeSenha: textoDeTiss(autorizacao, 'dataValidadeSenha'),
+    numeroCarteira: textoDeTiss(beneficiario, 'numeroCarteira'),
+    atendimentoRN: textoDeTiss(beneficiario, 'atendimentoRN'),
+    solicitante: extrairContratadoTiss(filhoTiss(dadosSolicitante, 'contratadoSolicitante')),
+    nomeContratadoSolicitante: textoDeTiss(dadosSolicitante, 'nomeContratadoSolicitante'),
+    profissionalSolicitante,
+    caraterAtendimento: textoDeTiss(dadosSolicitacao, 'caraterAtendimento'),
+    dataSolicitacao: textoDeTiss(dadosSolicitacao, 'dataSolicitacao'),
+    indicacaoClinica: textoDeTiss(dadosSolicitacao, 'indicacaoClinica'),
+    executante: extrairContratadoTiss(filhoTiss(dadosExecutante, 'contratadoExecutante')),
+    cnes: textoDeTiss(dadosExecutante, 'CNES'),
+    tipoAtendimento: textoDeTiss(dadosAtendimento, 'tipoAtendimento'),
+    indicacaoAcidente: textoDeTiss(dadosAtendimento, 'indicacaoAcidente'),
+    tipoConsulta: textoDeTiss(dadosAtendimento, 'tipoConsulta'),
+    regimeAtendimento: textoDeTiss(dadosAtendimento, 'regimeAtendimento'),
+    motivoEncerramento: textoDeTiss(dadosAtendimento, 'motivoEncerramento'),
+    procedimentos,
+    equipeConsolidada,
+    observacao: textoDeTiss(guiaEl, 'observacao'),
+    valores: {
+      procedimentos: numDeTiss(textoDeTiss(valorTotalEl, 'valorProcedimentos')),
+      taxasAlugueis: numDeTiss(textoDeTiss(valorTotalEl, 'valorTaxasAlugueis')),
+      materiais: numDeTiss(textoDeTiss(valorTotalEl, 'valorMateriais')),
+      medicamentos: numDeTiss(textoDeTiss(valorTotalEl, 'valorMedicamentos')),
+      opme: numDeTiss(textoDeTiss(valorTotalEl, 'valorOPME')),
+      gasesMedicinais: numDeTiss(textoDeTiss(valorTotalEl, 'valorGasesMedicinais')),
+      total: numDeTiss(textoDeTiss(valorTotalEl, 'valorTotalGeral')),
+    },
+  };
+}
+
+function campoOficial(rotulo, valor) {
+  return `<div class="go-campo"><span class="go-rotulo">${escaparHtml(rotulo)}</span><span class="go-valor">${valor === '' || valor === null || valor === undefined ? '—' : escaparHtml(String(valor))}</span></div>`;
+}
+
+function montarHtmlImpressaoSPSADT(dados, contexto) {
+  const profSolic = dados.profissionalSolicitante;
+  const procedimentosHtml = dados.procedimentos
+    .map(
+      (p) => `
+      <tr>
+        <td>${escaparHtml(p.data ? formatarDataBR(p.data) : '—')}</td>
+        <td>${escaparHtml(p.horaInicial || '—')} a ${escaparHtml(p.horaFinal || '—')}</td>
+        <td>${escaparHtml(p.codigoTabela || '—')}</td>
+        <td>${escaparHtml(p.codigoProcedimento || '—')}</td>
+        <td>${escaparHtml(p.descricaoProcedimento || '—')}</td>
+        <td class="go-num">${escaparHtml(p.quantidade || '—')}</td>
+        <td>${escaparHtml(TISS_VIA_ACESSO[p.viaAcesso] || p.viaAcesso || '—')}</td>
+        <td>${escaparHtml(TISS_TECNICA_UTILIZADA[p.tecnica] || p.tecnica || '—')}</td>
+        <td class="go-num">${escaparHtml(p.fator || '—')}</td>
+        <td class="go-num">${p.valorUnitario !== null ? fmtMoeda(p.valorUnitario) : '—'}</td>
+        <td class="go-num">${p.valorTotal !== null ? fmtMoeda(p.valorTotal) : '—'}</td>
+      </tr>`
+    )
+    .join('');
+
+  const equipeHtml = dados.equipeConsolidada
+    .map(
+      (eq) => `
+      <tr>
+        <td>${escaparHtml(TISS_GRAU_PARTICIPACAO[eq.grauPart] || eq.grauPart || '—')}</td>
+        <td>${escaparHtml(eq.nome || '—')}</td>
+        <td>${escaparHtml(TISS_CONSELHOS[eq.conselho] || eq.conselho || '—')}</td>
+        <td>${escaparHtml(eq.numeroConselho || '—')}</td>
+        <td>${escaparHtml(TISS_UF_SIGLA[eq.uf] || eq.uf || '—')}</td>
+        <td>${escaparHtml(eq.cbo || '—')}</td>
+      </tr>`
+    )
+    .join('');
+
+  return `
+    <div class="guia-oficial">
+      <div class="go-cabecalho">
+        <div class="go-cabecalho-prestador">
+          <div class="go-prestador">${escaparHtml(contexto.razaoSocialExecutante || contexto.prestadorOrigem || 'Prestador não identificado')}</div>
+          <div class="go-operadora">${escaparHtml(contexto.operadoraNome || (contexto.registroOperadora ? `Operadora — registro ANS ${contexto.registroOperadora}` : 'Operadora não identificada'))}</div>
+        </div>
+        <div class="go-titulo">
+          GUIA DE SERVIÇO PROFISSIONAL / SERVIÇO<br>AUXILIAR DE DIAGNÓSTICO E TERAPIA — SP/SADT
+        </div>
+        <div class="go-campo go-campo-guia-prestador">
+          <span class="go-rotulo">2 - Nº guia no prestador</span>
+          <span class="go-valor">${escaparHtml(dados.numeroGuiaPrestador || '—')}</span>
+        </div>
+      </div>
+      <p class="go-aviso">Reprodução do layout oficial do Padrão TISS/ANS a partir dos dados do XML já validado neste portal — não substitui a guia original nem é enviada a nenhuma operadora. Alguns campos do formulário em papel (nome, validade da carteira e CNS do beneficiário) não existem mais no XML desde a versão 4.00.00 do Padrão (removidos por adequação à LGPD). O nome do contratado (campo 30) é buscado pelo CNPJ na BrasilAPI ao clicar em imprimir (mesma fonte pública do botão "Buscar CNPJ") — se a consulta falhar, mostra o CNPJ.</p>
+
+      <div class="go-grid go-grid-2">
+        ${campoOficial('1 - Registro ANS', dados.registroANS)}
+        ${campoOficial('3 - Nº guia principal', dados.guiaPrincipal)}
+      </div>
+      <div class="go-grid go-grid-4">
+        ${campoOficial('4 - Data da autorização', dados.dataAutorizacao ? formatarDataBR(dados.dataAutorizacao) : '')}
+        ${campoOficial('5 - Senha', dados.senha)}
+        ${campoOficial('6 - Data de validade da senha', dados.dataValidadeSenha ? formatarDataBR(dados.dataValidadeSenha) : '')}
+        ${campoOficial('7 - Nº guia atribuído pela operadora', dados.numeroGuiaOperadora)}
+      </div>
+
+      <div class="go-secao-titulo">Dados do beneficiário</div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('8 - Nº da carteira', dados.numeroCarteira)}
+        <div class="go-campo"><span class="go-rotulo">9 - Validade da carteira</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        <div class="go-campo"><span class="go-rotulo">10 - Nome</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        <div class="go-campo"><span class="go-rotulo">11 - Cartão Nacional de Saúde</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        ${campoOficial('12 - Atendimento a RN', dados.atendimentoRN === 'S' ? 'Sim' : dados.atendimentoRN === 'N' ? 'Não' : dados.atendimentoRN)}
+      </div>
+
+      <div class="go-secao-titulo">Dados do solicitante</div>
+      <div class="go-grid go-grid-2">
+        ${campoOficial(`13 - ${dados.solicitante.rotulo || 'Código na operadora'}`, dados.solicitante.valor)}
+        ${campoOficial('14 - Nome do contratado', dados.nomeContratadoSolicitante)}
+      </div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('15 - Nome do profissional solicitante', profSolic ? profSolic.nome : '')}
+        ${campoOficial('16 - Conselho profissional', profSolic ? (TISS_CONSELHOS[profSolic.conselho] || profSolic.conselho) : '')}
+        ${campoOficial('17 - Nº no conselho', profSolic ? profSolic.numeroConselho : '')}
+        ${campoOficial('18 - UF', profSolic ? (TISS_UF_SIGLA[profSolic.uf] || profSolic.uf) : '')}
+        ${campoOficial('19 - Código CBO', profSolic ? profSolic.cbo : '')}
+      </div>
+
+      <div class="go-secao-titulo">Dados da solicitação / procedimentos ou itens assistenciais solicitados</div>
+      <div class="go-grid go-grid-3">
+        ${campoOficial('21 - Caráter do atendimento', TISS_CARATER_ATENDIMENTO[dados.caraterAtendimento] || dados.caraterAtendimento)}
+        ${campoOficial('22 - Data da solicitação', dados.dataSolicitacao ? formatarDataBR(dados.dataSolicitacao) : '')}
+        <div class="go-campo go-campo-larga"><span class="go-rotulo">23 - Indicação clínica</span><span class="go-valor">${escaparHtml(dados.indicacaoClinica || '—')}</span></div>
+      </div>
+
+      <div class="go-secao-titulo">Dados do contratado executante</div>
+      <div class="go-grid go-grid-3">
+        ${campoOficial(`29 - ${dados.executante.rotulo || 'Código na operadora'}`, dados.executante.valor)}
+        ${campoOficial('30 - Nome do contratado', contexto.razaoSocialExecutante || contexto.prestadorOrigem)}
+        ${campoOficial('31 - Código CNES', dados.cnes)}
+      </div>
+
+      <div class="go-secao-titulo">Dados do atendimento</div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('32 - Tipo de atendimento', TISS_TIPO_ATENDIMENTO[dados.tipoAtendimento] || dados.tipoAtendimento)}
+        ${campoOficial('33 - Indicação de acidente', TISS_INDICADOR_ACIDENTE[dados.indicacaoAcidente] || dados.indicacaoAcidente)}
+        ${campoOficial('34 - Tipo de consulta', TISS_TIPO_CONSULTA[dados.tipoConsulta] || dados.tipoConsulta)}
+        ${campoOficial('35 - Motivo de encerramento do atendimento', TISS_MOTIVO_ENCERRAMENTO[dados.motivoEncerramento] || dados.motivoEncerramento)}
+        ${campoOficial('Regime de atendimento', TISS_REGIME_ATENDIMENTO[dados.regimeAtendimento] || dados.regimeAtendimento)}
+      </div>
+
+      <div class="go-secao-titulo">Dados da execução / procedimentos e exames realizados (36 a 47)</div>
+      <table class="go-tabela">
+        <thead>
+          <tr>
+            <th>Data</th><th>Horário</th><th>Tabela</th><th>Código</th><th>Descrição</th>
+            <th>Qtde.</th><th>Via</th><th>Téc.</th><th>Fator</th><th>Valor unit. (R$)</th><th>Valor total (R$)</th>
+          </tr>
+        </thead>
+        <tbody>${procedimentosHtml || '<tr><td colspan="11" class="go-vazio">Nenhum procedimento executado informado</td></tr>'}</tbody>
+      </table>
+
+      <div class="go-secao-titulo">Identificação do(s) profissional(is) executante(s) (48 a 55)</div>
+      <table class="go-tabela">
+        <thead><tr><th>Grau de participação</th><th>Nome</th><th>Conselho</th><th>Nº conselho</th><th>UF</th><th>CBO</th></tr></thead>
+        <tbody>${equipeHtml || '<tr><td colspan="6" class="go-vazio">Nenhum profissional executante informado</td></tr>'}</tbody>
+      </table>
+
+      ${dados.observacao ? `<div class="go-secao-titulo">58 - Observação / Justificativa</div><p class="go-observacao">${escaparHtml(dados.observacao)}</p>` : ''}
+
+      <div class="go-secao-titulo">Totais</div>
+      <div class="go-totais">
+        <div class="go-campo"><span class="go-rotulo">59 - Procedimentos (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.procedimentos || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">60 - Taxas e aluguéis (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.taxasAlugueis || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">61 - Materiais (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.materiais || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">62 - OPME (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.opme || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">63 - Medicamentos (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.medicamentos || 0)}</span></div>
+        <div class="go-campo"><span class="go-rotulo">64 - Gases medicinais (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.gasesMedicinais || 0)}</span></div>
+        <div class="go-campo go-campo-total"><span class="go-rotulo">65 - Total geral (R$)</span><span class="go-valor">${fmtMoeda(dados.valores.total || 0)}</span></div>
+      </div>
+
+      <div class="go-assinaturas">
+        <div class="go-assinatura">Assinatura do responsável pela autorização</div>
+        <div class="go-assinatura">Assinatura do beneficiário ou responsável</div>
+        <div class="go-assinatura">Assinatura do contratado</div>
+      </div>
+    </div>`;
+}
+
 function abrirModalGuiaValidador(guia) {
   const modalEl = document.getElementById('modal-validador-guia');
   const tituloEl = document.getElementById('validador-guia-titulo');
   const tabsEl = document.getElementById('validador-guia-tabs');
   const conteudoEl = document.getElementById('validador-guia-conteudo');
+  const btnImprimirEl = document.getElementById('btn-imprimir-guia-oficial');
   if (!modalEl) return;
 
   tituloEl.textContent = `${guia.tipo}${guia.numeroGuiaPrestador ? ` — ${guia.numeroGuiaPrestador}` : ''}`;
+
+  // Impressão no layout oficial ANS: só implementada para guiaSP-SADT por
+  // enquanto (Consulta, Resumo de Internação e Honorário Individual ficam
+  // para uma próxima leva — layouts diferentes cada um).
+  if (btnImprimirEl) {
+    if (guia.tipo === 'guiaSP-SADT' && guia.elementoXml) {
+      btnImprimirEl.classList.remove('hidden');
+      btnImprimirEl.textContent = '🖨 Imprimir no layout ANS';
+      btnImprimirEl.onclick = async () => {
+        const contexto = { ...(guia.contextoArquivo || {}) };
+        // Busca a razão social do CNPJ do prestador (BrasilAPI) pra exibir
+        // como "Nome do Contratado" em vez do CNPJ cru — mesma fonte já
+        // usada no botão "Buscar CNPJ" da tela principal, com cache
+        // compartilhado. Só roda ao clicar em imprimir (ação explícita do
+        // usuário), nunca automático.
+        if (contexto.prestadorOrigemCnpj) {
+          btnImprimirEl.disabled = true;
+          btnImprimirEl.textContent = 'Consultando CNPJ…';
+          try {
+            const dadosCnpj = await buscarCnpjBrasilApi(contexto.prestadorOrigemCnpj);
+            contexto.razaoSocialExecutante = dadosCnpj.razao_social || null;
+          } catch (err) {
+            console.error('Erro ao buscar razão social do CNPJ para impressão:', err);
+          } finally {
+            btnImprimirEl.disabled = false;
+            btnImprimirEl.textContent = '🖨 Imprimir no layout ANS';
+          }
+        }
+        const dados = extrairDadosImpressaoSPSADT(guia.elementoXml);
+        const guiaPrintAreaEl = document.getElementById('guia-print-area');
+        guiaPrintAreaEl.innerHTML = montarHtmlImpressaoSPSADT(dados, contexto);
+        document.body.classList.add('modo-guia');
+        window.print();
+      };
+    } else {
+      btnImprimirEl.classList.add('hidden');
+      btnImprimirEl.onclick = null;
+    }
+  }
 
   const { porGrupo, ordenados } = agruparItens(itensDaGuia(guia));
   const abas = [

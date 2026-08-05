@@ -1303,3 +1303,90 @@ body {
   }
   body.modo-guia .guia-print-area { display: block !important; }
 }
+
+/* ---------- Guia SP/SADT no layout oficial ANS ---------- */
+@page { size: landscape; margin: 8mm; }
+
+.guia-oficial { font-size: 0.82rem; color: #000; }
+.go-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  border-bottom: 2px solid #000;
+  padding-bottom: 8px;
+  margin-bottom: 4px;
+}
+.go-cabecalho-prestador { flex: 1 1 auto; }
+.go-campo-guia-prestador { flex: 0 0 180px; min-height: auto !important; border: 1px solid #999 !important; }
+.go-prestador { font-weight: 700; font-size: 0.95rem; }
+.go-operadora { font-size: 0.8rem; color: #333; }
+.go-titulo { font-weight: 700; font-size: 0.85rem; text-align: center; text-transform: uppercase; flex: 1 1 auto; }
+.go-aviso { font-size: 0.72rem; color: #555; font-style: italic; margin: 6px 0 10px; }
+.go-secao-titulo {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: #eee;
+  padding: 3px 8px;
+  margin-top: 8px;
+  border: 1px solid #999;
+  border-bottom: none;
+}
+.go-grid {
+  display: grid;
+  border: 1px solid #999;
+  border-top: none;
+}
+.go-grid-2 { grid-template-columns: repeat(2, 1fr); }
+.go-grid-3 { grid-template-columns: repeat(3, 1fr); }
+.go-grid-4 { grid-template-columns: repeat(4, 1fr); }
+.go-grid-5 { grid-template-columns: repeat(5, 1fr); }
+.go-campo {
+  border-right: 1px solid #999;
+  border-bottom: 1px solid #999;
+  padding: 3px 7px;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-height: 30px;
+}
+.go-campo-larga { grid-column: span 2; }
+.go-rotulo { font-size: 0.64rem; text-transform: uppercase; letter-spacing: 0.02em; color: #555; }
+.go-valor { font-weight: 600; word-break: break-word; }
+.go-valor-obs { font-weight: 400; font-style: italic; color: #666; font-size: 0.7rem; }
+.go-tabela { width: 100%; border-collapse: collapse; margin-top: 0; font-size: 0.74rem; }
+.go-tabela th, .go-tabela td { border: 1px solid #999; padding: 3px 5px; text-align: left; }
+.go-tabela th { background: #eee; font-size: 0.64rem; text-transform: uppercase; }
+.go-tabela .go-num { text-align: right; font-family: var(--mono); white-space: nowrap; }
+.go-vazio { text-align: center; color: #777; font-style: italic; padding: 6px; }
+.go-observacao { border: 1px solid #999; border-top: none; padding: 6px 8px; margin: 0; min-height: 20px; font-size: 0.78rem; }
+.go-totais {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border: 1px solid #999;
+  border-top: none;
+}
+.go-campo-total { background: #eee; }
+.go-campo-total .go-valor { font-size: 1rem; }
+.go-assinaturas {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 22px;
+}
+.go-assinatura { border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 0.72rem; }
+
+@media print {
+  html, body { width: 100%; height: 100%; }
+  .guia-oficial { font-size: 7px; }
+  .go-cabecalho { padding-bottom: 4px; margin-bottom: 2px; }
+  .go-secao-titulo { margin-top: 4px; padding: 1px 6px; }
+  .go-campo { min-height: 16px; padding: 1px 5px; }
+  .go-tabela th, .go-tabela td { padding: 1px 4px; }
+  .go-assinaturas { margin-top: 5px; gap: 20px; }
+  .go-assinatura { padding-top: 2px; }
+  .go-aviso { margin: 3px 0 4px; }
+  .go-observacao { min-height: 12px; padding: 3px 6px; }
+}

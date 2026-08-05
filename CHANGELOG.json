@@ -1,5 +1,15 @@
 [
   {
+    "versao": "1.19.0",
+    "data": "2026-08-05",
+    "mudancas": [
+      "Validador de XML TISS: guias do tipo SP/SADT ganham botão 'Imprimir no layout ANS', reproduzindo o formulário oficial do Padrão TISS (Componente de Conteúdo e Estrutura) numa única página paisagem, a partir dos dados já extraídos do XML — inclui identificação da guia, autorização, beneficiário, solicitante, solicitação, executante, atendimento, procedimentos executados, equipe e totais.",
+      "O nome do contratado executante (campo 30 da guia impressa) é buscado pelo CNPJ na BrasilAPI ao clicar em imprimir, reaproveitando a mesma fonte e cache do botão 'Buscar CNPJ' já existente — só roda com o clique explícito do usuário.",
+      "Campos removidos do Padrão TISS desde a versão 4.00.00 (nome, validade da carteira e CNS do beneficiário, retirados por adequação à LGPD) aparecem sinalizados como tal na guia impressa, em vez de ficarem em branco sem explicação.",
+      "Guias de Consulta, Resumo de Internação e Honorário Individual ficam para uma próxima leva — cada uma com layout oficial próprio."
+    ]
+  },
+  {
     "versao": "1.18.0",
     "data": "2026-08-05",
     "mudancas": [
