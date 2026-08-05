@@ -2087,13 +2087,27 @@ function extrairContratadoTiss(el) {
   return { rotulo: '', valor: '' };
 }
 
+// Ordena itens por data + hora inicial — o XML fonte não garante ordem
+// cronológica (confirmado num arquivo real de quimioterapia: os itens vêm
+// agrupados por medicamento, com as 3 datas do ciclo intercaladas — ex.
+// Topotecana 27/04, 22/04, 13/04, depois Cloreto de Sódio 27/04, 22/04,
+// 13/04, e assim por diante), o que deixa a tabela impressa ilegível sem
+// essa ordenação.
+function ordenarPorDataHora(itens, campoData, campoHora) {
+  return itens.slice().sort((a, b) => {
+    const chaveA = `${a[campoData] || ''} ${a[campoHora] || ''}`;
+    const chaveB = `${b[campoData] || ''} ${b[campoHora] || ''}`;
+    return chaveA.localeCompare(chaveB);
+  });
+}
+
 // Anexo de Outras Despesas ("21.202 v008") — usado tanto na guia SP/SADT
 // quanto na de Resumo de Internação (mesma estrutura XML, <outrasDespesas>
 // <despesa>, ct_outrasDespesas no XSD oficial), por isso é extraído por uma
 // função à parte e reaproveitado nas duas impressões.
 function extrairOutrasDespesasTiss(guiaEl) {
   const outrasDespesas = filhoTiss(guiaEl, 'outrasDespesas');
-  return filhosTiss(outrasDespesas, 'despesa').map((d) => {
+  const despesas = filhosTiss(outrasDespesas, 'despesa').map((d) => {
     const servico = filhoTiss(d, 'servicosExecutados');
     return {
       codigoDespesa: textoDeTiss(d, 'codigoDespesa'),
@@ -2113,6 +2127,7 @@ function extrairOutrasDespesasTiss(guiaEl) {
       autorizacaoFuncionamento: servico ? textoDeTiss(servico, 'autorizacaoFuncionamento') : '',
     };
   });
+  return ordenarPorDataHora(despesas, 'data', 'horaInicial');
 }
 
 function renderizarTabelaOutrasDespesas(despesas) {
@@ -2166,7 +2181,7 @@ function extrairDadosImpressaoSPSADT(guiaEl) {
   const dadosAtendimento = filhoTiss(guiaEl, 'dadosAtendimento');
   const valorTotalEl = filhoTiss(guiaEl, 'valorTotal');
 
-  const procedimentos = filhosTiss(filhoTiss(guiaEl, 'procedimentosExecutados'), 'procedimentoExecutado').map((pe) => {
+  const procedimentosBrutos = filhosTiss(filhoTiss(guiaEl, 'procedimentosExecutados'), 'procedimentoExecutado').map((pe) => {
     const proc = filhoTiss(pe, 'procedimento');
     const equipe = filhosTiss(pe, 'equipeSadt').map((eq) => ({
       grauPart: textoDeTiss(eq, 'grauPart'),
@@ -2193,6 +2208,7 @@ function extrairDadosImpressaoSPSADT(guiaEl) {
       equipe,
     };
   });
+  const procedimentos = ordenarPorDataHora(procedimentosBrutos, 'data', 'horaInicial');
 
   const equipeConsolidada = [];
   procedimentos.forEach((p) =>
@@ -2411,7 +2427,7 @@ function extrairDadosImpressaoResumoInternacao(guiaEl) {
   const diagnosticos = filhosTiss(dadosSaida, 'diagnostico').map((d) => d.textContent.trim());
   const declaracao = filhoTiss(dadosInternacao, 'declaracoes');
 
-  const procedimentos = filhosTiss(filhoTiss(guiaEl, 'procedimentosExecutados'), 'procedimentoExecutado').map((pe) => {
+  const procedimentosBrutos = filhosTiss(filhoTiss(guiaEl, 'procedimentosExecutados'), 'procedimentoExecutado').map((pe) => {
     const proc = filhoTiss(pe, 'procedimento');
     const equipe = filhosTiss(pe, 'identEquipe')
       .map((ie) => extrairProfissionalTiss(filhoTiss(ie, 'identificacaoEquipe')))
@@ -2432,6 +2448,7 @@ function extrairDadosImpressaoResumoInternacao(guiaEl) {
       equipe,
     };
   });
+  const procedimentos = ordenarPorDataHora(procedimentosBrutos, 'data', 'horaInicial');
 
   const equipeConsolidada = [];
   procedimentos.forEach((p) =>

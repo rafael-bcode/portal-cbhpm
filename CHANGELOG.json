@@ -1,5 +1,14 @@
 [
   {
+    "versao": "1.22.0",
+    "data": "2026-08-05",
+    "mudancas": [
+      "Corrige ordenação na impressão no layout ANS: tanto a tabela de Procedimentos quanto o Anexo de Outras Despesas agora são ordenados cronologicamente (data + hora inicial) antes de imprimir, em vez de seguir a ordem bruta dos elementos no XML.",
+      "Motivo: em lotes reais (ex.: guia de quimioterapia com 55 itens de despesa), o XML agrupa os lançamentos por medicamento/item, não por data — isso fazia a guia impressa saltar entre datas fora de ordem ('27/04, 22/04, 13/04, 27/04...'), o que o faturista relatou como a guia estar 'toda misturada'.",
+      "Validado com o XML real de 9 guias '02772100004700000001983R1.xml' (guia 902, quimioterapia, 55 despesas): datas agora fluem em ordem crescente (13/04 → 22/04 → 27/04). Reconfirmados sem regressão os casos anteriores (SP/SADT simples, Resumo de Internação, ambos com e sem anexo de despesas) — todos seguem cabendo em página única paisagem."
+    ]
+  },
+  {
     "versao": "1.21.0",
     "data": "2026-08-05",
     "mudancas": [
