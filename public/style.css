@@ -741,6 +741,115 @@ body {
   color: var(--teal-dark);
 }
 
+/* ---------- Verificadores (compatibilidade / habilitação) ---------- */
+.compat-par {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+.compat-par .compat-codigos { flex: 1 1 320px; font-size: 0.88rem; }
+.compat-par .compat-codigos .codigo { font-family: var(--mono); font-weight: 700; color: var(--teal-dark); }
+.compat-par .compat-codigos .nome { color: var(--ink-soft); display: block; font-size: 0.8rem; }
+.compat-status {
+  font-family: var(--sans);
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.compat-status.compativel { background: var(--teal-tint); color: var(--teal-dark); }
+.compat-status.sem-registro { background: var(--amber-tint); color: var(--amber); }
+.compat-aviso {
+  flex-basis: 100%;
+  font-size: 0.78rem;
+  color: #A0341C;
+  background: #FBE7E4;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+.habilitacao-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  margin-bottom: 8px;
+}
+.habilitacao-card .nome { font-weight: 600; font-size: 0.88rem; }
+.habilitacao-card .detail { font-size: 0.76rem; color: var(--ink-soft); margin-top: 2px; }
+
+.conversor-secao-titulo {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--teal-dark);
+  margin: 16px 0 8px;
+}
+.conversor-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 10px 16px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.conversor-card .info { flex: 1 1 280px; }
+.conversor-card .codigo { font-family: var(--mono); font-weight: 700; color: var(--teal-dark); margin-right: 6px; }
+.conversor-card .nome { font-size: 0.85rem; }
+.grau-badge {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--teal-tint);
+  color: var(--teal-dark);
+  white-space: nowrap;
+}
+
+.glosa-categoria { padding: 4px 16px 14px; }
+.glosa-categoria-titulo {
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--teal-dark);
+  margin: 10px 0 8px;
+}
+.glosa-card {
+  display: flex;
+  gap: 12px;
+  border-left: 3px solid var(--teal);
+  background: var(--paper);
+  border-radius: 6px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+}
+.glosa-card-codigo {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--teal-dark);
+  flex-shrink: 0;
+  min-width: 44px;
+}
+.glosa-card-corpo { font-size: 0.82rem; line-height: 1.4; }
+.glosa-card-linha { margin-bottom: 3px; }
+.glosa-card-linha:last-child { margin-bottom: 0; }
+.glosa-card-linha .label { font-weight: 700; color: var(--ink-soft); margin-right: 4px; }
+
 /* ---------- Tabelas de Domínio TISS ---------- */
 .tiss-tabela-bloco {
   background: var(--panel);

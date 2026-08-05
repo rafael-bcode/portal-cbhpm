@@ -2889,14 +2889,56 @@ async function carregarTissTabelasDominio() {
   return tissTabelasDominioCache;
 }
 
+let glosasDicionarioCache = null;
+async function carregarGlosasDicionario() {
+  if (glosasDicionarioCache) return glosasDicionarioCache;
+  const resp = await fetch('/glosas-dicionario.json');
+  glosasDicionarioCache = await resp.json();
+  return glosasDicionarioCache;
+}
+
+function renderizarCardGlosaDicionario(item) {
+  return `
+    <div class="glosa-card">
+      <div class="glosa-card-codigo">${escaparHtml(item.codigo)}</div>
+      <div class="glosa-card-corpo">
+        <div class="glosa-card-linha"><span class="label">Causa provável</span> ${escaparHtml(item.causaProvavel)}</div>
+        <div class="glosa-card-linha"><span class="label">Como evitar</span> ${escaparHtml(item.comoEvitar)}</div>
+      </div>
+    </div>`;
+}
+
+function renderizarDicionarioGlosasHtml() {
+  if (!glosasDicionarioCache) return '';
+  const categoriasHtml = glosasDicionarioCache.categorias
+    .map(
+      (cat) => `
+      <div class="glosa-categoria">
+        <h4 class="glosa-categoria-titulo">${escaparHtml(cat.nome)}</h4>
+        ${cat.itens.map(renderizarCardGlosaDicionario).join('')}
+      </div>`
+    )
+    .join('');
+  return `
+    <details class="grupo grupo-principal" open style="margin-bottom:16px;">
+      <summary class="grupo-summary"><span class="grupo-nome">Dicionário de causas e como evitar (${glosasDicionarioCache.categorias.reduce((s, c) => s + c.itens.length, 0)} códigos mais comuns)</span></summary>
+      <div class="grupo-corpo">
+        <p class="ajustes-nota" style="margin:10px 16px 0;">${escaparHtml(glosasDicionarioCache.fonte)}</p>
+        ${categoriasHtml}
+      </div>
+    </details>`;
+}
+
 function renderizarPaginaTissTabela() {
   if (!tissTabelaAtual) {
     tissTabelasResultadoAreaEl.innerHTML = '';
     return;
   }
 
+  const dicionarioHtml = tissTabelaAtual.numero === 38 ? renderizarDicionarioGlosasHtml() : '';
+
   if (tissTabelaLinhasFiltradas.length === 0) {
-    tissTabelasResultadoAreaEl.innerHTML = '<div class="msg vazio">Nenhum item encontrado com esse filtro.</div>';
+    tissTabelasResultadoAreaEl.innerHTML = dicionarioHtml + '<div class="msg vazio">Nenhum item encontrado com esse filtro.</div>';
     return;
   }
 
@@ -2910,6 +2952,7 @@ function renderizarPaginaTissTabela() {
     .join('');
 
   tissTabelasResultadoAreaEl.innerHTML = `
+    ${dicionarioHtml}
     <div class="tiss-tabela-bloco">
       <h3 class="tiss-tabela-titulo">Tabela ${tissTabelaAtual.numero} — ${escaparHtml(tissTabelaAtual.nome)}</h3>
       <div class="tiss-tabela-scroll">
@@ -2985,6 +3028,7 @@ if (tissTabelasSelectEl) {
     tissTabelaAtual = tabelas.find((t) => t.numero === numero) || null;
     tissTabelasFiltroCampoEl.classList.remove('hidden');
     tissTabelasFiltroEl.value = '';
+    if (numero === 38) await carregarGlosasDicionario();
     aplicarFiltroTissTabela();
   });
 
@@ -3040,6 +3084,166 @@ if (cid10BuscaEl) {
     }
 
     debounceTimerCid10 = setTimeout(() => buscarCid10(termo), 300);
+  });
+}
+
+// ---------- Verificadores: compatibilidade entre procedimentos ----------
+const compatCodigosEl = document.getElementById('compat-codigos');
+const btnCompatVerificarEl = document.getElementById('btn-compat-verificar');
+const compatResultadoAreaEl = document.getElementById('compat-resultado-area');
+
+function renderizarParCompat(par) {
+  const statusClasse = par.compativel ? 'compativel' : 'sem-registro';
+  const statusTexto = par.compativel ? '✓ Compatibilidade registrada' : '— Sem registro de compatibilidade';
+  const aviso = par.excecoesAplicaveis.length
+    ? `<div class="compat-aviso">⚠ Existe uma exceção: a compatibilidade entre esses dois códigos é anulada se também constar o código ${par.excecoesAplicaveis.map(escaparHtml).join(', ')} na mesma conta.</div>`
+    : '';
+  return `
+    <div class="compat-par">
+      <div class="compat-codigos">
+        <span class="codigo">${escaparHtml(par.codigoA)}</span> ${par.nomeA ? escaparHtml(par.nomeA) : '<em>código não encontrado no SIGTAP</em>'}
+        <span class="nome">↔ <span class="codigo">${escaparHtml(par.codigoB)}</span> ${par.nomeB ? escaparHtml(par.nomeB) : '<em>código não encontrado no SIGTAP</em>'}</span>
+      </div>
+      <span class="compat-status ${statusClasse}">${statusTexto}</span>
+      ${aviso}
+    </div>`;
+}
+
+async function verificarCompatibilidade() {
+  const codigos = compatCodigosEl.value.split(',').map((c) => c.trim()).filter(Boolean);
+  if (codigos.length < 2) {
+    compatResultadoAreaEl.innerHTML = '<div class="msg erro">Informe pelo menos 2 códigos, separados por vírgula.</div>';
+    return;
+  }
+  compatResultadoAreaEl.innerHTML = '<div class="msg vazio">Verificando…</div>';
+  try {
+    const resp = await fetch(`/api/sigtap/compatibilidade?codigos=${encodeURIComponent(codigos.join(','))}`);
+    const dados = await resp.json();
+    if (!resp.ok) throw new Error(dados.erro || 'Falha ao verificar.');
+
+    const naoEncontradosHtml = dados.codigosNaoEncontrados.length
+      ? `<div class="msg erro" style="margin-bottom:12px;">Código(s) não encontrado(s) no SIGTAP: ${dados.codigosNaoEncontrados.map(escaparHtml).join(', ')}</div>`
+      : '';
+    compatResultadoAreaEl.innerHTML = naoEncontradosHtml + dados.pares.map(renderizarParCompat).join('');
+  } catch (err) {
+    console.error(err);
+    compatResultadoAreaEl.innerHTML = `<div class="msg erro">Erro ao verificar compatibilidade: ${escaparHtml(err.message)}</div>`;
+  }
+}
+
+if (btnCompatVerificarEl) {
+  btnCompatVerificarEl.addEventListener('click', verificarCompatibilidade);
+  compatCodigosEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') verificarCompatibilidade();
+  });
+}
+
+// ---------- Verificadores: habilitação exigida ----------
+const habilitacaoCodigoEl = document.getElementById('habilitacao-codigo');
+const habilitacaoResultadoAreaEl = document.getElementById('habilitacao-resultado-area');
+let debounceTimerHabilitacao = null;
+
+function renderizarHabilitacao(item) {
+  const grupo = item.grupo_codigo
+    ? `<div class="detail">Faz parte do grupo de habilitação ${escaparHtml(item.grupo_nome || item.grupo_codigo)}${item.grupo_descricao ? ' — ' + escaparHtml(item.grupo_descricao) : ''}</div>`
+    : '';
+  return `
+    <div class="habilitacao-card">
+      <div class="nome"><span class="codigo" style="font-family:var(--mono); color:var(--teal-dark); margin-right:6px;">${escaparHtml(item.codigo)}</span>${escaparHtml(item.nome)}</div>
+      ${grupo}
+    </div>`;
+}
+
+async function verificarHabilitacao(codigo) {
+  habilitacaoResultadoAreaEl.innerHTML = '<div class="msg vazio">Consultando…</div>';
+  try {
+    const resp = await fetch(`/api/sigtap/habilitacao?codigo=${encodeURIComponent(codigo)}`);
+    const dados = await resp.json();
+    if (!resp.ok) throw new Error(dados.erro || 'Falha ao consultar.');
+
+    if (dados.habilitacoes.length === 0) {
+      habilitacaoResultadoAreaEl.innerHTML = '<div class="msg vazio">Este procedimento não exige nenhuma habilitação específica do prestador.</div>';
+      return;
+    }
+    habilitacaoResultadoAreaEl.innerHTML = dados.habilitacoes.map(renderizarHabilitacao).join('');
+  } catch (err) {
+    console.error(err);
+    habilitacaoResultadoAreaEl.innerHTML = `<div class="msg erro">Erro ao consultar habilitação: ${escaparHtml(err.message)}</div>`;
+  }
+}
+
+if (habilitacaoCodigoEl) {
+  habilitacaoCodigoEl.addEventListener('input', () => {
+    const codigo = habilitacaoCodigoEl.value.trim();
+    clearTimeout(debounceTimerHabilitacao);
+    if (codigo.length < 4) {
+      habilitacaoResultadoAreaEl.innerHTML = '';
+      return;
+    }
+    debounceTimerHabilitacao = setTimeout(() => verificarHabilitacao(codigo), 300);
+  });
+}
+
+// ---------- Verificadores: conversor CBHPM ↔ TUSS ↔ SIGTAP ----------
+const conversorCodigoEl = document.getElementById('conversor-codigo');
+const conversorResultadoAreaEl = document.getElementById('conversor-resultado-area');
+let debounceTimerConversor = null;
+
+function renderizarCardConversor(codigo, nome, extra) {
+  const grau = extra && extra.grau_equivalencia
+    ? `<span class="grau-badge">Grau ${escaparHtml(String(extra.grau_equivalencia))}</span>`
+    : '';
+  return `
+    <div class="conversor-card">
+      <div class="info"><span class="codigo">${escaparHtml(codigo)}</span><span class="nome">${escaparHtml(nome || '—')}</span></div>
+      ${grau}
+    </div>`;
+}
+
+async function converterCodigo(codigo) {
+  conversorResultadoAreaEl.innerHTML = '<div class="msg vazio">Convertendo…</div>';
+  try {
+    const resp = await fetch(`/api/conversor?codigo=${encodeURIComponent(codigo)}`);
+    const dados = await resp.json();
+    if (!resp.ok) throw new Error(dados.erro || 'Falha ao converter.');
+
+    if (!dados.encontrado) {
+      conversorResultadoAreaEl.innerHTML = '<div class="msg vazio">Código não encontrado em nenhuma das 3 tabelas.</div>';
+      return;
+    }
+
+    const cbhpmHtml = dados.cbhpmTuss.length
+      ? `<div class="conversor-secao-titulo">CBHPM / TUSS</div>${dados.cbhpmTuss
+          .map((r) => renderizarCardConversor(`CBHPM ${r.codigo_cbhpm} = TUSS ${r.codigo_tuss}`, r.procedimento))
+          .join('')}`
+      : '';
+
+    const sigtapHtml = dados.tussSigtap.length
+      ? `<div class="conversor-secao-titulo">SIGTAP equivalente</div>${dados.tussSigtap
+          .map((r) => renderizarCardConversor(r.codigo_sigtap, r.procedimento_sigtap, r))
+          .join('')}`
+      : '';
+
+    const diretoHtml = dados.sigtapDireto
+      ? `<div class="conversor-secao-titulo">Encontrado direto no SIGTAP</div>${renderizarCardConversor(dados.sigtapDireto.codigo, dados.sigtapDireto.nome)}`
+      : '';
+
+    conversorResultadoAreaEl.innerHTML = cbhpmHtml + sigtapHtml + diretoHtml;
+  } catch (err) {
+    console.error(err);
+    conversorResultadoAreaEl.innerHTML = `<div class="msg erro">Erro ao converter: ${escaparHtml(err.message)}</div>`;
+  }
+}
+
+if (conversorCodigoEl) {
+  conversorCodigoEl.addEventListener('input', () => {
+    const codigo = conversorCodigoEl.value.trim();
+    clearTimeout(debounceTimerConversor);
+    if (codigo.length < 4) {
+      conversorResultadoAreaEl.innerHTML = '';
+      return;
+    }
+    debounceTimerConversor = setTimeout(() => converterCodigo(codigo), 300);
   });
 }
 

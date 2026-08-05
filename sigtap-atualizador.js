@@ -191,6 +191,122 @@ async function importarRelacao(pool, tabela, linhas, colunaX, fimX) {
   return linhas.length;
 }
 
+// tb_habilitacao.txt: CO_HABILITACAO(4) NO_HABILITACAO(150) DT_COMPETENCIA(6)
+async function importarHabilitacao(pool, linhas) {
+  const codigos = [];
+  const nomes = [];
+  for (const l of linhas) {
+    codigos.push(l.slice(0, 4));
+    nomes.push(l.slice(4, 154).trim());
+  }
+  await pool.query(
+    `INSERT INTO sigtap_habilitacao (codigo, nome)
+     SELECT * FROM UNNEST($1::varchar[], $2::text[])
+     ON CONFLICT (codigo) DO UPDATE SET nome = EXCLUDED.nome`,
+    [codigos, nomes]
+  );
+  return linhas.length;
+}
+
+// tb_grupo_habilitacao.txt: NU_GRUPO_HABILITACAO(4) NO_GRUPO_HABILITACAO(20) DS_GRUPO_HABILITACAO(250)
+async function importarGrupoHabilitacao(pool, linhas) {
+  const codigos = [];
+  const nomes = [];
+  const descricoes = [];
+  for (const l of linhas) {
+    codigos.push(l.slice(0, 4));
+    nomes.push(l.slice(4, 24).trim());
+    descricoes.push(l.slice(24, 274).trim());
+  }
+  await pool.query(
+    `INSERT INTO sigtap_grupo_habilitacao (codigo, nome, descricao)
+     SELECT * FROM UNNEST($1::varchar[], $2::text[], $3::text[])
+     ON CONFLICT (codigo) DO UPDATE SET nome = EXCLUDED.nome, descricao = EXCLUDED.descricao`,
+    [codigos, nomes, descricoes]
+  );
+  return linhas.length;
+}
+
+// rl_procedimento_habilitacao.txt: CO_PROCEDIMENTO(10) CO_HABILITACAO(4) NU_GRUPO_HABILITACAO(4) DT_COMPETENCIA(6)
+async function importarProcedimentoHabilitacao(pool, linhas) {
+  const codigosProcedimento = [];
+  const codigosHabilitacao = [];
+  const grupos = [];
+  for (const l of linhas) {
+    codigosProcedimento.push(l.slice(0, 10));
+    codigosHabilitacao.push(l.slice(10, 14));
+    const grupo = l.slice(14, 18).trim();
+    grupos.push(grupo || null);
+  }
+  await pool.query(
+    `INSERT INTO sigtap_procedimento_habilitacao (codigo_procedimento, codigo_habilitacao, codigo_grupo_habilitacao)
+     SELECT * FROM UNNEST($1::varchar[], $2::varchar[], $3::varchar[])
+     ON CONFLICT (codigo_procedimento, codigo_habilitacao) DO NOTHING`,
+    [codigosProcedimento, codigosHabilitacao, grupos]
+  );
+  return linhas.length;
+}
+
+// rl_procedimento_compativel.txt: CO_PROCEDIMENTO_PRINCIPAL(10) CO_REGISTRO_PRINCIPAL(2)
+// CO_PROCEDIMENTO_COMPATIVEL(10) CO_REGISTRO_COMPATIVEL(2) TP_COMPATIBILIDADE(1) QT_PERMITIDA(4) DT_COMPETENCIA(6)
+async function importarCompativel(pool, linhas) {
+  const principais = [];
+  const registrosPrincipais = [];
+  const compativeis = [];
+  const registrosCompativeis = [];
+  const tipos = [];
+  const quantidades = [];
+  for (const l of linhas) {
+    principais.push(l.slice(0, 10));
+    registrosPrincipais.push(l.slice(10, 12));
+    compativeis.push(l.slice(12, 22));
+    registrosCompativeis.push(l.slice(22, 24));
+    tipos.push(l.slice(24, 25));
+    quantidades.push(Number(l.slice(25, 29)));
+  }
+  await pool.query(
+    `INSERT INTO sigtap_procedimento_compativel (
+      codigo_principal, codigo_registro_principal, codigo_compativel,
+      codigo_registro_compativel, tipo_compatibilidade, quantidade_permitida
+    )
+    SELECT * FROM UNNEST($1::varchar[], $2::varchar[], $3::varchar[], $4::varchar[], $5::varchar[], $6::int[])
+    ON CONFLICT (codigo_principal, codigo_compativel, codigo_registro_principal, codigo_registro_compativel)
+    DO NOTHING`,
+    [principais, registrosPrincipais, compativeis, registrosCompativeis, tipos, quantidades]
+  );
+  return linhas.length;
+}
+
+// rl_excecao_compatibilidade.txt: CO_PROCEDIMENTO_RESTRICAO(10) CO_PROCEDIMENTO_PRINCIPAL(10)
+// CO_REGISTRO_PRINCIPAL(2) CO_PROCEDIMENTO_COMPATIVEL(10) CO_REGISTRO_COMPATIVEL(2) TP_COMPATIBILIDADE(1) DT_COMPETENCIA(6)
+async function importarExcecaoCompatibilidade(pool, linhas) {
+  const restricoes = [];
+  const principais = [];
+  const registrosPrincipais = [];
+  const compativeis = [];
+  const registrosCompativeis = [];
+  const tipos = [];
+  for (const l of linhas) {
+    restricoes.push(l.slice(0, 10));
+    principais.push(l.slice(10, 20));
+    registrosPrincipais.push(l.slice(20, 22));
+    compativeis.push(l.slice(22, 32));
+    registrosCompativeis.push(l.slice(32, 34));
+    tipos.push(l.slice(34, 35));
+  }
+  await pool.query(
+    `INSERT INTO sigtap_excecao_compatibilidade (
+      codigo_restricao, codigo_principal, codigo_registro_principal,
+      codigo_compativel, codigo_registro_compativel, tipo_compatibilidade
+    )
+    SELECT * FROM UNNEST($1::varchar[], $2::varchar[], $3::varchar[], $4::varchar[], $5::varchar[], $6::varchar[])
+    ON CONFLICT (codigo_restricao, codigo_principal, codigo_compativel, codigo_registro_principal, codigo_registro_compativel)
+    DO NOTHING`,
+    [restricoes, principais, registrosPrincipais, compativeis, registrosCompativeis, tipos]
+  );
+  return linhas.length;
+}
+
 // Baixa a versão mais recente do espelho GitHub, reimporta tudo (procedimentos
 // + classificação) e atualiza sigtap_metadata. Lança erro se algo falhar —
 // quem chamar decide como reportar.
@@ -216,6 +332,12 @@ async function atualizarSigtap(pool) {
   resumo.sigtap_procedimento_registro = await importarRelacao(pool, 'sigtap_procedimento_registro', lerEntradaZip(zip, 'rl_procedimento_registro.txt'), 'codigo_registro', 12);
   resumo.sigtap_procedimento_modalidade = await importarRelacao(pool, 'sigtap_procedimento_modalidade', lerEntradaZip(zip, 'rl_procedimento_modalidade.txt'), 'codigo_modalidade', 12);
   resumo.sigtap_procedimento_detalhe = await importarRelacao(pool, 'sigtap_procedimento_detalhe', lerEntradaZip(zip, 'rl_procedimento_detalhe.txt'), 'codigo_detalhe', 13);
+
+  resumo.sigtap_habilitacao = await importarHabilitacao(pool, lerEntradaZip(zip, 'tb_habilitacao.txt'));
+  resumo.sigtap_grupo_habilitacao = await importarGrupoHabilitacao(pool, lerEntradaZip(zip, 'tb_grupo_habilitacao.txt'));
+  resumo.sigtap_procedimento_habilitacao = await importarProcedimentoHabilitacao(pool, lerEntradaZip(zip, 'rl_procedimento_habilitacao.txt'));
+  resumo.sigtap_procedimento_compativel = await importarCompativel(pool, lerEntradaZip(zip, 'rl_procedimento_compativel.txt'));
+  resumo.sigtap_excecao_compatibilidade = await importarExcecaoCompatibilidade(pool, lerEntradaZip(zip, 'rl_excecao_compatibilidade.txt'));
 
   await pool.query(
     `INSERT INTO sigtap_metadata (id, competencia, atualizado_em) VALUES (1, $1, now())

@@ -1,0 +1,97 @@
+{
+  "fonte": "Causa provável e como evitar combinam a tabela oficial 'Erros no envio para a ANS' (Padrão TISS/ANS — 20 códigos com a regra de crítica exata, aplicada aos mesmos campos usados na troca de guias entre prestador e operadora) com curadoria própria sobre a Tabela 38 (Mensagens/Glosas) para os demais códigos mais recorrentes. Cobre os motivos mais comuns — não substitui o motivo específico informado pela operadora no demonstrativo de análise de conta médica.",
+  "categorias": [
+    {
+      "nome": "Cadastro do beneficiário",
+      "itens": [
+        { "codigo": "1001", "causaProvavel": "Número da carteirinha digitado errado, ou carteira de um dependente/titular diferente do atendido.", "comoEvitar": "Confira o número da carteira direto no cartão físico/app do convênio antes de faturar, não de memória ou de atendimento anterior." },
+        { "codigo": "1002", "causaProvavel": "[Regra oficial ANS] O Cartão Nacional de Saúde (CNS) do beneficiário, quando informado, deve passar no cálculo do dígito verificador — geralmente é erro de digitação ou dado desatualizado.", "comoEvitar": "Confira o CNS impresso no cartão SUS do paciente; evite copiar de memória ou de atendimento antigo." },
+        { "codigo": "1007", "causaProvavel": "Atendimento realizado dentro do período de carência contratual do beneficiário para aquele tipo de procedimento.", "comoEvitar": "Confirme elegibilidade/carência via sistema de autorização da operadora antes do atendimento, não só depois do envio." },
+        { "codigo": "1011", "causaProvavel": "Dados do beneficiário na guia (nome, data de nascimento) não batem com o cadastro na operadora.", "comoEvitar": "Sempre confira nome completo e data de nascimento exatamente como constam na carteirinha/cadastro da operadora." },
+        { "codigo": "1014", "causaProvavel": "Beneficiário já foi excluído do plano na data do atendimento (rescisão, inadimplência, etc.).", "comoEvitar": "Confirme elegibilidade em tempo real antes do atendimento — evita glosa e também atendimento sem cobertura." },
+        { "codigo": "1015", "causaProvavel": "Idade do beneficiário está fora da faixa etária permitida para o procedimento cobrado (ver campo Idade Mínima/Máxima na consulta SIGTAP deste portal).", "comoEvitar": "Confira a faixa etária do procedimento na aba SUS/SIGTAP antes de faturar em pacientes muito jovens ou muito idosos." },
+        { "codigo": "1017", "causaProvavel": "Carteirinha com data de validade vencida na data do atendimento.", "comoEvitar": "Confira a validade impressa/digital da carteira, principalmente em planos empresariais com renovação anual." },
+        { "codigo": "1024", "causaProvavel": "[Regra oficial ANS] Número de registro do plano informado não corresponde a um plano válido cadastrado na base de planos da operadora.", "comoEvitar": "Confira o número de registro do plano diretamente na carteirinha ou no sistema de elegibilidade da operadora antes de faturar." }
+      ]
+    },
+    {
+      "nome": "Guia e documentação",
+      "itens": [
+        { "codigo": "1304", "causaProvavel": "[Regra oficial ANS] Diárias de acompanhante ou de UTI informadas numa guia que não é do tipo Internação (esses campos só podem ser preenchidos em guia de internação).", "comoEvitar": "Só preencha número de diárias de acompanhante/UTI em guias de internação." },
+        { "codigo": "1305", "causaProvavel": "O mesmo item já foi cobrado em outra guia do mesmo atendimento (ex: material lançado na guia de honorários e também na de SP/SADT).", "comoEvitar": "Antes de enviar, confira se cada item aparece uma única vez no conjunto de guias do atendimento." },
+        { "codigo": "1307", "causaProvavel": "[Regra oficial ANS] Número da guia no prestador/operadora fora da regra esperada para a origem da guia (rede contratada exige número real; reembolso/prestador eventual exige sequência de 20 zeros), ou número de guia de internação informado numa guia de consulta/odontológica onde isso não é permitido.", "comoEvitar": "Confira a regra de numeração de acordo com a origem da guia (rede contratada x reembolso) antes de preencher; não vincule número de guia de internação em guias de consulta." },
+        { "codigo": "1308", "causaProvavel": "[Regra oficial ANS] Guia com a mesma chave (número no prestador) já existe na base — reenvio duplicado de uma inclusão.", "comoEvitar": "Consulte o protocolo/status da guia antes de reenviar; use 'alteração', não 'inclusão', para guias já enviadas." },
+        { "codigo": "1310", "causaProvavel": "Procedimento cirúrgico/invasivo cobrado sem informar a equipe médica (cirurgião, auxiliares, anestesista) na guia.", "comoEvitar": "Sempre preencha o grau de participação de cada profissional envolvido em atos cirúrgicos." },
+        { "codigo": "1319", "causaProvavel": "Guia física sem a assinatura do paciente/responsável, quando exigida pela operadora.", "comoEvitar": "Confira a assinatura antes de arquivar/enviar, principalmente em atendimentos de urgência onde isso é mais esquecido." },
+        { "codigo": "1323", "causaProvavel": "[Regra oficial ANS] Alguma data da guia (nascimento, autorização, atendimento, faturamento, pagamento) está fora do formato AAAA-MM-DD, é posterior à data atual, ou não respeita a ordem cronológica exigida entre datas (ex: data final antes da inicial).", "comoEvitar": "Confira o formato e a coerência cronológica de todas as datas da guia antes de enviar — a data final do atendimento, por exemplo, precisa ser maior ou igual à data de início." },
+        { "codigo": "1506", "causaProvavel": "[Regra oficial ANS] Tipo de internação ausente numa guia de Internação (obrigatório nesse caso), ou preenchido numa guia que não é de internação (não deveria).", "comoEvitar": "Preencha o tipo de internação só em guias de internação, sempre que a guia for desse tipo." },
+        { "codigo": "1602", "causaProvavel": "[Regra oficial ANS] Tipo de atendimento ausente numa guia de SP/SADT (campo obrigatório nesse tipo de guia), ou divergente do que já consta na guia numa alteração.", "comoEvitar": "Preencha sempre o tipo de atendimento em guia SP/SADT; não altere o tipo de atendimento de uma guia já lançada." },
+        { "codigo": "1603", "causaProvavel": "[Regra oficial ANS] Tipo de consulta ausente numa guia de Consulta, ou numa guia SP/SADT cujo tipo de atendimento é Consulta — obrigatório nesses casos.", "comoEvitar": "Sempre preencha o tipo de consulta quando a guia for de consulta ou o atendimento SP/SADT for do tipo consulta." },
+        { "codigo": "1713", "causaProvavel": "[Regra oficial ANS] Tipo de faturamento ausente numa guia de Internação ou Odontológica (GTO) — campo obrigatório nesses tipos de guia.", "comoEvitar": "Preencha sempre o tipo de faturamento em guias de internação e guias odontológicas (GTO)." },
+        { "codigo": "3052", "causaProvavel": "Falta anexar laudo, relatório médico, pedido do solicitante ou outro documento de suporte exigido para aquele procedimento/OPME.", "comoEvitar": "Monte um checklist de documentos obrigatórios por tipo de procedimento (principalmente OPME e alta complexidade) antes do envio." }
+      ]
+    },
+    {
+      "nome": "Diagnóstico (CID)",
+      "itens": [
+        { "codigo": "1509", "causaProvavel": "[Regra oficial ANS] Algum dos códigos de diagnóstico informados (CID principal, secundário, terceiro ou quarto) não existe na base de CID vigente.", "comoEvitar": "Confira o código na aba CID-10 deste portal antes de preencher — atenção a códigos descontinuados." }
+      ]
+    },
+    {
+      "nome": "Autorização",
+      "itens": [
+        { "codigo": "1402", "causaProvavel": "Procedimento realizado sem autorização prévia da operadora, quando ela é exigida.", "comoEvitar": "Confirme na tabela de regras da operadora quais procedimentos exigem autorização antes de agendar/realizar." },
+        { "codigo": "1403", "causaProvavel": "Guia cobrada sem informar a senha/número de autorização concedido pela operadora.", "comoEvitar": "Sempre preencha o campo de número de autorização quando o procedimento foi previamente autorizado." },
+        { "codigo": "1408", "causaProvavel": "Quantidade cobrada é maior do que a quantidade que constava na autorização concedida.", "comoEvitar": "Confira a quantidade autorizada antes de executar/cobrar; se precisar de mais, solicite autorização complementar." },
+        { "codigo": "1414", "causaProvavel": "Procedimento realizado depois que a senha de autorização já havia expirado.", "comoEvitar": "Confira a validade da senha na hora de agendar o procedimento, não só na hora de faturar." },
+        { "codigo": "1425", "causaProvavel": "Procedimento que exige pré-autorização específica da empresa/contratante (planos coletivos empresariais) e não foi solicitada.", "comoEvitar": "Para contratos coletivos, confirme com o RH/operadora se há regra de pré-autorização adicional além da autorização padrão." }
+      ]
+    },
+    {
+      "nome": "Valores e duplicidade",
+      "itens": [
+        { "codigo": "1701", "causaProvavel": "Guia enviada depois do prazo de validade contado a partir da autorização ou do atendimento.", "comoEvitar": "Controle o prazo de envio por operadora — a maioria segue o prazo de até 30 dias da ANS, mas cada contrato pode variar." },
+        { "codigo": "1702", "causaProvavel": "O mesmo procedimento foi cobrado mais de uma vez para o mesmo atendimento/data.", "comoEvitar": "Antes de enviar, confira se não há lançamento repetido do mesmo código na mesma guia/data." },
+        { "codigo": "1704", "causaProvavel": "Em atendimento por pacote/diária global, algum item foi cobrado à parte além do valor combinado no pacote.", "comoEvitar": "Confira o que está incluso no pacote contratado antes de lançar itens adicionais separadamente." },
+        { "codigo": "1705", "causaProvavel": "[Regra oficial ANS] Valor total informado é maior que o valor já registrado na base da ANS para essa guia (na inclusão) ou maior que o valor anterior (numa alteração) — indica cobrança acima do que já foi processado.", "comoEvitar": "Confira se o valor lançado bate com o valor já protocolado antes de reenviar; qualquer aumento de valor precisa ser tratado como lançamento novo, não alteração do existente." },
+        { "codigo": "1706", "causaProvavel": "[Regra oficial ANS] Valor total informado é menor que o já registrado na base, ou menor que a soma dos itens da própria guia — inconsistência entre o total e os itens/lançamentos.", "comoEvitar": "Confira se o valor total da guia bate exatamente com a soma dos itens lançados antes de enviar." },
+        { "codigo": "1740", "causaProvavel": "[Regra oficial ANS] Um lançamento de estorno (valor pago negativo) é maior que o valor já pago pela guia, deixando o total acumulado negativo — sinal de estorno indevido ou fora de ordem.", "comoEvitar": "Confira o valor já pago da guia antes de lançar um estorno; o estorno nunca pode deixar o total pago negativo." }
+      ]
+    },
+    {
+      "nome": "Materiais, medicamentos e OPME",
+      "itens": [
+        { "codigo": "2001", "causaProvavel": "Código de material informado não existe ou está desatualizado na tabela TUSS de materiais.", "comoEvitar": "Consulte a Tabela TISS de materiais/OPME atualizada antes de lançar; códigos são atualizados com frequência." },
+        { "codigo": "2003", "causaProvavel": "Material cobrado como \"outros\"/genérico sem a descrição/nome técnico exigido.", "comoEvitar": "Sempre detalhe o nome técnico do material, principalmente para OPME de alto custo." },
+        { "codigo": "2004", "causaProvavel": "Material de alto custo cobrado sem anexar a nota fiscal do fornecedor.", "comoEvitar": "Anexe sempre a nota fiscal para materiais/OPME — é um dos itens mais cobrados em auditoria." },
+        { "codigo": "2101", "causaProvavel": "Código de medicamento inexistente ou desatualizado na tabela TUSS de medicamentos.", "comoEvitar": "Confira o registro ANVISA e o código TUSS vigente do medicamento antes de lançar." }
+      ]
+    },
+    {
+      "nome": "Prestador e contrato",
+      "itens": [
+        { "codigo": "1202", "causaProvavel": "[Regra oficial ANS] Código CNES do prestador executante não existe na base do Ministério da Saúde (ou deveria ser '999999' para casos sem CNES, e não foi preenchido assim).", "comoEvitar": "Confirme o CNES correto do estabelecimento no Cadastro Nacional de Estabelecimentos de Saúde antes de faturar." },
+        { "codigo": "1206", "causaProvavel": "[Regra oficial ANS] CPF do beneficiário/executante ou CNPJ do executante/fornecedor não existe na base da Receita Federal — ou, em alterações, o CPF do beneficiário foi trocado em relação ao já registrado na guia.", "comoEvitar": "Confira o CPF/CNPJ pelo botão \"Buscar CNPJ\" do Validador de XML TISS deste portal antes de enviar; não altere o CPF do beneficiário em lançamentos posteriores da mesma guia." },
+        { "codigo": "1213", "causaProvavel": "[Regra oficial ANS] Código CBO do executante ausente quando obrigatório (guias de Consulta, ou SP/SADT com tipo de atendimento Consulta), preenchido quando não deveria (guias de Internação/Honorários), ou igual a 999999 (não permitido).", "comoEvitar": "Preencha o CBO correto do profissional executante nas guias de consulta; não preencha em guias de internação/honorários; confira a Tabela 24 (aba Tabelas TISS) para o código certo." },
+        { "codigo": "1214", "causaProvavel": "Procedimento exige habilitação específica do prestador (ex: alta complexidade, UTI, oncologia) que o credenciado não possui junto à operadora.", "comoEvitar": "Use o verificador de habilitação exigida (aba Verificadores) para conferir se o procedimento exige habilitação antes de cobrar." }
+      ]
+    },
+    {
+      "nome": "Cobertura e contrato do item",
+      "itens": [
+        { "codigo": "1801", "causaProvavel": "[Regra oficial ANS] Código de procedimento informado não existe na tabela TUSS de referência (quando não é código próprio da operadora/pacote), ou diverge do procedimento já lançado anteriormente na mesma guia.", "comoEvitar": "Confira o código na tabela de referência correta (TUSS/tabela própria) antes de lançar; não troque o código de um item já lançado na guia." },
+        { "codigo": "1806", "causaProvavel": "[Regra oficial ANS] Quantidade informada (ou quantidade paga) de algum procedimento/item está zerada ou não preenchida — precisa ser maior que zero.", "comoEvitar": "Sempre informe uma quantidade maior que zero para cada procedimento/item lançado." },
+        { "codigo": "2601", "causaProvavel": "[Regra oficial ANS] O procedimento foi enviado numa forma de envio (unitária/consolidada) diferente da exigida pela Tabela TUSS 64 para aquele código.", "comoEvitar": "Confira a forma de envio exigida (Tabela 64 — Forma de envio de procedimentos) antes de lançar." },
+        { "codigo": "3101", "causaProvavel": "Procedimento de execução única (ex: uma cirurgia específica) já foi realizado antes para o mesmo beneficiário.", "comoEvitar": "Confira o histórico do paciente antes de solicitar/cobrar um procedimento marcado como execução única." },
+        { "codigo": "3142", "causaProvavel": "Item cobrado não consta no rol de procedimentos contratados entre o prestador e a operadora.", "comoEvitar": "Confirme com o setor de contratos/comercial se aquele item está no contrato antes de executar em pacientes daquela operadora." }
+      ]
+    },
+    {
+      "nome": "Técnico (arquivo XML)",
+      "itens": [
+        { "codigo": "5001", "causaProvavel": "Arquivo XML não segue a estrutura/versão vigente do Padrão TISS (tags, versão do schema, encoding).", "comoEvitar": "Valide o arquivo no Validador de XML TISS deste portal antes de enviar — ele confere a estrutura contra o XSD oficial." },
+        { "codigo": "5002", "causaProvavel": "Erro estrutural no XML impediu a operadora de sequer processar o arquivo (tag obrigatória ausente, encoding errado, etc.).", "comoEvitar": "Rode o arquivo no Validador de XML TISS deste portal — ele aponta o erro estrutural exato antes do envio." }
+      ]
+    }
+  ]
+}

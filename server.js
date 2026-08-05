@@ -549,6 +549,162 @@ app.post('/api/sigtap/atualizar', async (req, res) => {
   }
 });
 
+// Verifica compatibilidade entre 2+ procedimentos SIGTAP (par a par) — usa
+// a tabela oficial de compatibilidade (rl_procedimento_compativel) e as
+// exceções (rl_excecao_compatibilidade, quando a presença de um terceiro
+// código anula a compatibilidade). Ausência de registro NÃO significa
+// necessariamente incompatibilidade — só que não há registro explícito.
+app.get('/api/sigtap/compatibilidade', async (req, res) => {
+  try {
+    const codigos = [...new Set((req.query.codigos || '').split(',').map((s) => s.trim()).filter(Boolean))];
+    if (codigos.length < 2) {
+      return res.status(400).json({ erro: 'Informe pelo menos 2 códigos, separados por vírgula.' });
+    }
+
+    const [{ rows: compat }, { rows: excecoes }, { rows: nomes }] = await Promise.all([
+      pool.query(
+        `SELECT codigo_principal, codigo_compativel, tipo_compatibilidade, quantidade_permitida
+         FROM sigtap_procedimento_compativel
+         WHERE codigo_principal = ANY($1) AND codigo_compativel = ANY($1)`,
+        [codigos]
+      ),
+      pool.query(
+        `SELECT codigo_restricao, codigo_principal, codigo_compativel
+         FROM sigtap_excecao_compatibilidade
+         WHERE codigo_principal = ANY($1) AND codigo_compativel = ANY($1)`,
+        [codigos]
+      ),
+      pool.query('SELECT codigo, nome FROM sigtap_procedimentos WHERE codigo = ANY($1)', [codigos]),
+    ]);
+    const nomePorCodigo = Object.fromEntries(nomes.map((n) => [n.codigo, n.nome]));
+
+    const pares = [];
+    for (let i = 0; i < codigos.length; i++) {
+      for (let j = i + 1; j < codigos.length; j++) {
+        const a = codigos[i];
+        const b = codigos[j];
+        const encontrado = compat.find(
+          (c) => (c.codigo_principal === a && c.codigo_compativel === b) || (c.codigo_principal === b && c.codigo_compativel === a)
+        );
+        const excecoesPar = excecoes.filter(
+          (e) =>
+            ((e.codigo_principal === a && e.codigo_compativel === b) || (e.codigo_principal === b && e.codigo_compativel === a)) &&
+            codigos.includes(e.codigo_restricao)
+        );
+        pares.push({
+          codigoA: a,
+          nomeA: nomePorCodigo[a] || null,
+          codigoB: b,
+          nomeB: nomePorCodigo[b] || null,
+          compativel: Boolean(encontrado),
+          tipoCompatibilidade: encontrado ? encontrado.tipo_compatibilidade : null,
+          quantidadePermitida: encontrado ? encontrado.quantidade_permitida : null,
+          excecoesAplicaveis: excecoesPar.map((e) => e.codigo_restricao),
+        });
+      }
+    }
+    res.json({ codigos, codigosNaoEncontrados: codigos.filter((c) => !nomePorCodigo[c]), pares });
+  } catch (err) {
+    console.error('Erro ao verificar compatibilidade SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao verificar compatibilidade.' });
+  }
+});
+
+// Habilitações exigidas do prestador para um procedimento SIGTAP.
+app.get('/api/sigtap/habilitacao', async (req, res) => {
+  try {
+    const codigo = (req.query.codigo || '').trim();
+    if (!codigo) {
+      return res.status(400).json({ erro: 'Informe o código do procedimento.' });
+    }
+    const { rows } = await pool.query(
+      `SELECT sh.codigo, sh.nome,
+              sph.codigo_grupo_habilitacao AS grupo_codigo,
+              sgh.nome AS grupo_nome, sgh.descricao AS grupo_descricao
+       FROM sigtap_procedimento_habilitacao sph
+       JOIN sigtap_habilitacao sh ON sh.codigo = sph.codigo_habilitacao
+       LEFT JOIN sigtap_grupo_habilitacao sgh ON sgh.codigo = sph.codigo_grupo_habilitacao
+       WHERE sph.codigo_procedimento = $1
+       ORDER BY sph.codigo_grupo_habilitacao NULLS LAST, sh.nome`,
+      [codigo]
+    );
+    res.json({ codigo, habilitacoes: rows });
+  } catch (err) {
+    console.error('Erro ao consultar habilitação SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao consultar habilitação.' });
+  }
+});
+
+// Conversor CBHPM <-> TUSS <-> SIGTAP: a partir de QUALQUER código de
+// qualquer uma das 3 tabelas, encontra os equivalentes nas outras duas.
+// Funciona em 2 passos porque não há uma tabela única com as 3 pontas:
+// primeiro acha o(s) código(s) TUSS relacionados ao código informado (via
+// mapeamento_amb_tuss para CBHPM, ou diretamente se o código já for TUSS/
+// SIGTAP), depois usa esses códigos TUSS como ponte para buscar nas duas
+// tabelas de mapeamento de novo.
+app.get('/api/conversor', async (req, res) => {
+  try {
+    const codigo = (req.query.codigo || '').trim();
+    if (!codigo) {
+      return res.status(400).json({ erro: 'Informe um código.' });
+    }
+
+    const [porCbhpmOuTuss, porTussOuSigtap, direto] = await Promise.all([
+      pool.query(
+        `SELECT DISTINCT codigo_cbhpm, codigo_tuss, procedimento
+         FROM mapeamento_amb_tuss
+         WHERE codigo_cbhpm::text = $1 OR codigo_tuss = $1
+         LIMIT 20`,
+        [codigo]
+      ),
+      pool.query(
+        `SELECT DISTINCT codigo_tuss, termo_tuss, codigo_sigtap, procedimento_sigtap, grau_equivalencia
+         FROM mapeamento_tuss_sigtap
+         WHERE codigo_tuss = $1 OR codigo_sigtap = $1
+         LIMIT 20`,
+        [codigo]
+      ),
+      pool.query('SELECT codigo, nome FROM sigtap_procedimentos WHERE codigo = $1', [codigo]),
+    ]);
+
+    const codigosTuss = new Set();
+    porCbhpmOuTuss.rows.forEach((r) => r.codigo_tuss && codigosTuss.add(r.codigo_tuss));
+    porTussOuSigtap.rows.forEach((r) => r.codigo_tuss && codigosTuss.add(r.codigo_tuss));
+
+    let cbhpm = porCbhpmOuTuss.rows;
+    let tussSigtap = porTussOuSigtap.rows;
+
+    if (codigosTuss.size > 0) {
+      const tussArr = [...codigosTuss];
+      const [c, s] = await Promise.all([
+        pool.query(
+          `SELECT DISTINCT codigo_cbhpm, codigo_tuss, procedimento FROM mapeamento_amb_tuss WHERE codigo_tuss = ANY($1) LIMIT 30`,
+          [tussArr]
+        ),
+        pool.query(
+          `SELECT DISTINCT codigo_tuss, termo_tuss, codigo_sigtap, procedimento_sigtap, grau_equivalencia
+           FROM mapeamento_tuss_sigtap WHERE codigo_tuss = ANY($1) LIMIT 30`,
+          [tussArr]
+        ),
+      ]);
+      cbhpm = c.rows;
+      tussSigtap = s.rows;
+    }
+
+    const encontrado = cbhpm.length > 0 || tussSigtap.length > 0 || direto.rows.length > 0;
+    res.json({
+      codigo,
+      encontrado,
+      cbhpmTuss: cbhpm,
+      tussSigtap,
+      sigtapDireto: direto.rows[0] || null,
+    });
+  } catch (err) {
+    console.error('Erro no conversor CBHPM/TUSS/SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao converter código.' });
+  }
+});
+
 // Busca CID-10 por código exato (subcategoria ou categoria) ou por trecho do
 // nome. Buscar pelo código de uma categoria (ex: "J45") traz também todas as
 // suas subcategorias (J45.0, J45.1...). Categorias sem subcategoria própria

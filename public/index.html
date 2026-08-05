@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CBHPM+ — Central de Faturamento em Saúde</title>
+<title>CBHPM+ — Sistema de Apoio ao Faturista</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 <header class="topbar">
   <div class="topbar-inner">
     <span class="logo-mark">CBHPM+</span>
-    <span class="logo-sub">Central de Faturamento em Saúde</span>
+    <span class="logo-sub">Sistema de Apoio ao Faturista</span>
     <div class="topbar-actions">
       <button type="button" id="btn-tema" class="btn-ajuda" title="Alternar modo claro/escuro" aria-label="Alternar modo claro/escuro">🌙</button>
     </div>
@@ -156,6 +156,7 @@
     <button type="button" class="tab-btn" data-tab="sigtap">SUS / SIGTAP</button>
     <button type="button" class="tab-btn" data-tab="tiss-tabelas">Tabelas TISS</button>
     <button type="button" class="tab-btn" data-tab="cid10">CID-10</button>
+    <button type="button" class="tab-btn" data-tab="verificadores">Verificadores</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -552,6 +553,69 @@
   </section>
 
   <section id="cid10-resultado-area"></section>
+
+  </div>
+
+  <div id="tab-verificadores" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Verificador de compatibilidade entre procedimentos</h2>
+    </div>
+    <p class="ajustes-nota">
+      Confere, na tabela oficial do SIGTAP, se os procedimentos informados têm compatibilidade registrada entre
+      si (podem ser faturados juntos). <strong>Atenção:</strong> a ausência de registro não significa
+      necessariamente incompatibilidade — só que não há registro explícito. Use como apoio, não como decisão
+      final; em caso de dúvida, confirme com a operadora.
+    </p>
+    <div class="field field-busca">
+      <label for="compat-codigos">Códigos SIGTAP (2 ou mais, separados por vírgula)</label>
+      <div class="busca-wrapper" style="max-width:620px;">
+        <input type="text" id="compat-codigos" placeholder="Ex: 0206010010, 0206030045, 0417010060" autocomplete="off">
+      </div>
+    </div>
+    <button type="button" id="btn-compat-verificar" class="btn-consultar">Verificar compatibilidade</button>
+  </section>
+
+  <section id="compat-resultado-area"></section>
+
+  <section class="search-panel" style="margin-top:32px;">
+    <div class="mp-header">
+      <h2>Verificador de habilitação exigida</h2>
+    </div>
+    <p class="ajustes-nota">
+      Mostra se um procedimento SIGTAP exige alguma habilitação específica do prestador (ex: UTI, oncologia,
+      alta complexidade) junto à operadora/SUS — uma causa comum de glosa por "credenciado não habilitado".
+    </p>
+    <div class="field field-busca">
+      <label for="habilitacao-codigo">Código SIGTAP</label>
+      <div class="busca-wrapper" style="max-width:420px;">
+        <input type="text" id="habilitacao-codigo" placeholder="Ex: 0303170077" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="habilitacao-resultado-area"></section>
+
+  <section class="search-panel" style="margin-top:32px;">
+    <div class="mp-header">
+      <h2>Conversor CBHPM ↔ TUSS ↔ SIGTAP</h2>
+    </div>
+    <p class="ajustes-nota">
+      Informe um código de qualquer uma das 3 tabelas e veja os equivalentes nas outras duas — útil quando a
+      operadora exige uma tabela diferente da que o prestador usa internamente. O <strong>grau de
+      equivalência</strong> indica a precisão do mapeamento TUSS↔SIGTAP: 1–2 são bem equivalentes, 3–4 têm
+      significado mais amplo/específico, 5 não tem correspondência direta.
+    </p>
+    <div class="field field-busca">
+      <label for="conversor-codigo">Código CBHPM, TUSS ou SIGTAP</label>
+      <div class="busca-wrapper" style="max-width:420px;">
+        <input type="text" id="conversor-codigo" placeholder="Ex: 31003044 ou 0407020438" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="conversor-resultado-area"></section>
 
   </div>
 

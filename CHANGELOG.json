@@ -1,5 +1,15 @@
 [
   {
+    "versao": "1.18.0",
+    "data": "2026-08-05",
+    "mudancas": [
+      "Portal rebatizado para 'CBHPM+ — Sistema de Apoio ao Faturista', deixando explícito o papel de apoio à conferência (não é um sistema de faturamento).",
+      "Nova aba 'Verificadores', com 3 ferramentas de conferência pré-envio voltadas para faturistas: verificador de compatibilidade entre procedimentos SIGTAP (12.226 relações oficiais), verificador de habilitação exigida do prestador (11.045 relações) e conversor de código entre CBHPM, TUSS e SIGTAP (4.299 mapeamentos oficiais, com grau de equivalência).",
+      "Dicionário de causas de glosa (aba Tabelas TISS, Tabela 38) ampliado de 32 para 47 códigos, agora com a regra de crítica oficial da ANS para 18 deles (fonte: tabela oficial 'Erros no envio para a ANS').",
+      "SIGTAP: importação de compatibilidade entre procedimentos e exigência de habilitação passa a fazer parte da atualização automática da base (mesmo botão já existente na aba SUS/SIGTAP)."
+    ]
+  },
+  {
     "versao": "1.17.0",
     "data": "2026-08-04",
     "mudancas": [
