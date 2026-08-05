@@ -1,5 +1,14 @@
 [
   {
+    "versao": "1.23.0",
+    "data": "2026-08-05",
+    "mudancas": [
+      "Validador de XML TISS: guias do tipo Consulta ganham o botão 'Imprimir no layout ANS' — reproduz o formulário oficial '21.200 v008' em página única paisagem: registro ANS, dados do beneficiário, contratado, profissional executante, indicação de acidente e o procedimento único da consulta (data, tipo, tabela, código e valor).",
+      "É a guia mais simples do padrão: um único procedimento embutido em dadosAtendimento, sem tabela de itens nem equipe (um só profissional executante direto na guia). Mapeamento de campos confirmado no XSD oficial (ctm_consultaGuia) e no PDF de referência fornecido.",
+      "Testado ponta a ponta com XML real de duas guias de consulta (operadora Bradesco Saúde), incluindo a busca da razão social do contratado via CNPJ na BrasilAPI. Guia de Honorário Individual não será implementada."
+    ]
+  },
+  {
     "versao": "1.22.0",
     "data": "2026-08-05",
     "mudancas": [

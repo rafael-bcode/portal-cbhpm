@@ -2646,6 +2646,105 @@ function montarHtmlImpressaoResumoInternacao(dados, contexto) {
     </div>`;
 }
 
+// Extrai da guia Consulta (elemento XML bruto) os campos usados na
+// impressão no layout oficial ANS (formulário "21.200 v008" — Padrão TISS
+// Componente de Conteúdo e Estrutura). Estrutura confirmada no XSD oficial
+// (ctm_consultaGuia, tissGuiasV4_03_00.xsd) e no modelo em PDF fornecido —
+// é a guia mais simples do padrão: um único procedimento embutido em
+// dadosAtendimento, sem tabela de itens nem equipe (só um profissional
+// executante direto na guia, sem CPF/código próprio — diferente de
+// equipeSadt/identEquipe usados nas outras guias).
+function extrairDadosImpressaoConsulta(guiaEl) {
+  const cabecalho = filhoTiss(guiaEl, 'cabecalhoConsulta');
+  const beneficiario = filhoTiss(guiaEl, 'dadosBeneficiario');
+  const contratadoExecutante = filhoTiss(guiaEl, 'contratadoExecutante');
+  const dadosAtendimento = filhoTiss(guiaEl, 'dadosAtendimento');
+  const proc = filhoTiss(dadosAtendimento, 'procedimento');
+
+  return {
+    registroANS: textoDeTiss(cabecalho, 'registroANS'),
+    numeroGuiaPrestador: textoDeTiss(cabecalho, 'numeroGuiaPrestador'),
+    numeroGuiaOperadora: textoDeTiss(guiaEl, 'numeroGuiaOperadora'),
+    numeroCarteira: textoDeTiss(beneficiario, 'numeroCarteira'),
+    atendimentoRN: textoDeTiss(beneficiario, 'atendimentoRN'),
+    contratado: extrairContratadoTiss(contratadoExecutante),
+    cnes: textoDeTiss(contratadoExecutante, 'CNES'),
+    executante: extrairProfissionalTiss(filhoTiss(guiaEl, 'profissionalExecutante')),
+    indicacaoAcidente: textoDeTiss(guiaEl, 'indicacaoAcidente'),
+    dataAtendimento: textoDeTiss(dadosAtendimento, 'dataAtendimento'),
+    tipoConsulta: textoDeTiss(dadosAtendimento, 'tipoConsulta'),
+    codigoTabela: proc ? textoDeTiss(proc, 'codigoTabela') : '',
+    codigoProcedimento: proc ? textoDeTiss(proc, 'codigoProcedimento') : '',
+    valorProcedimento: proc ? numDeTiss(textoDeTiss(proc, 'valorProcedimento')) : null,
+    observacao: textoDeTiss(guiaEl, 'observacao'),
+  };
+}
+
+function montarHtmlImpressaoConsulta(dados, contexto) {
+  return `
+    <div class="guia-oficial">
+      <div class="go-cabecalho">
+        <div class="go-cabecalho-prestador">
+          <div class="go-prestador">${escaparHtml(contexto.razaoSocialExecutante || contexto.prestadorOrigem || 'Prestador não identificado')}</div>
+          <div class="go-operadora">${escaparHtml(contexto.operadoraNome || (contexto.registroOperadora ? `Operadora — registro ANS ${contexto.registroOperadora}` : 'Operadora não identificada'))}</div>
+        </div>
+        <div class="go-titulo">GUIA DE CONSULTA</div>
+        <div class="go-campo go-campo-guia-prestador">
+          <span class="go-rotulo">2 - Nº guia no prestador</span>
+          <span class="go-valor">${escaparHtml(dados.numeroGuiaPrestador || '—')}</span>
+        </div>
+      </div>
+      <p class="go-aviso">Reprodução do layout oficial do Padrão TISS/ANS a partir dos dados do XML já validado neste portal — não substitui a guia original nem é enviada a nenhuma operadora. Nome, validade da carteira e CNS do beneficiário não existem mais no XML desde a v4.00.00 (LGPD). Nome do contratado (campo 10) buscado pelo CNPJ na BrasilAPI ao clicar em imprimir.</p>
+
+      <div class="go-grid go-grid-2">
+        ${campoOficial('1 - Registro ANS', dados.registroANS)}
+        ${campoOficial('3 - Número da guia atribuído pela operadora', dados.numeroGuiaOperadora)}
+      </div>
+
+      <div class="go-secao-titulo">Dados do beneficiário</div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('4 - Número da carteira', dados.numeroCarteira)}
+        <div class="go-campo"><span class="go-rotulo">5 - Validade da carteira</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        ${campoOficial('6 - Atendimento a RN', dados.atendimentoRN === 'S' ? 'Sim' : dados.atendimentoRN === 'N' ? 'Não' : dados.atendimentoRN)}
+        <div class="go-campo"><span class="go-rotulo">7 - Nome</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+        <div class="go-campo"><span class="go-rotulo">8 - Cartão Nacional de Saúde</span><span class="go-valor go-valor-obs">retirado do XML (LGPD)</span></div>
+      </div>
+
+      <div class="go-secao-titulo">Dados do contratado</div>
+      <div class="go-grid go-grid-3">
+        ${campoOficial(`9 - ${dados.contratado.rotulo || 'Código na operadora'}`, dados.contratado.valor)}
+        ${campoOficial('10 - Nome do contratado', contexto.razaoSocialExecutante || contexto.prestadorOrigem)}
+        ${campoOficial('11 - Código CNES', dados.cnes)}
+      </div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('12 - Nome do profissional executante', dados.executante ? dados.executante.nome : '')}
+        ${campoOficial('13 - Conselho profissional', dados.executante ? (TISS_CONSELHOS[dados.executante.conselho] || dados.executante.conselho) : '')}
+        ${campoOficial('14 - Número no conselho', dados.executante ? dados.executante.numeroConselho : '')}
+        ${campoOficial('15 - UF', dados.executante ? (TISS_UF_SIGLA[dados.executante.uf] || dados.executante.uf) : '')}
+        ${campoOficial('16 - Código CBO', dados.executante ? dados.executante.cbo : '')}
+      </div>
+
+      <div class="go-secao-titulo">Dados do atendimento / procedimento realizado</div>
+      <div class="go-grid go-grid-2">
+        ${campoOficial('17 - Indicação de acidente', TISS_INDICADOR_ACIDENTE[dados.indicacaoAcidente] || dados.indicacaoAcidente)}
+      </div>
+      <div class="go-grid go-grid-5">
+        ${campoOficial('18 - Data do atendimento', dados.dataAtendimento ? formatarDataBR(dados.dataAtendimento) : '')}
+        ${campoOficial('19 - Tipo de consulta', TISS_TIPO_CONSULTA[dados.tipoConsulta] || dados.tipoConsulta)}
+        ${campoOficial('20 - Tabela', dados.codigoTabela)}
+        ${campoOficial('21 - Código do procedimento', dados.codigoProcedimento)}
+        ${campoOficial('22 - Valor do procedimento (R$)', dados.valorProcedimento !== null ? fmtMoeda(dados.valorProcedimento) : '')}
+      </div>
+
+      ${dados.observacao ? `<div class="go-secao-titulo">23 - Observação / Justificativa</div><p class="go-observacao">${escaparHtml(dados.observacao)}</p>` : ''}
+
+      <div class="go-assinaturas">
+        <div class="go-assinatura">24 - Assinatura do profissional executante</div>
+        <div class="go-assinatura">25 - Assinatura do beneficiário ou responsável</div>
+      </div>
+    </div>`;
+}
+
 function abrirModalGuiaValidador(guia) {
   const modalEl = document.getElementById('modal-validador-guia');
   const tituloEl = document.getElementById('validador-guia-titulo');
@@ -2657,11 +2756,11 @@ function abrirModalGuiaValidador(guia) {
   tituloEl.textContent = `${guia.tipo}${guia.numeroGuiaPrestador ? ` — ${guia.numeroGuiaPrestador}` : ''}`;
 
   // Impressão no layout oficial ANS: cada tipo de guia tem seu próprio
-  // formulário/layout — Consulta e Honorário Individual ficam para uma
-  // próxima leva.
+  // formulário/layout — Honorário Individual não será implementada.
   const IMPRESSAO_GUIA_OFICIAL = {
     'guiaSP-SADT': { extrair: extrairDadosImpressaoSPSADT, montar: montarHtmlImpressaoSPSADT },
     guiaResumoInternacao: { extrair: extrairDadosImpressaoResumoInternacao, montar: montarHtmlImpressaoResumoInternacao },
+    guiaConsulta: { extrair: extrairDadosImpressaoConsulta, montar: montarHtmlImpressaoConsulta },
   };
   if (btnImprimirEl) {
     const impressao = IMPRESSAO_GUIA_OFICIAL[guia.tipo];
