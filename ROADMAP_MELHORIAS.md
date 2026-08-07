@@ -272,6 +272,62 @@ CFM, que segue bloqueada por exigir credenciamento pago).
   4.01.00) que já passaram nos testes reais sugerem boa compatibilidade
   retroativa, mas isso não é uma garantia formal da ANS.
 
+## Achados rápidos (ago/2026) — corrigir antes de somar features novas
+
+Encontrados numa revisão completa do portal (estrutura, links, teste
+funcional de cada aba com Playwright, screenshots mobile e desktop):
+
+1. **Topbar quebra no mobile (< 400px)** — testado em 390×844 (iPhone): o
+   botão de alternar tema (🌙) fica cortado na borda direita da tela, o menu
+   de abas empilha sem hierarquia clara. `.topbar-actions`/`.tabs` não
+   encolhem/quebram direito abaixo de ~400px.
+2. **Home desatualizada** — o card "9 ferramentas num só portal" e a lista
+   "Nove formas de conferir" (`public/home.html`) não contam o Validador SUS
+   (BPA/AIH/APAC), a maior novidade da v2.0.0. Está subvendendo o produto.
+
+## Fase 7 — Próximas melhorias (🔲 Proposto, ago/2026)
+
+Levantamento a partir da revisão completa acima — nenhuma decisão de escopo
+tomada ainda, é a lista para priorizar e complementar juntos daqui pra
+frente. Mesma linha de sempre: nada de login, persistência de
+paciente/guia no servidor, ou geração/envio de guia oficial.
+
+### Aprofundar pilares existentes
+- Comparador de edições CBHPM lado a lado — hoje dá pra escolher "todas as
+  21 edições", mas não existe uma visão de como um procedimento específico
+  evoluiu de 2004 a 2022, útil pra entender se uma glosa é por edição
+  desatualizada do convênio.
+- Formalizar relatório de conferência do Validador SUS (BPA/AIH/APAC) no
+  mesmo padrão de PDF por paciente que o Validador XML TISS já tem.
+- Checklist pré-envio unificado na aba Verificadores: hoje são 3 consultas
+  isoladas (compatibilidade, habilitação, conversor) — unificar num fluxo
+  só (cola o código uma vez, roda os 3 + CID, resumo visual verde/
+  amarelo/vermelho).
+
+### Novas conferências (mesma linha de "apoio", sem dado persistido)
+- Consulta de CNES standalone — o Validador AIH já resolve nome de
+  instituição via CNESNet internamente, só falta expor como consulta
+  própria.
+- Simulador reverso de glosa: a partir do sintoma relatado pelo faturista
+  ("operadora rejeitou por incompatibilidade"), aponta qual verificador
+  rodar.
+- Alerta ativo de versão TISS vencida — hoje o modal "Versões TISS" é só
+  informativo; dá pra virar uma checagem ativa (usuário informa a versão do
+  XML, portal avisa se está prestes a sair de uso, como aconteceu com a
+  4.02.00 → 4.03.00).
+
+### Transparência de dados
+- Selo "atualizado em" por base estática (CBO, operadoras ANS, dicionário
+  de glosas) — hoje só o SIGTAP mostra a competência carregada.
+- Página `/fontes` consolidando as fontes oficiais já citadas espalhadas
+  pela home, com link direto e data do último import de cada uma.
+
+### Polish técnico
+- Corrigir o overflow mobile do topbar (achado #1 acima).
+- Atualizar a copy da home pro Validador SUS (achado #2 acima).
+- PWA leve (app shell estático em cache, sem cache de dado de paciente) —
+  pensado pra conexão instável dentro de hospital.
+
 ## Resumo executivo
 
 | Fase | Status | Esforço | Valor | Depende de dado pago? |
@@ -286,3 +342,4 @@ CFM, que segue bloqueada por exigir credenciamento pago).
 | 5d. Detalhe por guia (abas) e busca por número | ✅ Feito | Baixo–médio | Alto | Não |
 | 6a. Histórico local, múltiplos arquivos (Unimed 0/2/5) e comparação | ✅ Feito | Médio | Alto | Não |
 | 6c. Validação estrutural contra o XSD oficial | ✅ Feito | Alto | Alto | Não |
+| 7. Comparador de edições, checklist pré-envio, CNES standalone, glosa reversa, alerta de versão, transparência de dados, PWA, mobile | 🔲 Proposto | — | — | Não |
