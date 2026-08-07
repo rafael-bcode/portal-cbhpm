@@ -1,21 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
 
+/* Paleta alinhada ao ecossistema Argus (argusbc.com.br) — azul/ciano no
+   lugar do verde/âmbar original. Os nomes de variável (--teal, --amber etc.)
+   continuam os mesmos (80+ usos no arquivo) pra não precisar tocar em cada
+   regra; só o valor de cor muda. */
 :root {
   --ink: #16232B;
   --ink-soft: #52616C;
   --paper: #F6F7F5;
   --panel: #FFFFFF;
   --border: #DCE3E0;
-  --teal: #0F6E5F;
-  --teal-dark: #0B4F45;
-  --teal-tint: #E4F1EE;
-  --amber: #C97A2B;
-  --amber-tint: #FBEEE0;
+  --teal: #2453EB;
+  --teal-dark: #1B3FC4;
+  --teal-tint: #E8F1FE;
+  --amber: #06B6D4;
+  --amber-tint: #E0FBFF;
   /* Superfície sempre escura (topbar, cabeçalho do card, tooltip) — não
      inverte no modo escuro, ao contrário de --ink (que é texto). */
-  --navy: #16232B;
+  --navy: #0B1220;
   --mono: 'IBM Plex Mono', ui-monospace, monospace;
-  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --sans: 'Inter', system-ui, sans-serif;
   --radius: 10px;
 }
 
@@ -26,11 +30,11 @@
     --paper: #10161A;
     --panel: #1A2328;
     --border: #2E3A3F;
-    --teal: #2FB39A;
-    --teal-dark: #7FD9C4;
-    --teal-tint: #17302C;
-    --amber: #E3A85E;
-    --amber-tint: #33291B;
+    --teal: #5B8DEF;
+    --teal-dark: #8AB4FF;
+    --teal-tint: #142138;
+    --amber: #22D3EE;
+    --amber-tint: #0F2A30;
   }
 }
 
@@ -44,11 +48,11 @@
   --paper: #F6F7F5;
   --panel: #FFFFFF;
   --border: #DCE3E0;
-  --teal: #0F6E5F;
-  --teal-dark: #0B4F45;
-  --teal-tint: #E4F1EE;
-  --amber: #C97A2B;
-  --amber-tint: #FBEEE0;
+  --teal: #2453EB;
+  --teal-dark: #1B3FC4;
+  --teal-tint: #E8F1FE;
+  --amber: #06B6D4;
+  --amber-tint: #E0FBFF;
 }
 :root[data-theme="dark"] {
   --ink: #E4E9EA;
@@ -56,11 +60,11 @@
   --paper: #10161A;
   --panel: #1A2328;
   --border: #2E3A3F;
-  --teal: #2FB39A;
-  --teal-dark: #7FD9C4;
-  --teal-tint: #17302C;
-  --amber: #E3A85E;
-  --amber-tint: #33291B;
+  --teal: #5B8DEF;
+  --teal-dark: #8AB4FF;
+  --teal-tint: #142138;
+  --amber: #22D3EE;
+  --amber-tint: #0F2A30;
 }
 
 * { box-sizing: border-box; }
@@ -103,6 +107,75 @@ body {
   align-items: center;
   gap: 8px;
 }
+.topbar-home-link {
+  font-family: var(--sans);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #A9B7BC;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.topbar-home-link:hover { color: #fff; }
+
+/* ---------- Ecossistema Argus (sidebar) ---------- */
+/* Sempre visível a partir de 1024px — nunca display:none nesse intervalo.
+   Dois formatos, trocando junto com o .container pra nunca sobrepor a
+   ferramenta:
+   - >=1600px: sidebar larga (200px) com descrição, .container no tamanho
+     normal (1100px, definido na regra .container já existente).
+   - 1024–1599px: sidebar compacta (110px) só com o nome, e o .container
+     encolhe pra 760px nessa faixa (ver override abaixo) pra sempre sobrar
+     espaço dos dois lados. */
+.eco-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: fixed;
+  top: 96px;
+  width: 110px;
+  max-height: calc(100vh - 116px);
+  overflow-y: auto;
+  left: max(10px, calc(50% - 380px - 120px));
+}
+.eco-sidebar-right { left: auto; right: max(10px, calc(50% - 380px - 120px)); }
+.eco-card-desc { display: none; }
+
+@media (min-width: 1600px) {
+  .eco-sidebar { width: 200px; left: max(24px, calc(50% - 574px - 224px)); }
+  .eco-sidebar-right { left: auto; right: max(24px, calc(50% - 574px - 224px)); }
+  .eco-card-desc { display: block; }
+}
+@media (max-width: 1023px) {
+  .eco-sidebar { display: none; }
+}
+
+.eco-sidebar-titulo {
+  font-family: var(--mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  text-decoration: none;
+  margin-bottom: 2px;
+}
+.eco-sidebar-titulo:hover { color: var(--teal-dark); }
+.eco-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--pcolor, var(--teal));
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.eco-card:hover { box-shadow: 0 0 0 1px var(--pcolor, var(--teal)) inset; }
+.eco-card-nome { font-size: 0.78rem; font-weight: 700; color: var(--pcolor, var(--ink)); }
+.eco-card-desc { font-size: 0.72rem; line-height: 1.4; color: var(--ink-soft); }
+
 .btn-ajuda {
   width: 24px;
   height: 24px;
@@ -199,6 +272,12 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   padding: 28px 24px 80px;
+}
+/* Encolhe pra abrir espaço pra sidebar compacta do ecossistema Argus nessa
+   faixa de largura — precisa vir DEPOIS da regra .container acima: mesma
+   especificidade, então quem manda é a ordem no arquivo, não a media query. */
+@media (min-width: 1024px) and (max-width: 1599px) {
+  .container { max-width: 760px; }
 }
 
 /* ---------- Abas ---------- */

@@ -1,4 +1,5 @@
 require('dotenv').config();
+const path = require('path');
 const express = require('express');
 const { Pool } = require('pg');
 const packageJson = require('./package.json');
@@ -7,6 +8,13 @@ const { competenciaLegivel, buscarUltimaDisponivelGitHub, atualizarSigtap } = re
 
 const app = express();
 app.use(express.json());
+
+// Página institucional na raiz — a ferramenta em si (public/index.html)
+// continua acessível normalmente em /index.html via o static abaixo.
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'home.html'));
+});
+
 app.use(express.static('public')); // serve os arquivos da tela (HTML/CSS/JS)
 
 const pool = new Pool({

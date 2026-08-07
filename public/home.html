@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Argus Fatura — Confira CBHPM, SIGTAP e TISS antes de faturar</title>
+<link rel="icon" type="image/webp" href="logo.webp">
+<meta name="description" content="Consulte CBHPM, SUS/SIGTAP, TUSS e CID-10, e valide arquivos XML do Padrão TISS antes de enviar — gratuito, sem cadastro. Reduza glosas conferindo cada valor antes de faturar.">
+<meta name="robots" content="index, follow">
+<link rel="canonical" href="/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Argus Fatura — Confira CBHPM, SIGTAP e TISS antes de faturar">
+<meta property="og:description" content="Consulte CBHPM, SUS/SIGTAP, TUSS e CID-10, e valide arquivos XML do Padrão TISS antes de enviar — gratuito, sem cadastro.">
+<meta property="og:locale" content="pt_BR">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Argus Fatura",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web",
+  "description": "Consulta de CBHPM, SUS/SIGTAP, TUSS e CID-10, e validador de XML do Padrão TISS, gratuito e sem cadastro, para apoio ao faturamento em saúde.",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "BRL" }
+}
+</script>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap">
+<style>
+  :root {
+    --ink: #0B1220;
+    --ink-soft: #64748B;
+    --paper: #F4F7FC;
+    --panel: #FFFFFF;
+    --border: #E2E8F0;
+    --blue: #2453EB;
+    --cyan: #06B6D4;
+    --blue-tint: #E8F1FE;
+    --gradient: linear-gradient(90deg, var(--blue), var(--cyan));
+    --sans: 'Inter', system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; font-family: var(--sans); background: var(--paper); color: var(--ink); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+
+  /* ---------- Nav ---------- */
+  .nav {
+    position: sticky; top: 0; z-index: 30;
+    background: var(--ink); color: #fff;
+    border-bottom: 3px solid var(--blue);
+  }
+  .nav-inner {
+    max-width: 1180px; margin: 0 auto; padding: 16px 24px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .nav-logo { font-weight: 800; letter-spacing: 0.02em; font-size: 1.05rem; display: flex; align-items: center; gap: 10px; text-decoration: none; }
+  .nav-logo span { color: var(--cyan); }
+  .nav-logo-icon { height: 28px; width: auto; display: block; }
+  .nav-cta {
+    font-weight: 700; font-size: 0.85rem;
+    background: var(--blue); color: #fff; padding: 10px 20px; border-radius: 999px;
+    text-decoration: none; transition: background 0.15s;
+  }
+  .nav-cta:hover { background: #1B3FC4; }
+
+  /* ---------- Hero ---------- */
+  .hero {
+    max-width: 1180px; margin: 0 auto; padding: 72px 24px 40px;
+    display: grid; grid-template-columns: 1.05fr 0.95fr; gap: 40px; align-items: center;
+  }
+  .eyebrow {
+    font-size: 0.76rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: var(--blue); background: var(--blue-tint);
+    display: inline-block; padding: 5px 12px; border-radius: 999px; margin-bottom: 20px;
+  }
+  h1 {
+    font-size: clamp(2rem, 4vw, 2.9rem); line-height: 1.12; margin: 0 0 20px;
+    letter-spacing: -0.02em; font-weight: 800;
+  }
+  h1 em {
+    font-style: normal; background: var(--gradient);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero-sub {
+    font-size: 1.08rem; line-height: 1.6; color: var(--ink-soft); max-width: 46ch; margin: 0 0 28px;
+  }
+  .hero-ctas { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 32px; }
+  .btn-primary {
+    font-weight: 700; font-size: 0.98rem;
+    background: var(--ink); color: #fff; padding: 13px 26px; border-radius: 999px;
+    text-decoration: none; transition: background 0.15s, transform 0.1s; display: inline-block;
+  }
+  .btn-primary:hover { background: var(--blue); transform: translateY(-1px); }
+  .btn-secondary {
+    font-weight: 600; font-size: 0.95rem;
+    color: var(--ink); padding: 13px 22px; border-radius: 999px; border: 1.5px solid var(--border);
+    text-decoration: none; background: var(--panel); display: inline-block;
+  }
+  .btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+
+  .stat-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .stat-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 12px 12px 11px;
+  }
+  .stat-card .num { font-size: 1.15rem; font-weight: 800; color: var(--ink); line-height: 1.1; }
+  .stat-card .lbl { font-size: 0.7rem; color: var(--ink-soft); line-height: 1.3; margin-top: 3px; }
+
+  /* ---------- Diagrama radial do ecossistema ---------- */
+  .ecosystem { position: relative; width: 100%; max-width: 440px; aspect-ratio: 440 / 380; margin: 0 auto; }
+  .ecosystem-svg { width: 100%; height: 100%; overflow: visible; }
+  .eco-line { stroke: #CBD5E1; stroke-width: 1.5; }
+  .eco-dot { fill: var(--blue); }
+  .eco-dot-fatura { fill: var(--ink); r: 6; }
+  .eco-label {
+    font-family: var(--sans); font-size: 11px; font-weight: 700; letter-spacing: 0.03em;
+    text-transform: uppercase; fill: var(--ink-soft); dominant-baseline: middle;
+  }
+  .eco-label-fatura { font-size: 14px; font-weight: 800; fill: var(--ink); }
+  .eco-node { text-decoration: none; cursor: pointer; }
+  .eco-node:hover .eco-label { fill: var(--blue); }
+  .eco-node:hover .eco-dot { fill: var(--cyan); }
+  .ecosystem-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; pointer-events: none;
+  }
+  .ecosystem-center img { height: 46px; width: auto; display: block; margin: 0 auto 4px; }
+  .ecosystem-center span {
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.14em; color: var(--ink-soft);
+  }
+
+  /* ---------- Por que importa ---------- */
+  .why { background: var(--ink); color: #fff; padding: 64px 24px; }
+  .why-inner { max-width: 1180px; margin: 0 auto; }
+  .why h2 { font-size: 1.6rem; margin: 0 0 12px; max-width: 32ch; font-weight: 800; letter-spacing: -0.01em; }
+  .why .lead { color: #94A3B8; max-width: 62ch; line-height: 1.6; margin-bottom: 40px; font-size: 1.02rem; }
+  .why-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+  .why-card { border-top: 3px solid; border-image: var(--gradient) 1; padding-top: 16px; }
+  .why-card h3 { font-size: 1.02rem; margin: 0 0 8px; color: #fff; font-weight: 700; }
+  .why-card p { color: #94A3B8; font-size: 0.9rem; line-height: 1.55; margin: 0; }
+
+  /* ---------- Features ---------- */
+  .features { max-width: 1180px; margin: 0 auto; padding: 64px 24px; }
+  .section-head { max-width: 60ch; margin-bottom: 40px; }
+  .section-head .eyebrow { margin-bottom: 12px; }
+  .section-head h2 { font-size: 1.7rem; margin: 0 0 10px; font-weight: 800; letter-spacing: -0.01em; }
+  .section-head p { color: var(--ink-soft); line-height: 1.6; margin: 0; }
+  .feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .feature-card {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 22px;
+  }
+  .feature-card .ftag {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.05em;
+    color: var(--blue); background: var(--blue-tint); display: inline-block;
+    padding: 3px 9px; border-radius: 5px; margin-bottom: 12px; text-transform: uppercase;
+  }
+  .feature-card h3 { font-size: 1.02rem; margin: 0 0 8px; font-weight: 700; }
+  .feature-card p { font-size: 0.88rem; color: var(--ink-soft); line-height: 1.55; margin: 0; }
+
+  /* ---------- Fontes / confiança ---------- */
+  .trust { background: var(--blue-tint); padding: 56px 24px; }
+  .trust-inner { max-width: 1180px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .trust h2 { font-size: 1.4rem; margin: 0 0 12px; color: var(--blue); font-weight: 800; letter-spacing: -0.01em; }
+  .trust p { color: var(--ink); line-height: 1.6; font-size: 0.95rem; margin: 0 0 14px; }
+  .trust-sources { display: flex; flex-direction: column; gap: 14px; }
+  .source-item { background: var(--panel); border-radius: 8px; padding: 14px 16px; border: 1px solid #C7DBF7; }
+  .source-item .stag { font-size: 0.72rem; font-weight: 700; color: var(--blue); display: block; margin-bottom: 3px; }
+  .source-item .sdesc { font-size: 0.85rem; color: var(--ink-soft); }
+
+  /* ---------- CTA final ---------- */
+  .final-cta { max-width: 1180px; margin: 0 auto; padding: 72px 24px 96px; text-align: center; }
+  .final-cta h2 { font-size: 1.8rem; margin: 0 0 14px; font-weight: 800; letter-spacing: -0.01em; }
+  .final-cta p { color: var(--ink-soft); max-width: 46ch; margin: 0 auto 28px; line-height: 1.6; }
+
+  footer { background: var(--ink); color: #94A3B8; }
+  .footer-inner {
+    max-width: 1180px; margin: 0 auto; padding: 28px 24px; font-size: 0.85rem;
+    display: flex; justify-content: space-between; align-items: center; gap: 20px; flex-wrap: wrap;
+  }
+  .footer-brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: #fff; }
+  .footer-brand img { height: 22px; width: auto; }
+  .footer-brand span { color: var(--cyan); }
+  .footer-disclaimer { flex: 1 1 320px; min-width: 220px; }
+  .footer-solucoes {
+    font-weight: 700; color: var(--ink); text-decoration: none; white-space: nowrap;
+    background: var(--cyan); padding: 10px 20px; border-radius: 999px; transition: background 0.15s;
+  }
+  .footer-solucoes:hover { background: #22D3EE; }
+
+  @media (max-width: 860px) {
+    .hero { grid-template-columns: 1fr; padding-top: 40px; }
+    .why-grid, .feature-grid { grid-template-columns: 1fr; }
+    .trust-inner { grid-template-columns: 1fr; }
+    .stat-row { grid-template-columns: repeat(2, 1fr); }
+    .ecosystem { max-width: 320px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-inner">
+    <a class="nav-logo" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer"><img src="logo.webp" alt="" class="nav-logo-icon">ARGUS<span> FATURA</span></a>
+    <a class="nav-cta" href="index.html">Entrar no portal →</a>
+  </div>
+</nav>
+
+<section class="hero">
+  <div>
+    <span class="eyebrow">Apoio ao faturamento em saúde</span>
+    <h1>Cada valor conferido <em>antes</em> de virar glosa.</h1>
+    <p class="hero-sub">
+      Um lugar só para consultar CBHPM, SUS/SIGTAP, TUSS e TISS — e cruzar tudo isso
+      antes de enviar a guia. Menos retrabalho, menos glosa, mais confiança no valor que você faturou.
+    </p>
+    <div class="hero-ctas">
+      <a class="btn-primary" href="index.html">Visite o site</a>
+      <a class="btn-secondary" href="#recursos">Ver o que o portal faz</a>
+    </div>
+    <div class="stat-row">
+      <div class="stat-card"><div class="num">21</div><div class="lbl">edições CBHPM cobertas</div></div>
+      <div class="stat-card"><div class="num">9</div><div class="lbl">ferramentas num só portal</div></div>
+      <div class="stat-card"><div class="num">100%</div><div class="lbl">gratuito, sem cadastro</div></div>
+      <div class="stat-card"><div class="num">0</div><div class="lbl">dados enviados no validador de XML</div></div>
+    </div>
+  </div>
+
+  <div class="ecosystem" aria-hidden="true">
+    <svg viewBox="0 0 440 380" class="ecosystem-svg">
+      <line class="eco-line" x1="220" y1="190" x2="220" y2="95" />
+      <line class="eco-line" x1="220" y1="190" x2="275.8" y2="113.1" />
+      <line class="eco-line" x1="220" y1="190" x2="310.4" y2="160.6" />
+      <line class="eco-line" x1="220" y1="190" x2="310.4" y2="219.4" />
+      <line class="eco-line" x1="220" y1="190" x2="275.8" y2="266.9" />
+      <line class="eco-line" x1="220" y1="190" x2="220" y2="285" />
+      <line class="eco-line" x1="220" y1="190" x2="164.2" y2="266.9" />
+      <line class="eco-line" x1="220" y1="190" x2="129.6" y2="219.4" />
+      <line class="eco-line" x1="220" y1="190" x2="129.6" y2="160.6" />
+      <line class="eco-line" x1="220" y1="190" x2="164.2" y2="113.1" />
+
+      <g>
+        <circle class="eco-dot eco-dot-fatura" cx="220" cy="95" r="6" />
+        <text class="eco-label eco-label-fatura" x="220" y="50" text-anchor="middle">FATURA</text>
+      </g>
+
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="275.8" cy="113.1" r="4" />
+        <text class="eco-label" x="302.3" y="76.7" text-anchor="start">WATCH</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="310.4" cy="160.6" r="4" />
+        <text class="eco-label" x="353.2" y="146.7" text-anchor="start">VISION</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="310.4" cy="219.4" r="4" />
+        <text class="eco-label" x="353.2" y="233.3" text-anchor="start">EXPERIENCE</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="275.8" cy="266.9" r="4" />
+        <text class="eco-label" x="302.3" y="303.3" text-anchor="start">QUALITY</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="220" cy="285" r="4" />
+        <text class="eco-label" x="220" y="330" text-anchor="middle">CLINICAL</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="164.2" cy="266.9" r="4" />
+        <text class="eco-label" x="137.7" y="303.3" text-anchor="end">SAM</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="129.6" cy="219.4" r="4" />
+        <text class="eco-label" x="86.8" y="233.3" text-anchor="end">PROSIGN</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="129.6" cy="160.6" r="4" />
+        <text class="eco-label" x="86.8" y="146.7" text-anchor="end">PARTNERS</text>
+      </a>
+      <a class="eco-node" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+        <circle class="eco-dot" cx="164.2" cy="113.1" r="4" />
+        <text class="eco-label" x="137.7" y="76.7" text-anchor="end">TAXINVOICE</text>
+      </a>
+    </svg>
+    <div class="ecosystem-center">
+      <img src="logo.webp" alt="Argus">
+      <span>ARGUS</span>
+    </div>
+  </div>
+</section>
+
+<section class="why">
+  <div class="why-inner">
+    <h2>Uma glosa não é só um valor menor no repasse.</h2>
+    <p class="lead">
+      É a guia que volta, o procedimento que precisa ser reconferido, o tempo do faturista
+      refazendo o que já tinha sido feito — e, às vezes, o prazo pra recurso que já passou.
+      A maioria desses problemas nasce em coisas simples de checar, só que checadas tarde demais.
+    </p>
+    <div class="why-grid">
+      <div class="why-card">
+        <h3>Tabela errada, edição errada</h3>
+        <p>Usar o valor de uma edição da CBHPM que não é mais a vigente, ou confundir o código certo entre CBHPM, TUSS e SIGTAP, é uma das causas mais comuns de glosa — e a mais fácil de evitar com a consulta certa.</p>
+      </div>
+      <div class="why-card">
+        <h3>Regra que não foi checada</h3>
+        <p>Habilitação exigida, compatibilidade entre procedimentos, idade e sexo permitidos — são regras que existem na tabela oficial, mas raramente são conferidas linha a linha antes do envio.</p>
+      </div>
+      <div class="why-card">
+        <h3>XML fora do padrão vigente</h3>
+        <p>O Padrão TISS muda de versão, e cada mudança tem uma data a partir da qual arquivos antigos passam a ser rejeitados. Descobrir isso depois do envio custa tempo que dava pra ter economizado.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features" id="recursos">
+  <div class="section-head">
+    <span class="eyebrow">O que tem no portal</span>
+    <h2>Nove formas de conferir antes de enviar</h2>
+    <p>Cada ferramenta resolve uma dúvida específica do dia a dia de quem fatura — da consulta simples de um código até a validação completa de um lote de XML.</p>
+  </div>
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="ftag">CBHPM</span>
+      <h3>Consulta por procedimento</h3>
+      <p>Código, descrição, porte, UCO e auxiliares — em qualquer edição, de 2004 até a atual, com o cálculo passo a passo à vista.</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">CBHPM</span>
+      <h3>Múltiplos procedimentos</h3>
+      <p>Simula o valor de uma cirurgia com vários procedimentos no mesmo ato, já aplicando a redução de porte por via de acesso.</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">TISS</span>
+      <h3>Validador de XML</h3>
+      <p>Confere o arquivo contra o XSD oficial da versão vigente, direto no navegador — o arquivo nunca sai do seu computador.</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">SUS</span>
+      <h3>SIGTAP</h3>
+      <p>Valores de repasse, permanência máxima, idade e sexo permitidos — tudo que o procedimento exige pra ser faturado ao SUS.</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">CID-10</span>
+      <h3>Diagnóstico</h3>
+      <p>Busca por código ou nome da doença, com as subcategorias já organizadas — pro campo de diagnóstico da guia.</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">Conversor</span>
+      <h3>CBHPM ↔ TUSS ↔ SIGTAP</h3>
+      <p>Informa um código de qualquer uma das três tabelas e vê os equivalentes nas outras — pra quando a operadora pede uma tabela diferente da que você usa.</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">SIGTAP</span>
+      <h3>Compatibilidade</h3>
+      <p>Confere se dois ou mais procedimentos têm registro de compatibilidade entre si na tabela oficial, antes de lançar os dois juntos.</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">SIGTAP</span>
+      <h3>Habilitação exigida</h3>
+      <p>Mostra se o procedimento exige alguma habilitação do prestador — uma causa clássica de glosa por "credenciado não habilitado".</p>
+    </div>
+    <div class="feature-card">
+      <span class="ftag">TISS</span>
+      <h3>Tabelas de domínio</h3>
+      <p>Códigos de glosa, CBO, unidades de medida e outras tabelas oficiais do Padrão TISS, pesquisáveis num só lugar.</p>
+    </div>
+  </div>
+</section>
+
+<section class="trust">
+  <div class="trust-inner">
+    <div>
+      <h2>Os dados vêm das fontes oficiais</h2>
+      <p>O portal organiza e cruza informação pública — não substitui a documentação oficial, e não é um validador certificado pela ANS. Em caso de dúvida sobre um caso específico, a palavra final é sempre da operadora ou do órgão competente.</p>
+      <p>Nada do que você consulta ou dos arquivos XML que você confere é enviado a servidor nenhum além do necessário para a própria consulta — o validador de TISS, por exemplo, roda inteiramente no seu navegador.</p>
+    </div>
+    <div class="trust-sources">
+      <div class="source-item"><span class="stag">AMB</span><span class="sdesc">Associação Médica Brasileira — publicadora oficial da CBHPM</span></div>
+      <div class="source-item"><span class="stag">ANS</span><span class="sdesc">Agência Nacional de Saúde Suplementar — Padrão TISS e tabelas TUSS</span></div>
+      <div class="source-item"><span class="stag">DATASUS</span><span class="sdesc">Ministério da Saúde — Tabela SIGTAP do SUS</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="final-cta">
+  <h2>Confere antes de faturar.</h2>
+  <p>Evita o retrabalho de amanhã com a consulta de hoje.</p>
+  <a class="btn-primary" href="index.html">Entrar no portal</a>
+</section>
+
+<footer>
+  <div class="footer-inner">
+    <a class="footer-brand" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+      <img src="logo.webp" alt="">ARGUS<span> FATURA</span>
+    </a>
+    <span class="footer-disclaimer">Ferramenta de apoio — não substitui a documentação oficial da AMB, ANS ou Ministério da Saúde.</span>
+    <a href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer" class="footer-solucoes">Conheça nossas soluções →</a>
+  </div>
+</footer>
+
+</body>
+</html>
