@@ -127,18 +127,19 @@ body {
 .topbar-home-link:hover { color: #fff; border-color: var(--teal); background: rgba(36, 83, 235, 0.15); }
 
 /* ---------- Layout com sidebar do ecossistema Argus ---------- */
-/* Grid de 3 colunas de verdade em vez de sidebar fixa com largura/posição
-   calculada manualmente (a versão anterior deixava sobra de espaço nas
-   bordas e travava o .container numa largura fixa, forçando as abas a
-   quebrar linha à toa). As colunas laterais crescem/encolhem sozinhas
-   (minmax) conforme o espaço realmente disponível, e o grid inteiro fica
-   centralizado — nunca sobra vão morto nem sobrepõe a ferramenta. */
+/* Grid de 3 colunas. A coluna central (a ferramenta) tem um piso alto
+   (1092px, com folga — a barra de 8 abas precisa de ~1050px pra nunca
+   quebrar linha) e só cresce até 1140px; as sidebars é que cedem espaço
+   primeiro quando o monitor é menor, e somem (abaixo de 1500px) em vez de
+   ficar espremidas coladas na borda da tela. Padding lateral no .app-layout
+   garante uma margem mínima mesmo no limite do breakpoint. */
 .app-layout {
   display: grid;
-  grid-template-columns: minmax(150px, 220px) minmax(0, 1100px) minmax(150px, 220px);
+  grid-template-columns: minmax(0, 220px) minmax(1092px, 1140px) minmax(0, 220px);
   justify-content: center;
   align-items: start;
   gap: 24px;
+  padding: 0 16px;
 }
 .app-layout .container { max-width: none; margin: 0; width: 100%; }
 
@@ -148,10 +149,11 @@ body {
   gap: 10px;
   position: sticky;
   top: 96px;
+  min-width: 0;
 }
 
-@media (max-width: 1023px) {
-  .app-layout { grid-template-columns: minmax(0, 1100px); }
+@media (max-width: 1499px) {
+  .app-layout { grid-template-columns: minmax(0, 1140px); padding: 0; }
   .eco-sidebar { display: none; }
 }
 
@@ -290,9 +292,9 @@ body {
 }
 .tab-btn {
   font-family: var(--sans);
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 600;
-  padding: 10px 18px;
+  padding: 10px 10px;
   border: none;
   background: none;
   color: var(--ink-soft);
