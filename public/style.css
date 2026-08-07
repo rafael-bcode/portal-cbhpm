@@ -102,11 +102,13 @@ body {
 }
 
 /* Grade sutil de 44px sobre o degradê, esmaecendo perto do rodapé — igual
-   ao efeito de fundo do argusbc.com.br. Fixa (não rola com o conteúdo) e
-   sem interceptar clique, então não interfere na página. */
+   ao efeito de fundo do argusbc.com.br. Absoluta (rola junto com a página,
+   cobrindo a altura real do conteúdo) — com "fixed" a máscara ficava presa
+   à altura da janela e criava uma linha de corte visível parada na tela
+   conforme rolava. Sem interceptar clique, então não interfere na página. */
 body::before {
   content: "";
-  position: fixed;
+  position: absolute;
   inset: 0;
   z-index: 0;
   pointer-events: none;
