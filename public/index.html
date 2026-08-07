@@ -154,6 +154,7 @@
     <button type="button" class="tab-btn active" data-tab="consulta">Consulta por procedimento</button>
     <button type="button" class="tab-btn" data-tab="multiplos">Múltiplos procedimentos</button>
     <button type="button" class="tab-btn" data-tab="validador">Validador de XML TISS</button>
+    <button type="button" class="tab-btn" data-tab="validador-sus">Validador SUS</button>
     <button type="button" class="tab-btn" data-tab="sigtap">SUS / SIGTAP</button>
     <button type="button" class="tab-btn" data-tab="tiss-tabelas">Tabelas TISS</button>
     <button type="button" class="tab-btn" data-tab="cid10">CID-10</button>
@@ -477,6 +478,99 @@
   </section>
 
   <section id="validador-resultado-area"></section>
+
+  </div>
+
+  <div id="tab-validador-sus" class="tab-panel hidden">
+
+  <div class="tabs subtabs">
+    <button type="button" class="subtab-btn active" data-subtab="bpa">Validador BPA</button>
+    <button type="button" class="subtab-btn" data-subtab="aih">Validador AIH</button>
+    <button type="button" class="subtab-btn" data-subtab="apac">Validador APAC</button>
+  </div>
+
+  <div id="subtab-bpa" class="subtab-panel">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Validador BPA (SIA/SUS)</h2>
+    </div>
+    <p class="ajustes-nota">
+      Confere um arquivo-texto de BPA (Boletim de Produção Ambulatorial) — Consolidado (BPA-C) e/ou
+      Individualizado (BPA-I) — <strong>só no seu navegador</strong>, contra o layout oficial do DATASUS
+      ("Layout da interface texto do BPA e do SIA", DATASUS/SIA — layout interno vigente). Verifica a
+      estrutura do cabeçalho e de cada linha de produção, o campo de controle (soma de verificação), a
+      numeração de folha/sequência, o CNS de profissional e paciente (dígito verificador), o CNPJ/CPF do
+      órgão responsável, datas e domínios de campo (sexo, raça/cor, origem) — e cruza o código do
+      procedimento com a SIGTAP e o CID-10 (Prd-cid) com a nossa base de CID-10 já carregada. Não é um
+      validador oficial do DATASUS/SISAIH.
+      <br>Aceita arquivos com linhas BPA-C (tipo 02), BPA-I (tipo 03) ou ambos misturados no mesmo arquivo.
+    </p>
+    <div class="field">
+      <label for="bpa-arquivo">Arquivo(s) de BPA (.txt)</label>
+      <input type="file" id="bpa-arquivo" accept=".txt" multiple>
+    </div>
+  </section>
+
+  <section id="bpa-resultado-area"></section>
+
+  </div>
+
+  <div id="subtab-aih" class="subtab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Validador AIH (SIHD/SUS)</h2>
+    </div>
+    <p class="ajustes-nota">
+      Confere um arquivo-texto de AIH (Autorização de Internação Hospitalar) — <strong>só no seu
+      navegador</strong> — contra o layout oficial do SISAIH01/SIHD ("Layout da interface texto do
+      SISAIH01", DATASUS, registros de 1800 posições). Verifica a estrutura de cada registro (AIH
+      principal/continuação/longa permanência, registro civil de nascimento e OPM), a consistência do lote
+      (quantidade e sequência de AIHs declaradas x gravadas), as datas de emissão/internação/saída, o CPF/CNS
+      dos médicos solicitante/responsável/diretor clínico/autorizador e do paciente (dígito verificador), o
+      sexo, raça/cor, CEP e UF do paciente, os nomes (contra as regras oficiais de preenchimento) — e cruza o
+      diagnóstico principal/secundários e os códigos de procedimento (principal e secundários/especiais) com
+      a SIGTAP e o CID-10 já carregados. Não é um validador oficial do DATASUS/SISAIH.
+      <br>Aceita arquivos com registros tipo 01/03/05 (AIH), 04 (registro civil) e 07 (OPM) misturados no
+      mesmo arquivo.
+    </p>
+    <div class="field">
+      <label for="aih-arquivo">Arquivo(s) de AIH (.txt)</label>
+      <input type="file" id="aih-arquivo" accept=".txt" multiple>
+    </div>
+  </section>
+
+  <section id="aih-resultado-area"></section>
+
+  </div>
+
+  <div id="subtab-apac" class="subtab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Validador APAC (SIA/SUS)</h2>
+    </div>
+    <p class="ajustes-nota">
+      Confere um arquivo-texto de APAC (Autorização de Procedimento Ambulatorial de Alta Complexidade/Custo)
+      — <strong>só no seu navegador</strong> — contra o layout oficial do DATASUS ("Layout da interface texto
+      do APAC e do SIA", DATASUS/SIA — layout interno vigente). Verifica a estrutura do cabeçalho, do corpo
+      da APAC e do registro de procedimentos, o campo de controle, o CNS do paciente/médico responsável/
+      autorizador (dígito verificador), datas (validade, solicitação, autorização), sexo e raça/cor — e cruza
+      o procedimento principal e os procedimentos do laudo com a SIGTAP e o CID principal/secundário com o
+      CID-10 já carregado. Os laudos de parte variável (Quimioterapia, Radioterapia, Nefrologia, Medicamentos,
+      Bariátrica, Prótese de mama, Diálise etc.) são reconhecidos pelo tipo de registro mas não têm todos os
+      campos validados individualmente. Não é um validador oficial do DATASUS/SISAIH.
+    </p>
+    <div class="field">
+      <label for="apac-arquivo">Arquivo(s) de APAC (.txt)</label>
+      <input type="file" id="apac-arquivo" accept=".txt" multiple>
+    </div>
+  </section>
+
+  <section id="apac-resultado-area"></section>
+
+  </div>
 
   </div>
 

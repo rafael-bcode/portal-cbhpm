@@ -223,6 +223,22 @@ body {
 .tab-btn:hover { color: var(--teal-dark); }
 .tab-btn.active { color: var(--teal-dark); border-bottom-color: var(--teal); }
 .tab-panel.hidden { display: none; }
+.tabs.subtabs { margin-bottom: 18px; }
+.subtab-btn {
+  font-family: var(--sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  padding: 10px 18px;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1.5px;
+}
+.subtab-btn:hover { color: var(--teal-dark); }
+.subtab-btn.active { color: var(--teal-dark); border-bottom-color: var(--teal); }
+.subtab-panel.hidden { display: none; }
 
 /* ---------- Favoritos ---------- */
 .field-favoritos.hidden { display: none; }
@@ -699,6 +715,9 @@ body {
   color: var(--teal-dark);
 }
 .sigtap-badge-3 { background: var(--amber-tint); color: var(--amber); }
+.sigtap-badge-erro { background: #FBE7E4; color: #A0341C; }
+.bpa-linha-card { border: 1px solid var(--border); border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; }
+.bpa-linha-card .bpa-linha-cab { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; font-family: var(--mono); font-size: 0.82rem; color: var(--ink-soft); }
 .sigtap-card-nome {
   padding: 12px 16px;
   font-weight: 600;
@@ -1292,6 +1311,9 @@ body {
 .guia-doc-tabela .detail { font-family: var(--mono); font-size: 0.72rem; color: #94A0A6; }
 .guia-doc-tabela tfoot td { font-weight: 700; border-top: 2px solid var(--ink); border-bottom: none; }
 .guia-doc-tabela-itens .col-data { white-space: nowrap; font-family: var(--mono); font-size: 0.8rem; }
+.guia-doc-paciente { margin: 22px 0 4px; font-size: 0.95rem; break-inside: avoid; break-after: avoid; }
+.guia-doc-paciente + .guia-doc-tabela { margin-top: 6px; break-inside: avoid; }
+.guia-doc-total-geral { margin-top: 20px; padding-top: 12px; border-top: 2px solid var(--ink); text-align: right; font-size: 1rem; }
 
 @media print {
   body.modo-guia .topbar,
@@ -1378,16 +1400,32 @@ body {
 }
 .go-assinatura { border-top: 1px solid #000; padding-top: 4px; text-align: center; font-size: 0.72rem; }
 
+/* O anexo de outras despesas (materiais/medicamentos/taxas/OPME/gases) pode
+   ter dezenas de linhas — sempre começa em página nova em vez de espremer
+   junto do corpo principal da guia. */
+.go-anexo-despesas { break-before: page; }
+
 @media print {
   html, body { width: 100%; height: 100%; }
-  .guia-oficial { font-size: 6.6px; }
-  .go-cabecalho { padding-bottom: 3px; margin-bottom: 1px; }
-  .go-secao-titulo { margin-top: 3px; padding: 1px 6px; }
-  .go-campo { min-height: 14px; padding: 1px 5px; }
-  .go-tabela th, .go-tabela td { padding: 0.5px 4px; }
-  .go-assinaturas { margin-top: 4px; gap: 20px; }
-  .go-assinatura { padding-top: 2px; }
-  .go-aviso { margin: 2px 0 3px; }
-  .go-observacao { min-height: 10px; padding: 2px 6px; }
+  /* Antes forçava tudo (inclusive o anexo de outras despesas, que pode ter
+     dezenas de linhas) num único formato de página landscape com fonte de
+     6.6px — ilegível. Agora o conteúdo flui em quantas páginas precisar, com
+     fonte legível, e as tabelas repetem o cabeçalho a cada página. */
+  .guia-oficial { font-size: 9px; }
+  .go-cabecalho { padding-bottom: 4px; margin-bottom: 2px; }
+  .go-secao-titulo { margin-top: 6px; padding: 2px 6px; }
+  .go-campo { min-height: 16px; padding: 2px 6px; }
+  .go-tabela th, .go-tabela td { padding: 1.5px 4px; }
+  /* Só protege contra o pior caso (uma linha de tabela cortada ao meio entre
+     páginas, no anexo de outras despesas quando ele é longo) — sem também
+     forçar título+tabela ou grids inteiros a saltar de página, senão uma
+     guia curta que caberia inteira numa página acaba ganhando uma segunda
+     página quase vazia por causa de uma tabela de 1 linha no fim. */
+  .go-tabela thead { display: table-header-group; }
+  .go-tabela tr { break-inside: avoid; }
+  .go-assinaturas { margin-top: 10px; gap: 20px; }
+  .go-assinatura { padding-top: 3px; }
+  .go-aviso { margin: 3px 0 5px; }
+  .go-observacao { min-height: 12px; padding: 3px 6px; }
   .go-totais { margin-top: 0; }
 }

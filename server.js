@@ -156,12 +156,16 @@ app.post('/api/consultar-procedimento', async (req, res) => {
     // auxiliares/instrumentador são honorários de OUTROS profissionais e nunca
     // somam ao valor do procedimento — por isso vêm em blocos separados.
     const resultado = rows.map((r) => {
-      // Usa os totais já gravados da planilha como base (e não fração×valor_porte
-      // recalculado), pois as edições 2004-2017 embutem um fator de 10% no total
-      // do porte/porte anestésico que não aparece no valor unitário isoladamente.
+      // As colunas "total_porte"/"total_porte_anestesico" da planilha-fonte das
+      // edições 2004-2017 (Planilha-CBHPM-Comparativo-2004-ate-2017.xlsx) trazem
+      // um fator de 10% embutido sobre fração×valor_porte em 100% das linhas —
+      // confirmado por auditoria (59.694/59.694 linhas com razão exata 1,10) e
+      // pelas próprias colunas de auxiliar da planilha, que calculam o percentual
+      // sobre fração×valor_porte SEM o fator, não sobre o total gravado. Por isso
+      // recalculamos aqui em vez de confiar no total já gravado.
       const valorPorte = Number(r.valor_porte) || 0;
       const fracaoPorte = Number(r.fracao_porte) || 0;
-      const totalPorteBase = Number(r.total_porte) || 0;
+      const totalPorteBase = Number((fracaoPorte * valorPorte).toFixed(2));
       const totalPorte = totalPorteBase * (1 + pctPorte / 100);
 
       const qtdUco = Number(r.uco) || 0;
@@ -176,8 +180,10 @@ app.post('/api/consultar-procedimento', async (req, res) => {
       const subtotalCirurgiaoOriginal = totalPorteBase + qtdUco * valorUcoRef + totalFilmeBase;
 
       // Anestesista: honorário à parte, nunca somado ao valor do procedimento.
+      // Não há coluna de fração para o porte anestésico (fração = 1 implícita,
+      // confirmado pelas edições 2018+ onde total_porte_anestesico == valor_porte_anestesico).
       const valorPorteAN = Number(r.valor_porte_anestesico) || 0;
-      const totalPorteANBase = Number(r.total_porte_anestesico) || 0;
+      const totalPorteANBase = valorPorteAN;
       const totalPorteAN = totalPorteANBase * (1 + pctPorteAN / 100);
 
       // Equipe (auxiliares/instrumentador): percentual configurável sobre o
@@ -356,8 +362,13 @@ app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
         throw Object.assign(new Error(`Relação inválida para o código ${p.codigo}: ${p.relacao}`), { status: 400 });
       }
 
+      // Ver nota em /api/consultar: a coluna total_porte/total_porte_anestesico
+      // da planilha-fonte das edições 2004-2017 embute um fator de 10% em 100%
+      // das linhas — recalculamos a partir de fração×valor_porte em vez de
+      // confiar no total já gravado.
       const valorPorte = Number(r.valor_porte) || 0;
-      const totalPorteBase = Number(r.total_porte) || 0;
+      const fracaoPorte = Number(r.fracao_porte) || 0;
+      const totalPorteBase = Number((fracaoPorte * valorPorte).toFixed(2));
       const totalPorteAjustado = totalPorteBase * (1 + pctPorte / 100);
       const portePago = totalPorteAjustado * (relacaoPct / 100);
 
@@ -368,7 +379,7 @@ app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
       const qtdFilme = Number(r.quantidade_filme) || 0;
       const totalFilme = qtdFilme * valorFilme * (1 + pctFilme / 100);
 
-      const totalPorteANBase = Number(r.total_porte_anestesico) || 0;
+      const totalPorteANBase = Number(r.valor_porte_anestesico) || 0;
       const totalPorteAN = totalPorteANBase * (1 + pctPorteAN / 100);
       const temAnestesia = Boolean(r.porte_anestesico) && r.porte_anestesico !== '0';
 
@@ -617,18 +628,21 @@ app.get('/api/sigtap/habilitacao', async (req, res) => {
     if (!codigo) {
       return res.status(400).json({ erro: 'Informe o código do procedimento.' });
     }
-    const { rows } = await pool.query(
-      `SELECT sh.codigo, sh.nome,
-              sph.codigo_grupo_habilitacao AS grupo_codigo,
-              sgh.nome AS grupo_nome, sgh.descricao AS grupo_descricao
-       FROM sigtap_procedimento_habilitacao sph
-       JOIN sigtap_habilitacao sh ON sh.codigo = sph.codigo_habilitacao
-       LEFT JOIN sigtap_grupo_habilitacao sgh ON sgh.codigo = sph.codigo_grupo_habilitacao
-       WHERE sph.codigo_procedimento = $1
-       ORDER BY sph.codigo_grupo_habilitacao NULLS LAST, sh.nome`,
-      [codigo]
-    );
-    res.json({ codigo, habilitacoes: rows });
+    const [{ rows }, { rows: procRows }] = await Promise.all([
+      pool.query(
+        `SELECT sh.codigo, sh.nome,
+                sph.codigo_grupo_habilitacao AS grupo_codigo,
+                sgh.nome AS grupo_nome, sgh.descricao AS grupo_descricao
+         FROM sigtap_procedimento_habilitacao sph
+         JOIN sigtap_habilitacao sh ON sh.codigo = sph.codigo_habilitacao
+         LEFT JOIN sigtap_grupo_habilitacao sgh ON sgh.codigo = sph.codigo_grupo_habilitacao
+         WHERE sph.codigo_procedimento = $1
+         ORDER BY sph.codigo_grupo_habilitacao NULLS LAST, sh.nome`,
+        [codigo]
+      ),
+      pool.query('SELECT nome FROM sigtap_procedimentos WHERE codigo = $1', [codigo]),
+    ]);
+    res.json({ codigo, procedimentoNome: procRows[0]?.nome || null, habilitacoes: rows });
   } catch (err) {
     console.error('Erro ao consultar habilitação SIGTAP:', err);
     res.status(500).json({ erro: 'Erro ao consultar habilitação.' });
@@ -735,6 +749,89 @@ app.get('/api/cid10/buscar', async (req, res) => {
   } catch (err) {
     console.error('Erro na busca CID-10:', err);
     res.status(500).json({ erro: 'Erro ao buscar códigos CID-10.' });
+  }
+});
+
+// Busca em lote (por código exato) usada pelos Validadores SUS (BPA/AIH/APAC)
+// para conferir se os códigos de procedimento lançados existem na SIGTAP e
+// para compor o relatório de conferência (PDF) com nome e valores SH/SA/SP,
+// sem 1 requisição por linha do arquivo.
+app.post('/api/sigtap/lote', async (req, res) => {
+  try {
+    const codigos = Array.isArray(req.body.codigos) ? [...new Set(req.body.codigos.map(String))] : [];
+    if (codigos.length === 0) return res.json([]);
+    const { rows } = await pool.query(
+      'SELECT codigo, nome, sexo, vl_sh, vl_sa, vl_sp FROM sigtap_procedimentos WHERE codigo = ANY($1)',
+      [codigos]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca em lote SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao buscar procedimentos SIGTAP em lote.' });
+  }
+});
+
+// Idem para CID-10 — usada pelo Validador BPA para conferir o campo Prd-cid
+// do BPA-I contra os códigos oficiais (categoria de 3 dígitos ou subcategoria
+// de 4 dígitos).
+app.post('/api/cid10/lote', async (req, res) => {
+  try {
+    const codigos = Array.isArray(req.body.codigos) ? [...new Set(req.body.codigos.map(String))] : [];
+    if (codigos.length === 0) return res.json([]);
+    const { rows } = await pool.query(
+      `SELECT codigo, nome FROM cid10_subcategoria WHERE codigo = ANY($1)
+       UNION ALL
+       SELECT codigo, nome FROM cid10_categoria WHERE codigo = ANY($1)`,
+      [codigos]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca em lote CID-10:', err);
+    res.status(500).json({ erro: 'Erro ao buscar códigos CID-10 em lote.' });
+  }
+});
+
+// O layout do AIH não traz o nome do estabelecimento — só CNES + código do
+// município (sem DV). Consultamos o CNESNet público do DATASUS (não tem API
+// oficial, então extraímos o campo "Nome:" do HTML) para o relatório de
+// conferência do Validador AIH. Cache em memória (processo do servidor) já
+// que o nome de um estabelecimento praticamente não muda.
+const cnesNomeCache = new Map();
+async function buscarNomeCnes(municipio, cnes) {
+  const chave = `${municipio}${cnes}`;
+  if (cnesNomeCache.has(chave)) return cnesNomeCache.get(chave);
+  try {
+    const resp = await fetch(`https://cnes2.datasus.gov.br/Mod_Conjunto.asp?VCo_Unidade=${chave}`, {
+      signal: AbortSignal.timeout(8000),
+    });
+    const html = Buffer.from(await resp.arrayBuffer()).toString('latin1');
+    const m = html.match(/<b>Nome:<\/b><\/font><\/td>[\s\S]*?<td colspan=3><font[^>]*>([^<]*)<\/font><\/td>/i);
+    const nome = m ? m[1].replace(/\s+/g, ' ').trim() || null : null;
+    cnesNomeCache.set(chave, nome);
+    return nome;
+  } catch (err) {
+    console.error('Erro ao consultar CNES', chave, err.message);
+    return null; // não cacheia falha de rede — pode ser transitória
+  }
+}
+
+app.post('/api/cnes/lote', async (req, res) => {
+  try {
+    const itens = Array.isArray(req.body.itens) ? req.body.itens : [];
+    const unicos = [...new Map(
+      itens
+        .filter((i) => /^\d{6}$/.test(i && i.municipio) && /^\d{7}$/.test(i && i.cnes))
+        .map((i) => [`${i.municipio}${i.cnes}`, i])
+    ).values()].slice(0, 30); // teto defensivo: um arquivo AIH raramente tem mais que 1-2 hospitais
+
+    const resultados = [];
+    for (const { municipio, cnes } of unicos) {
+      resultados.push({ municipio, cnes, nome: await buscarNomeCnes(municipio, cnes) });
+    }
+    res.json(resultados);
+  } catch (err) {
+    console.error('Erro na busca em lote CNES:', err);
+    res.status(500).json({ erro: 'Erro ao buscar estabelecimentos CNES em lote.' });
   }
 });
 

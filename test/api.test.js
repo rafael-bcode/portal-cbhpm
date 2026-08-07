@@ -59,9 +59,13 @@ test('consultar-procedimento: Cesariana (31309054) na edição 2004 bate com a p
   const r = corpo.resultados[0];
   // Sem nenhum ajuste percentual, o subtotal deve bater com o valor original da planilha.
   assert.equal(r.cirurgiao.subtotal, r.cirurgiao.subtotal_original_planilha);
-  assert.equal(r.cirurgiao.subtotal, 422.4);
+  // Porte 8B, fração 1, valor de referência 384 -> subtotal 384 (ago/2026: valores
+  // anteriores, 422,4 e 374, vinham das colunas total_porte/total_porte_anestesico
+  // da planilha-fonte 2004-2017, que embutem +10% sobre fração×valor_porte em
+  // 100% das linhas — auditado e corrigido em server.js).
+  assert.equal(r.cirurgiao.subtotal, 384);
   assert.equal(r.anestesista.aplicavel, true);
-  assert.equal(r.anestesista.total, 374);
+  assert.equal(r.anestesista.total, 340);
 });
 
 test('consultar-procedimento: código inexistente retorna 404', async () => {
@@ -84,20 +88,25 @@ test('consultar-multiplos-procedimentos: via de acesso (mesma via, 50%) bate com
   });
   assert.equal(status, 200);
 
+  // ago/2026: valores anteriores (832.87/35.03/735.87/971.48) vinham das colunas
+  // total_porte/total_porte_anestesico da planilha-fonte 2004-2017, que embutem
+  // +10% sobre fração×valor_porte em 100% das linhas — auditado e corrigido em
+  // server.js. base_calculo e uco.total já vinham de valor_porte/quantidade
+  // brutos (não das colunas com bug), por isso não mudam.
   const [principal, secundario] = corpo.procedimentos;
   assert.equal(principal.percentual_relacao, 100);
-  assert.equal(principal.porte.total_pago, 832.87);
+  assert.equal(principal.porte.total_pago, 757.15);
   assert.equal(secundario.percentual_relacao, 50);
-  assert.equal(secundario.porte.total_pago, 35.03);
+  assert.equal(secundario.porte.total_pago, 31.85);
   assert.equal(secundario.uco.total, 103.58); // UCO não é reduzido pela via
 
   // Porte anestésico é cobrado uma única vez por sessão (maior valor, não soma).
   assert.equal(corpo.sessao.anestesista.aplicavel, true);
-  assert.equal(corpo.sessao.anestesista.total, 735.87);
+  assert.equal(corpo.sessao.anestesista.total, 668.97);
 
   // Base de cálculo da equipe = soma dos portes já ponderados pela via.
   assert.equal(corpo.sessao.equipe.base_calculo, 789);
-  assert.equal(corpo.sessao.cirurgiao.subtotal, 971.48);
+  assert.equal(corpo.sessao.cirurgiao.subtotal, 892.58);
 });
 
 test('consultar-multiplos-procedimentos: exige exatamente 1 principal', async () => {
