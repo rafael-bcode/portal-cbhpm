@@ -126,35 +126,32 @@ body {
 }
 .topbar-home-link:hover { color: #fff; border-color: var(--teal); background: rgba(36, 83, 235, 0.15); }
 
-/* ---------- Ecossistema Argus (sidebar) ---------- */
-/* Sempre visível a partir de 1024px — nunca display:none nesse intervalo.
-   Dois formatos, trocando junto com o .container pra nunca sobrepor a
-   ferramenta:
-   - >=1600px: sidebar larga (200px) com descrição, .container no tamanho
-     normal (1100px, definido na regra .container já existente).
-   - 1024–1599px: sidebar compacta (110px) só com o nome, e o .container
-     encolhe pra 760px nessa faixa (ver override abaixo) pra sempre sobrar
-     espaço dos dois lados. */
+/* ---------- Layout com sidebar do ecossistema Argus ---------- */
+/* Grid de 3 colunas de verdade em vez de sidebar fixa com largura/posição
+   calculada manualmente (a versão anterior deixava sobra de espaço nas
+   bordas e travava o .container numa largura fixa, forçando as abas a
+   quebrar linha à toa). As colunas laterais crescem/encolhem sozinhas
+   (minmax) conforme o espaço realmente disponível, e o grid inteiro fica
+   centralizado — nunca sobra vão morto nem sobrepõe a ferramenta. */
+.app-layout {
+  display: grid;
+  grid-template-columns: minmax(150px, 220px) minmax(0, 1100px) minmax(150px, 220px);
+  justify-content: center;
+  align-items: start;
+  gap: 24px;
+}
+.app-layout .container { max-width: none; margin: 0; width: 100%; }
+
 .eco-sidebar {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  position: fixed;
+  position: sticky;
   top: 96px;
-  width: 110px;
-  max-height: calc(100vh - 116px);
-  overflow-y: auto;
-  left: max(10px, calc(50% - 380px - 120px));
 }
-.eco-sidebar-right { left: auto; right: max(10px, calc(50% - 380px - 120px)); }
-.eco-card-desc { display: none; }
 
-@media (min-width: 1600px) {
-  .eco-sidebar { width: 200px; left: max(24px, calc(50% - 574px - 224px)); }
-  .eco-sidebar-right { left: auto; right: max(24px, calc(50% - 574px - 224px)); }
-  .eco-card-desc { display: block; }
-}
 @media (max-width: 1023px) {
+  .app-layout { grid-template-columns: minmax(0, 1100px); }
   .eco-sidebar { display: none; }
 }
 
@@ -281,12 +278,6 @@ body {
   max-width: 1100px;
   margin: 0 auto;
   padding: 28px 24px 80px;
-}
-/* Encolhe pra abrir espaço pra sidebar compacta do ecossistema Argus nessa
-   faixa de largura — precisa vir DEPOIS da regra .container acima: mesma
-   especificidade, então quem manda é a ordem no arquivo, não a media query. */
-@media (min-width: 1024px) and (max-width: 1599px) {
-  .container { max-width: 760px; }
 }
 
 /* ---------- Abas ---------- */
