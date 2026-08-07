@@ -1,5 +1,16 @@
 [
   {
+    "versao": "2.0.0",
+    "data": "2026-08-07",
+    "mudancas": [
+      "Nova sessão 'Validador SUS' com três validadores completos que rodam inteiramente no navegador (o arquivo nunca sai do computador do faturista): Validador BPA (layout mais recente do DATASUS, incluindo os campos de CPF do paciente/situação de rua), Validador AIH (novo — SISAIH01/SIHD, registros de 1800 posições) e Validador APAC (novo — SIA), todos cruzando procedimentos e diagnósticos com a SIGTAP e o CID-10 já carregados.",
+      "Relatório de conferência em PDF nos três validadores, quebrado por paciente (CNS, CPF ou nome), com nome da instituição (resolvido pelo CNES real via CNESNet do DATASUS para AIH, que não traz nome no arquivo) e valores estimados por procedimento (SH+SP para AIH, SA+SP para BPA/APAC).",
+      "Corrige o cálculo do porte e porte anestésico para procedimentos das edições CBHPM 2004-2017: as colunas de total já gravadas na planilha-fonte embutiam um fator de 10% em cima de fração×valor_porte em 100% das linhas (auditado e confirmado) — o valor agora é recalculado a partir dos valores brutos.",
+      "Rebrand completo para 'Argus Fatura', como parte do ecossistema Argus (argusbc.com.br): nova página institucional em '/' (a ferramenta continua em /index.html), com SEO (meta tags, Open Graph, JSON-LD, robots.txt e sitemap.xml), fonte Inter e paleta azul/ciano em gradiente, diagrama radial do ecossistema com 'Fatura' como nó, e sidebars com as outras soluções do ecossistema (cada uma com a cor oficial do respectivo produto), sempre visíveis a partir de 1500px de largura sem disputar espaço com a ferramenta — layout em grid fluido testado de 1100px a 2200px.",
+      "Corrige a paginação da impressão das guias oficiais ANS (Resumo de Internação e SP/SADT): o hack antigo forçava tudo — inclusive o anexo de Outras Despesas, que pode ter dezenas de linhas — numa única página com fonte de 6.6px. Agora o anexo sempre começa em página nova, com fonte legível e cabeçalho de tabela repetido a cada página."
+    ]
+  },
+  {
     "versao": "1.23.0",
     "data": "2026-08-05",
     "mudancas": [
