@@ -15,7 +15,7 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'home.html'));
 });
 
-app.use(express.static('public')); // serve os arquivos da tela (HTML/CSS/JS)
+app.use(express.static(path.join(__dirname, 'public'))); // serve os arquivos da tela (HTML/CSS/JS)
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
