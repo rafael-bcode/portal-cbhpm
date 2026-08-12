@@ -202,6 +202,7 @@
     <button type="button" class="tab-btn" data-tab="indicadores" id="tab-btn-indicadores" style="display:none" aria-hidden="true" tabindex="-1">Indicadores ANAHP</button>
     <button type="button" class="tab-btn" data-tab="cmed" id="tab-btn-cmed" style="display:none" aria-hidden="true" tabindex="-1">Preço Teto CMED</button>
     <button type="button" class="tab-btn" data-tab="operadoras" id="tab-btn-operadoras" style="display:none" aria-hidden="true" tabindex="-1">Operadoras ANS</button>
+    <button type="button" class="tab-btn" data-tab="cnes" id="tab-btn-cnes" style="display:none" aria-hidden="true" tabindex="-1">CNES</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -1439,9 +1440,9 @@
       <details class="faq-item">
         <summary class="faq-pergunta">Como consultar o CNES de um estabelecimento?</summary>
         <div class="faq-resposta">
-          <p>Direto no CNESNet, o sistema público do DATASUS — busca por nome, município ou código, e mostra
-          dados completos de infraestrutura, leitos e serviços do estabelecimento.</p>
-          <a class="faq-portal-link" href="https://cnes.datasus.gov.br/" target="_blank" rel="noopener">🌐 Consultar no CNESNet (DATASUS) →</a>
+          <p>Direto aqui no portal — busca por nome, código CNES ou CNPJ, com o cadastro completo (endereço,
+          telefone, e-mail, site, tipo de estabelecimento) já carregado, sem precisar sair pro CNESNet.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="cnes">🏥 Consultar o CNES aqui no portal →</button>
         </div>
       </details>
 
@@ -1645,6 +1646,37 @@
 
   </div>
 
+  <div id="tab-cnes" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>CNES — Cadastro Nacional de Estabelecimentos de Saúde</h2>
+      <div id="cnes-competencia-area" class="sigtap-competencia-area"></div>
+    </div>
+    <p class="ajustes-nota">
+      Consulta ao cadastro completo de estabelecimentos de saúde do Brasil (hospitais, clínicas, laboratórios,
+      UBS e outros) — mais de 630 mil registros, direto da fonte oficial do DATASUS. Traz CNES, CNPJ, razão
+      social, nome fantasia, endereço completo, telefone, e-mail, site, tipo de estabelecimento e natureza
+      jurídica. Dado público e institucional (do estabelecimento, não do paciente), atualizado direto da fonte
+      oficial: <a href="https://cnes.datasus.gov.br/pages/downloads/arquivosBaseDados.jsp" target="_blank" rel="noopener">cnes.datasus.gov.br</a>.
+    </p>
+    <p class="ajustes-nota">
+      Habilitações de serviço especializado (UTI, oncologia, alta complexidade etc.) ainda não estão aqui —
+      fica como uma próxima evolução da ferramenta.
+    </p>
+
+    <div class="field field-busca">
+      <label for="cnes-busca">Nome, código CNES ou CNPJ do estabelecimento</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="cnes-busca" placeholder="Ex: Hospital das Clínicas, 2077469 ou CNPJ" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="cnes-resultado-area"></section>
+
+  </div>
+
 </main>
 
 <aside class="eco-sidebar eco-sidebar-right">
@@ -1676,6 +1708,11 @@
   <a class="eco-card eco-card-faq" href="#" id="link-operadoras-ans">
     <span class="eco-card-nome">🏢 Operadoras ANS</span>
     <span class="eco-card-desc">Busque uma operadora pelo nome, registro ANS ou CNPJ e veja endereço, telefone e e-mail — direto do cadastro oficial.</span>
+  </a>
+
+  <a class="eco-card eco-card-faq" href="#" id="link-cnes">
+    <span class="eco-card-nome">🏥 CNES</span>
+    <span class="eco-card-desc">Busque um estabelecimento de saúde pelo nome, CNES ou CNPJ e veja endereço, telefone, e-mail e site — cadastro nacional completo.</span>
   </a>
 </aside>
 

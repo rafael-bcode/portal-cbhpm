@@ -68,5 +68,10 @@
     "tag": "ANS",
     "titulo": "Operadoras de saúde",
     "descricao": "Busque uma operadora pelo nome, registro ANS ou CNPJ e veja endereço, telefone e e-mail, direto do cadastro oficial."
+  },
+  {
+    "tag": "CNES",
+    "titulo": "Estabelecimentos de saúde",
+    "descricao": "Busque um hospital, clínica ou laboratório pelo nome, CNES ou CNPJ e veja endereço, telefone, e-mail e site — cadastro nacional completo."
   }
 ]

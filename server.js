@@ -7,6 +7,7 @@ const changelog = require('./CHANGELOG.json');
 const { competenciaLegivel, buscarUltimaDisponivelGitHub, atualizarSigtap } = require('./sigtap-atualizador');
 const { buscarUltimaModificacaoAnvisa, atualizarCmed } = require('./cmed-atualizador');
 const { buscarUltimaModificacaoAns, atualizarOperadoras } = require('./operadoras-atualizador');
+const { buscarUltimaCompetenciaDisponivel: buscarUltimaCompetenciaCnes, atualizarCnes } = require('./cnes-atualizador');
 
 const app = express();
 app.use(express.json());
@@ -670,6 +671,86 @@ app.post('/api/operadoras/atualizar', async (req, res) => {
   }
 });
 
+// Cadastro Nacional de Estabelecimentos de Saúde (CNES) — dado público e
+// institucional (CNES, CNPJ, endereço, telefone, e-mail, site), sem
+// nenhuma informação de paciente. Busca por nome, CNES ou CNPJ.
+app.get('/api/cnes/buscar', async (req, res) => {
+  try {
+    const termo = (req.query.q || '').trim();
+    if (termo.length < 2) {
+      return res.json([]);
+    }
+    const termoDigitos = termo.replace(/\D/g, '');
+
+    const { rows } = await pool.query(
+      `SELECT
+         codigo_cnes, cnpj, razao_social, nome_fantasia, logradouro, numero,
+         complemento, bairro, cep, cidade, uf, telefone, fax, email, site,
+         tipo_estabelecimento, natureza_juridica, latitude, longitude, atualizado_em
+       FROM cnes_estabelecimentos
+       WHERE codigo_cnes = $1 OR (length($3) > 0 AND cnpj = $3)
+          OR razao_social ILIKE $2 OR nome_fantasia ILIKE $2
+       ORDER BY (codigo_cnes = $1) DESC, razao_social
+       LIMIT 40`,
+      [termo, `%${termo}%`, termoDigitos]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca CNES:', err);
+    res.status(500).json({ erro: 'Erro ao buscar estabelecimentos CNES.' });
+  }
+});
+
+// Competência (AAAAMM) da Base de Dados CNES carregada no banco, e se o
+// DATASUS já publicou uma competência mais nova.
+app.get('/api/cnes/status', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT competencia, atualizado_em, total_registros FROM cnes_metadata WHERE id = 1');
+    const atual = rows[0] || null;
+
+    let ultimaDisponivel = null;
+    let erroVerificacao = null;
+    try {
+      const ultima = await buscarUltimaCompetenciaCnes();
+      ultimaDisponivel = ultima.competencia;
+    } catch (err) {
+      console.error('Erro ao verificar atualização CNES no DATASUS:', err);
+      erroVerificacao = 'Não foi possível verificar atualizações agora.';
+    }
+
+    res.json({
+      competencia: atual ? atual.competencia : null,
+      competenciaLegivel: atual ? competenciaLegivel(atual.competencia) : null,
+      atualizadoEm: atual ? atual.atualizado_em : null,
+      totalRegistros: atual ? atual.total_registros : null,
+      ultimaDisponivel,
+      ultimaDisponivelLegivel: ultimaDisponivel ? competenciaLegivel(ultimaDisponivel) : null,
+      atualizacaoDisponivel: Boolean(atual && ultimaDisponivel && ultimaDisponivel > atual.competencia),
+      erroVerificacao,
+    });
+  } catch (err) {
+    console.error('Erro ao consultar status do CNES:', err);
+    res.status(500).json({ erro: 'Erro ao consultar status do CNES.' });
+  }
+});
+
+// Baixa e reimporta a Base de Dados CNES direto do DATASUS. Protegido pela
+// mesma senha administrativa do SIGTAP/CMED/Operadoras (SIGTAP_UPDATE_SENHA).
+app.post('/api/cnes/atualizar', async (req, res) => {
+  try {
+    const { senha } = req.body || {};
+    if (!process.env.SIGTAP_UPDATE_SENHA || senha !== process.env.SIGTAP_UPDATE_SENHA) {
+      return res.status(401).json({ erro: 'Senha inválida.' });
+    }
+
+    const resultado = await atualizarCnes(pool);
+    res.json(resultado);
+  } catch (err) {
+    console.error('Erro ao atualizar CNES:', err);
+    res.status(500).json({ erro: 'Erro ao atualizar a base CNES.' });
+  }
+});
+
 // Competência atual da Tabela Unificada SIGTAP carregada no banco, e se há
 // uma competência mais nova disponível no espelho GitHub (RenatoKR/SIGTAP,
 // sincronizado diariamente com o FTP oficial do DATASUS).
@@ -1047,6 +1128,29 @@ async function checarAtualizacaoAutomaticaOperadoras() {
   }
 }
 
+// Mesma lógica, pro CNES — mas comparando competência (AAAAMM), igual o
+// SIGTAP, já que o DATASUS publica um arquivo por mês (não uma URL sempre
+// vigente). É a checagem mais pesada das quatro quando encontra novidade
+// (arquivo de ~700MB), por isso começa depois das outras no boot.
+const CNES_INTERVALO_AUTO_MS = 24 * 60 * 60 * 1000;
+async function checarAtualizacaoAutomaticaCnes() {
+  try {
+    const { rows } = await pool.query('SELECT competencia FROM cnes_metadata WHERE id = 1');
+    const competenciaAtual = rows[0]?.competencia || null;
+    const ultima = await buscarUltimaCompetenciaCnes();
+
+    if (!competenciaAtual || ultima.competencia > competenciaAtual) {
+      console.log('[cnes] Nova competência detectada no DATASUS, atualizando automaticamente...');
+      const resultado = await atualizarCnes(pool);
+      console.log(`[cnes] Atualização automática concluída: ${resultado.totalRegistros} estabelecimentos, competência ${resultado.competencia}.`);
+    } else {
+      console.log('[cnes] Nenhuma atualização disponível (checagem automática).');
+    }
+  } catch (err) {
+    console.error('[cnes] Erro na checagem/atualização automática:', err.message);
+  }
+}
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -1058,6 +1162,9 @@ if (require.main === module) {
 
   setTimeout(checarAtualizacaoAutomaticaOperadoras, 15_000);
   setInterval(checarAtualizacaoAutomaticaOperadoras, OPERADORAS_INTERVALO_AUTO_MS);
+
+  setTimeout(checarAtualizacaoAutomaticaCnes, 20_000);
+  setInterval(checarAtualizacaoAutomaticaCnes, CNES_INTERVALO_AUTO_MS);
 }
 
 module.exports = app;

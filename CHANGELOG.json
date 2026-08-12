@@ -1,5 +1,14 @@
 [
   {
+    "versao": "2.5.0",
+    "data": "2026-08-12",
+    "mudancas": [
+      "Nova aba 'CNES': consulta ao Cadastro Nacional de Estabelecimentos de Saúde do DATASUS por nome, código CNES ou CNPJ — mais de 630 mil hospitais, clínicas, laboratórios e outros estabelecimentos, com razão social, nome fantasia, endereço completo, telefone, e-mail, site, tipo de estabelecimento e natureza jurídica. Habilitações de serviço especializado (UTI, oncologia etc.) ficam de fora por enquanto, anotadas como próxima evolução. Substitui o link externo pro CNESNet que existia na aba Dúvidas frequentes.",
+      "Rotina de atualização automática a cada 24h (cnes-atualizador.js), comparando a competência mais recente publicada pelo DATASUS (via a mesma API que a tela oficial de downloads do CNES usa) contra a base carregada, e reimportando em lotes de 20 mil linhas quando há uma nova — uma query única com as 632 mil linhas inteiras excede o tempo limite do banco.",
+      "Corrige performance de busca por texto (ILIKE) no Preço Teto CMED, nas Operadoras ANS e agora no CNES: o índice de texto completo (to_tsvector) usado antes não acelera esse tipo de busca — trocado por índice trigram (pg_trgm), que é o correto para esse padrão. No CMED a busca caiu de ~1,8s para ~4ms."
+    ]
+  },
+  {
     "versao": "2.4.0",
     "data": "2026-08-12",
     "mudancas": [

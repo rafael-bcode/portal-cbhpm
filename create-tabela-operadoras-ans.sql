@@ -25,5 +25,9 @@ CREATE TABLE operadoras_ans (
     atualizado_em DATE
 );
 
-CREATE INDEX idx_operadoras_busca ON operadoras_ans USING gin(to_tsvector('portuguese', razao_social || ' ' || COALESCE(nome_fantasia, '')));
+-- Busca é por ILIKE '%termo%' (substring) — trigram (pg_trgm) é o índice
+-- certo pra isso, não o de texto completo (que só acelera @@ to_tsquery).
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_operadoras_razao_trgm ON operadoras_ans USING gin (razao_social gin_trgm_ops);
+CREATE INDEX idx_operadoras_fantasia_trgm ON operadoras_ans USING gin (nome_fantasia gin_trgm_ops);
 CREATE INDEX idx_operadoras_cnpj ON operadoras_ans (cnpj);

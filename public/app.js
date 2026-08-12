@@ -824,6 +824,136 @@ function renderizarStatusOperadoras(status) {
 
 carregarStatusOperadoras();
 
+// ---------- CNES (Cadastro Nacional de Estabelecimentos de Saúde) ----------
+document.getElementById('link-cnes')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('tab-btn-cnes')?.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+const cnesBuscaTabEl = document.getElementById('cnes-busca');
+const cnesResultadoAreaTabEl = document.getElementById('cnes-resultado-area');
+let debounceTimerCnesTab = null;
+
+function fmtTelefoneCnes(telefone) {
+  return telefone || null;
+}
+
+function fmtEnderecoCnesEstab(item) {
+  const linha1 = [item.logradouro, item.numero].filter(Boolean).join(', ') + (item.complemento ? ` — ${item.complemento}` : '');
+  const linha2 = [item.bairro, item.cidade && item.uf ? `${item.cidade}/${item.uf}` : item.cidade || item.uf].filter(Boolean).join(' — ');
+  const cep = item.cep ? `CEP ${item.cep.replace(/(\d{5})(\d{3})/, '$1-$2')}` : null;
+  return [linha1.trim(), linha2, cep].filter((p) => p && p.trim()).join(' · ');
+}
+
+function renderizarCardCnesEstab(item) {
+  const nomeExibido = item.nome_fantasia || item.razao_social;
+  const endereco = fmtEnderecoCnesEstab(item);
+
+  return `
+    <details class="faq-item">
+      <summary class="faq-pergunta" style="flex-wrap:wrap; gap:4px 14px;">
+        <span style="flex:1 1 320px;">${escaparHtml(nomeExibido)} <span style="font-weight:400; color:var(--ink-soft);">— ${escaparHtml(item.tipo_estabelecimento || 'tipo não informado')}</span></span>
+        <span style="font-weight:700; white-space:nowrap;">CNES: ${escaparHtml(item.codigo_cnes)}</span>
+      </summary>
+      <div class="faq-resposta">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 16px; margin-bottom:14px; font-size:0.82rem; color:var(--ink-soft);">
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Razão social:</strong> ${escaparHtml(item.razao_social)}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>CNPJ:</strong> ${item.cnpj ? escaparHtml(item.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Telefone:</strong> ${item.telefone ? escaparHtml(fmtTelefoneCnes(item.telefone)) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>E-mail:</strong> ${item.email ? escaparHtml(item.email) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Site:</strong> ${item.site ? escaparHtml(item.site) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Natureza jurídica:</strong> ${item.natureza_juridica ? escaparHtml(item.natureza_juridica) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere; grid-column:1 / -1;"><strong>Endereço:</strong> ${endereco ? escaparHtml(endereco) : '—'}</div>
+        </div>
+        <p class="faq-fonte">Atualizado em ${item.atualizado_em ? new Date(item.atualizado_em).toLocaleDateString('pt-BR') : '—'}</p>
+      </div>
+    </details>`;
+}
+
+async function buscarCnesTab(termo) {
+  try {
+    const resp = await fetch(`/api/cnes/buscar?q=${encodeURIComponent(termo)}`);
+    if (!resp.ok) throw new Error('Falha na requisição.');
+    const itens = await resp.json();
+    if (itens.length === 0) {
+      cnesResultadoAreaTabEl.innerHTML = '<p class="msg vazio">Nenhum estabelecimento encontrado com esse termo.</p>';
+      return;
+    }
+    const aviso = itens.length >= 40
+      ? '<p class="ajustes-nota">Mostrando os 40 primeiros — refine a busca (nome mais específico, código CNES ou CNPJ) se não achar o estabelecimento.</p>'
+      : '';
+    cnesResultadoAreaTabEl.innerHTML = aviso + itens.map(renderizarCardCnesEstab).join('');
+  } catch (err) {
+    console.error(err);
+    cnesResultadoAreaTabEl.innerHTML = '<div class="msg erro">Erro ao buscar no CNES.</div>';
+  }
+}
+
+if (cnesBuscaTabEl) {
+  cnesBuscaTabEl.addEventListener('input', () => {
+    const termo = cnesBuscaTabEl.value.trim();
+    clearTimeout(debounceTimerCnesTab);
+    if (termo.length < 2) {
+      cnesResultadoAreaTabEl.innerHTML = '';
+      return;
+    }
+    debounceTimerCnesTab = setTimeout(() => buscarCnesTab(termo), 300);
+  });
+}
+
+const cnesCompetenciaAreaEl = document.getElementById('cnes-competencia-area');
+
+async function carregarStatusCnesTab() {
+  if (!cnesCompetenciaAreaEl) return;
+  try {
+    const resp = await fetch('/api/cnes/status');
+    const status = await resp.json();
+    renderizarStatusCnesTab(status);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderizarStatusCnesTab(status) {
+  const badge = status.competenciaLegivel
+    ? `<span class="sigtap-competencia-badge">Competência: ${escaparHtml(status.competenciaLegivel)}${status.totalRegistros ? ` · ${status.totalRegistros.toLocaleString('pt-BR')} estabelecimentos` : ''}</span>`
+    : '<span class="sigtap-competencia-badge">Base ainda não carregada</span>';
+  const botaoAtualizar = status.atualizacaoDisponivel
+    ? `<button type="button" id="btn-cnes-atualizar" class="chip-btn disponivel">Atualizar para ${escaparHtml(status.ultimaDisponivelLegivel)}</button>`
+    : '';
+  cnesCompetenciaAreaEl.innerHTML = badge + botaoAtualizar;
+
+  const btn = document.getElementById('btn-cnes-atualizar');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      const senha = window.prompt('Senha para atualizar a base CNES:');
+      if (!senha) return;
+      btn.disabled = true;
+      btn.textContent = 'Atualizando… (arquivo grande, pode levar alguns minutos)';
+      try {
+        const resp = await fetch('/api/cnes/atualizar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha }),
+        });
+        const dados = await resp.json();
+        if (!resp.ok) throw new Error(dados.erro || 'Falha ao atualizar.');
+        window.alert(`Base CNES atualizada: ${dados.totalRegistros} estabelecimentos.`);
+        await carregarStatusCnesTab();
+        if (cnesBuscaTabEl && cnesBuscaTabEl.value.trim().length >= 2) buscarCnesTab(cnesBuscaTabEl.value.trim());
+      } catch (err) {
+        console.error(err);
+        window.alert(`Erro ao atualizar: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = 'Tentar atualizar novamente';
+      }
+    });
+  }
+}
+
+carregarStatusCnesTab();
+
 // ---------- Favoritos (localStorage, sem login) ----------
 const FAVORITOS_KEY = 'cbhpm_favoritos';
 const listaFavoritosEl = document.getElementById('lista-favoritos');

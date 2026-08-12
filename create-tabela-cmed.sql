@@ -27,5 +27,9 @@ CREATE TABLE cmed_medicamentos (
     atualizado_em DATE
 );
 
-CREATE INDEX idx_cmed_busca ON cmed_medicamentos USING gin(to_tsvector('portuguese', produto || ' ' || COALESCE(substancia, '')));
+-- Busca é por ILIKE '%termo%' (substring) — trigram (pg_trgm) é o índice
+-- certo pra isso, não o de texto completo (que só acelera @@ to_tsquery).
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+CREATE INDEX idx_cmed_produto_trgm ON cmed_medicamentos USING gin (produto gin_trgm_ops);
+CREATE INDEX idx_cmed_substancia_trgm ON cmed_medicamentos USING gin (substancia gin_trgm_ops);
 CREATE INDEX idx_cmed_registro ON cmed_medicamentos (registro);
