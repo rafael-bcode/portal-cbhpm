@@ -546,25 +546,25 @@ function renderizarCardCmed(item) {
     <details class="faq-item">
       <summary class="faq-pergunta" style="flex-wrap:wrap; gap:4px 14px;">
         <span style="flex:1 1 320px;">${escaparHtml(item.produto)} <span style="font-weight:400; color:var(--ink-soft);">— ${escaparHtml(item.apresentacao)}</span></span>
-        <span style="font-weight:700; white-space:nowrap;">PF sem impostos: ${pfSemImpostos} · PMC sem impostos: ${pmcSemImpostos}</span>
+        <span style="font-weight:700; white-space:nowrap;">PF (hospital): ${pfSemImpostos} · PMC (farmácia): ${pmcSemImpostos}</span>
         ${foraDeLinha ? '<span class="favorito-chip" style="cursor:default; margin:0;">Sem comercialização confirmada em 2025</span>' : ''}
       </summary>
       <div class="faq-resposta">
-        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:14px; font-size:0.82rem; color:var(--ink-soft);">
-          <div><strong>Laboratório:</strong> ${escaparHtml(item.laboratorio || '—')}</div>
-          <div><strong>Substância:</strong> ${escaparHtml(item.substancia || '—')}</div>
-          <div><strong>Classe terapêutica:</strong> ${escaparHtml(item.classe_terapeutica || '—')}</div>
-          <div><strong>Tipo:</strong> ${escaparHtml(item.tipo_produto || '—')}</div>
-          <div><strong>Registro ANVISA:</strong> ${escaparHtml(item.registro || '—')}</div>
-          <div><strong>Tarja:</strong> ${escaparHtml(item.tarja || '—')}</div>
-          <div><strong>Restrição hospitalar:</strong> ${item.restricao_hospitalar ? 'Sim' : 'Não'}</div>
-          <div><strong>Regime de preço:</strong> ${escaparHtml(item.regime_preco || '—')}</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px 16px; margin-bottom:14px; font-size:0.82rem; color:var(--ink-soft);">
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Laboratório:</strong> ${escaparHtml(item.laboratorio || '—')}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Substância:</strong> ${escaparHtml(item.substancia || '—')}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Classe terapêutica:</strong> ${escaparHtml(item.classe_terapeutica || '—')}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Tipo:</strong> ${escaparHtml(item.tipo_produto || '—')}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Registro ANVISA:</strong> ${escaparHtml(item.registro || '—')}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Tarja:</strong> ${escaparHtml(item.tarja || '—')}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Restrição hospitalar:</strong> ${item.restricao_hospitalar ? 'Sim' : 'Não'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Regime de preço:</strong> ${escaparHtml(item.regime_preco || '—')}</div>
         </div>
 
-        <p style="margin:0 0 6px;"><strong>Preço Fábrica (PF) por alíquota de ICMS</strong>${item.pf_sem_impostos !== null ? ` — sem impostos: ${fmtMoeda(item.pf_sem_impostos)}` : ''}</p>
+        <p style="margin:0 0 6px;"><strong>PF · Preço Fábrica</strong> — teto pra venda ao hospital/clínica/farmácia (referência de faturamento hospitalar), por alíquota de ICMS${item.pf_sem_impostos !== null ? `; sem impostos: ${fmtMoeda(item.pf_sem_impostos)}` : ''}</p>
         ${linhaFaixasCmed(item.pf_faixas)}
 
-        <p style="margin:14px 0 6px;"><strong>Preço Máximo ao Consumidor (PMC) por alíquota de ICMS</strong>${item.pmc_sem_impostos !== null ? ` — sem impostos: ${fmtMoeda(item.pmc_sem_impostos)}` : ''}</p>
+        <p style="margin:14px 0 6px;"><strong>PMC · Preço Máximo ao Consumidor</strong> — teto pra venda direta ao paciente na farmácia (não usado no faturamento hospitalar), por alíquota de ICMS${item.pmc_sem_impostos !== null ? `; sem impostos: ${fmtMoeda(item.pmc_sem_impostos)}` : ''}</p>
         ${linhaFaixasCmed(item.pmc_faixas)}
 
         <p class="faq-fonte">Atualizado em ${item.atualizado_em ? new Date(item.atualizado_em).toLocaleDateString('pt-BR') : '—'} · Código GGREM ${escaparHtml(item.codigo_ggrem)}</p>

@@ -219,7 +219,7 @@
     </div>
     <div class="stat-row">
       <div class="stat-card"><div class="num">21</div><div class="lbl">edições CBHPM cobertas</div></div>
-      <div class="stat-card"><div class="num">9</div><div class="lbl">ferramentas num só portal</div></div>
+      <div class="stat-card"><div class="num" id="stat-num-ferramentas">–</div><div class="lbl">ferramentas num só portal</div></div>
       <div class="stat-card"><div class="num">100%</div><div class="lbl">gratuito, sem cadastro</div></div>
       <div class="stat-card"><div class="num">0</div><div class="lbl">dados enviados no validador de XML</div></div>
     </div>
@@ -315,56 +315,10 @@
 <section class="features" id="recursos">
   <div class="section-head">
     <span class="eyebrow">O que tem no portal</span>
-    <h2>Nove formas de conferir antes de enviar</h2>
+    <h2 id="features-titulo">Formas de conferir antes de enviar</h2>
     <p>Cada ferramenta resolve uma dúvida específica do dia a dia de quem fatura — da consulta simples de um código até a validação completa de um lote de XML.</p>
   </div>
-  <div class="feature-grid">
-    <div class="feature-card">
-      <span class="ftag">CBHPM</span>
-      <h3>Consulta por procedimento</h3>
-      <p>Código, descrição, porte, UCO e auxiliares — em qualquer edição, de 2004 até a atual, com o cálculo passo a passo à vista.</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">CBHPM</span>
-      <h3>Múltiplos procedimentos</h3>
-      <p>Simula o valor de uma cirurgia com vários procedimentos no mesmo ato, já aplicando a redução de porte por via de acesso.</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">TISS</span>
-      <h3>Validador de XML</h3>
-      <p>Confere o arquivo contra o XSD oficial da versão vigente, direto no navegador — o arquivo nunca sai do seu computador.</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">SUS</span>
-      <h3>SIGTAP</h3>
-      <p>Valores de repasse, permanência máxima, idade e sexo permitidos — tudo que o procedimento exige pra ser faturado ao SUS.</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">CID-10</span>
-      <h3>Diagnóstico</h3>
-      <p>Busca por código ou nome da doença, com as subcategorias já organizadas — pro campo de diagnóstico da guia.</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">Conversor</span>
-      <h3>CBHPM ↔ TUSS ↔ SIGTAP</h3>
-      <p>Informa um código de qualquer uma das três tabelas e vê os equivalentes nas outras — pra quando a operadora pede uma tabela diferente da que você usa.</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">SIGTAP</span>
-      <h3>Compatibilidade</h3>
-      <p>Confere se dois ou mais procedimentos têm registro de compatibilidade entre si na tabela oficial, antes de lançar os dois juntos.</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">SIGTAP</span>
-      <h3>Habilitação exigida</h3>
-      <p>Mostra se o procedimento exige alguma habilitação do prestador — uma causa clássica de glosa por "credenciado não habilitado".</p>
-    </div>
-    <div class="feature-card">
-      <span class="ftag">TISS</span>
-      <h3>Tabelas de domínio</h3>
-      <p>Códigos de glosa, CBO, unidades de medida e outras tabelas oficiais do Padrão TISS, pesquisáveis num só lugar.</p>
-    </div>
-  </div>
+  <div class="feature-grid" id="feature-grid"></div>
 </section>
 
 <section class="trust">
@@ -398,5 +352,34 @@
   </div>
 </footer>
 
+<script>
+  // Lista de funcionalidades vem de funcionalidades.json — carregada aqui via
+  // fetch pra manter a home sempre em dia com o que existe no portal. Sempre
+  // que uma ferramenta nova for lançada, o único passo é adicionar uma
+  // entrada nesse arquivo: essa tela (contagem, título e grade de cards)
+  // se atualiza sozinha, sem precisar mexer neste HTML de novo.
+  fetch('funcionalidades.json')
+    .then((r) => r.json())
+    .then((lista) => {
+      const grid = document.getElementById('feature-grid');
+      grid.innerHTML = lista
+        .map(
+          (f) => `
+        <div class="feature-card">
+          <span class="ftag">${f.tag}</span>
+          <h3>${f.titulo}</h3>
+          <p>${f.descricao}</p>
+        </div>`
+        )
+        .join('');
+
+      const statEl = document.getElementById('stat-num-ferramentas');
+      if (statEl) statEl.textContent = lista.length;
+
+      const tituloEl = document.getElementById('features-titulo');
+      if (tituloEl) tituloEl.textContent = `${lista.length} formas de conferir antes de enviar`;
+    })
+    .catch((err) => console.error('Erro ao carregar funcionalidades.json:', err));
+</script>
 </body>
 </html>

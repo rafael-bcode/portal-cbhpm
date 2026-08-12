@@ -1,5 +1,14 @@
 [
   {
+    "versao": "2.3.0",
+    "data": "2026-08-12",
+    "mudancas": [
+      "Página inicial ('/') passa a montar a grade de funcionalidades, a contagem de ferramentas e o título da seção dinamicamente a partir de 'public/funcionalidades.json', em vez de HTML fixo — a partir de agora, lançar uma ferramenta nova no portal é só adicionar uma entrada nesse arquivo, que a home se atualiza sozinha (contagem, título e card). Aproveitado pra corrigir a lista, que estava presa em 9 itens e não incluía o Validador SUS nem as 3 ferramentas mais recentes (Dúvidas frequentes, Indicadores ANAHP, Preço-teto CMED) — agora são 13.",
+      "Preço-teto CMED: deixa explícito que PF (Preço Fábrica) é a referência de faturamento hospitalar e PMC (Preço Máximo ao Consumidor) é a referência de venda da farmácia direto ao paciente — o PMC não se aplica a hospital, mas continua útil pra qualquer pessoa conferir se pagou um valor justo numa compra pessoal. Adiciona explicação de por que o valor 'sem impostos' é sempre menor que o valor por alíquota de ICMS, mesmo em '0%' (a coluna sem impostos zera ICMS e PIS/Cofins juntos; as colunas por alíquota já embutem o PIS/Cofins do regime monofásico do setor).",
+      "Corrige sobreposição de texto no card expandido do Preço-teto CMED: nomes de substância com múltiplos princípios ativos separados por ';' (sem espaço) forçavam a célula do grid a não encolher, estourando a largura e sobrepondo a coluna vizinha em telas mais estreitas."
+    ]
+  },
+  {
     "versao": "2.2.0",
     "data": "2026-08-12",
     "mudancas": [

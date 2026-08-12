@@ -1,0 +1,67 @@
+[
+  {
+    "tag": "CBHPM",
+    "titulo": "Consulta por procedimento",
+    "descricao": "Código, descrição, porte, UCO e auxiliares — em qualquer edição, de 2004 até a atual, com o cálculo passo a passo à vista."
+  },
+  {
+    "tag": "CBHPM",
+    "titulo": "Múltiplos procedimentos",
+    "descricao": "Simula o valor de uma cirurgia com vários procedimentos no mesmo ato, já aplicando a redução de porte por via de acesso."
+  },
+  {
+    "tag": "TISS",
+    "titulo": "Validador de XML",
+    "descricao": "Confere o arquivo contra o XSD oficial da versão vigente, direto no navegador — o arquivo nunca sai do seu computador."
+  },
+  {
+    "tag": "SUS",
+    "titulo": "Validador BPA/AIH/APAC",
+    "descricao": "Confere arquivos-texto de BPA, AIH e APAC contra o layout oficial do DATASUS, cruzando com SIGTAP e CID-10 — tudo no seu navegador."
+  },
+  {
+    "tag": "SUS",
+    "titulo": "SIGTAP",
+    "descricao": "Valores de repasse, permanência máxima, idade e sexo permitidos — tudo que o procedimento exige pra ser faturado ao SUS."
+  },
+  {
+    "tag": "CID-10",
+    "titulo": "Diagnóstico",
+    "descricao": "Busca por código ou nome da doença, com as subcategorias já organizadas — pro campo de diagnóstico da guia."
+  },
+  {
+    "tag": "Conversor",
+    "titulo": "CBHPM ↔ TUSS ↔ SIGTAP",
+    "descricao": "Informa um código de qualquer uma das três tabelas e vê os equivalentes nas outras — pra quando a operadora pede uma tabela diferente da que você usa."
+  },
+  {
+    "tag": "SIGTAP",
+    "titulo": "Compatibilidade",
+    "descricao": "Confere se dois ou mais procedimentos têm registro de compatibilidade entre si na tabela oficial, antes de lançar os dois juntos."
+  },
+  {
+    "tag": "SIGTAP",
+    "titulo": "Habilitação exigida",
+    "descricao": "Mostra se o procedimento exige alguma habilitação do prestador — uma causa clássica de glosa por \"credenciado não habilitado\"."
+  },
+  {
+    "tag": "TISS",
+    "titulo": "Tabelas de domínio",
+    "descricao": "Códigos de glosa, CBO, unidades de medida e outras tabelas oficiais do Padrão TISS, pesquisáveis num só lugar."
+  },
+  {
+    "tag": "FAQ",
+    "titulo": "Dúvidas frequentes",
+    "descricao": "Perguntas comuns sobre SUS, CBHPM, Simpro, Brasíndice e TISS, com atalho direto pra cada ferramenta do portal."
+  },
+  {
+    "tag": "ANAHP",
+    "titulo": "Indicadores hospitalares",
+    "descricao": "Compare seu resultado com o benchmark da ANAHP em indicadores assistenciais, financeiros, de pessoas e sustentabilidade."
+  },
+  {
+    "tag": "CMED",
+    "titulo": "Preço-teto de medicamentos",
+    "descricao": "Consulta gratuita ao Preço Fábrica e ao Preço Máximo ao Consumidor oficiais da ANVISA — pro hospital faturar e pra você conferir na farmácia."
+  }
+]

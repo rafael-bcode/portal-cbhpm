@@ -1240,10 +1240,37 @@
     </p>
     <p class="ajustes-nota">
       <strong>Isto não é o Simpro nem a Brasíndice.</strong> É só o teto de preço definido por lei — útil como
-      checagem rápida e gratuita (se um valor cobrado está acima do PMC/PF da CMED, já é glosável, independente
-      de qualquer tabela comercial) — mas não cobre materiais, OPME e equipamentos, nem os campos comerciais
+      checagem rápida e gratuita — mas não cobre materiais, OPME e equipamentos, nem os campos comerciais
       (código TUSS, classificação por convênio) que Simpro e Brasíndice agregam por assinatura paga. Quando o
       contrato exigir especificamente uma dessas tabelas, a assinatura continua sendo necessária.
+    </p>
+
+    <p class="ajustes-nota" style="margin-bottom:6px;"><strong>PF e PMC não são a mesma referência — cada um vale pra um lado diferente da compra:</strong></p>
+    <div class="ajustes-grid" style="margin-bottom:16px;">
+      <div class="stat-card" style="padding:14px 16px;">
+        <div class="lbl" style="text-transform:uppercase; font-weight:700; color:var(--teal-dark); margin-bottom:6px; letter-spacing:0.03em;">PF · Preço Fábrica</div>
+        <div style="font-size:0.85rem; color:var(--ink-soft); line-height:1.55;">
+          Teto de venda da indústria/distribuidora pro <strong>hospital, clínica, farmácia ou distribuidor</strong>.
+          É a referência certa pro faturamento hospitalar — o PMC não se aplica aqui, porque hospital não é
+          varejo, não vende no balcão pro paciente.
+        </div>
+      </div>
+      <div class="stat-card" style="padding:14px 16px;">
+        <div class="lbl" style="text-transform:uppercase; font-weight:700; color:var(--teal-dark); margin-bottom:6px; letter-spacing:0.03em;">PMC · Preço Máximo ao Consumidor</div>
+        <div style="font-size:0.85rem; color:var(--ink-soft); line-height:1.55;">
+          Teto de venda da <strong>farmácia/drogaria direto pro paciente</strong>, no balcão. Não é usado no
+          faturamento hospitalar — mas serve pra você (ou qualquer consumidor) conferir se pagou um valor justo
+          numa compra pessoal de medicamento.
+        </div>
+      </div>
+    </div>
+
+    <p class="ajustes-nota">
+      <strong>Por que o valor "sem impostos" é menor que o valor com "ICMS 0%"?</strong> Porque "sem impostos" é
+      um valor teórico de referência, sem ICMS <em>e</em> sem PIS/Cofins — não é praticado em lugar nenhum. Já a
+      coluna "ICMS 0%" (e todas as outras por alíquota) já embutem o PIS/Cofins normalmente cobrado do setor
+      farmacêutico (regime de tributação monofásica/concentrada), mesmo quando o ICMS em si está zerado — por
+      isso o salto de valor não vem só do ICMS.
     </p>
 
     <div class="field field-busca">
@@ -1283,7 +1310,7 @@
 
   <a class="eco-card eco-card-faq" href="#" id="link-cmed-precos">
     <span class="eco-card-nome">💊 Preço-teto CMED</span>
-    <span class="eco-card-desc">Consulta gratuita ao PF/PMC oficial de medicamentos (ANVISA/CMED) — não substitui Simpro/Brasíndice, mas ajuda a flagrar cobrança acima do teto legal.</span>
+    <span class="eco-card-desc">Consulta gratuita ao PF (hospital) e PMC (farmácia) oficiais da ANVISA/CMED — não substitui Simpro/Brasíndice, mas ajuda a flagrar cobrança acima do teto legal em qualquer ponta.</span>
   </a>
 </aside>
 
