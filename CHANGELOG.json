@@ -1,5 +1,14 @@
 [
   {
+    "versao": "2.4.0",
+    "data": "2026-08-12",
+    "mudancas": [
+      "Nova aba 'Operadoras ANS': consulta ao Cadastro de Operadoras Ativas da ANS por nome, registro ANS ou CNPJ, trazendo razão social, modalidade, endereço completo, telefone e e-mail — a mesma fonte já usada para identificar a operadora pelo registro ANS no Validador de XML TISS, agora como busca dedicada com mais dados. Dado público e institucional (da empresa registrada, não do beneficiário), ~1.100 operadoras.",
+      "Rotina de atualização automática a cada 24h (operadoras-atualizador.js), comparando o Last-Modified do arquivo oficial da ANS (dadosabertos.ans.gov.br) contra a versão carregada no banco e reimportando quando há uma nova — mesmo padrão de badge + botão manual 'Atualizar' já usado no SUS/SIGTAP e no Preço Teto CMED.",
+      "Nova aba acessível por card na barra lateral direita, abaixo do Preço Teto CMED, e já refletida automaticamente na contagem e na grade de funcionalidades da página inicial."
+    ]
+  },
+  {
     "versao": "2.3.0",
     "data": "2026-08-12",
     "mudancas": [

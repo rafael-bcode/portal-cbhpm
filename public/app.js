@@ -689,6 +689,137 @@ function renderizarStatusCmed(status) {
 
 carregarStatusCmed();
 
+// ---------- Operadoras ANS (cadastro público, dado institucional) ----------
+document.getElementById('link-operadoras-ans')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('tab-btn-operadoras')?.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+const operadorasBuscaEl = document.getElementById('operadoras-busca');
+const operadorasResultadoAreaEl = document.getElementById('operadoras-resultado-area');
+let debounceTimerOperadoras = null;
+
+function fmtTelefoneOperadora(ddd, numero) {
+  if (!numero) return null;
+  return ddd ? `(${ddd}) ${numero}` : numero;
+}
+
+function fmtEnderecoOperadora(item) {
+  const linha1 = [item.logradouro, item.numero].filter(Boolean).join(', ') + (item.complemento ? ` — ${item.complemento}` : '');
+  const linha2 = [item.bairro, item.cidade && item.uf ? `${item.cidade}/${item.uf}` : item.cidade || item.uf].filter(Boolean).join(' — ');
+  const cep = item.cep ? `CEP ${item.cep.replace(/(\d{5})(\d{3})/, '$1-$2')}` : null;
+  return [linha1.trim(), linha2, cep].filter((p) => p && p.trim()).join(' · ');
+}
+
+function renderizarCardOperadora(item) {
+  const nomeExibido = item.nome_fantasia || item.razao_social;
+  const telefone = fmtTelefoneOperadora(item.ddd, item.telefone);
+  const endereco = fmtEnderecoOperadora(item);
+
+  return `
+    <details class="faq-item">
+      <summary class="faq-pergunta" style="flex-wrap:wrap; gap:4px 14px;">
+        <span style="flex:1 1 320px;">${escaparHtml(nomeExibido)} <span style="font-weight:400; color:var(--ink-soft);">— ${escaparHtml(item.modalidade || 'modalidade não informada')}</span></span>
+        <span style="font-weight:700; white-space:nowrap;">Registro ANS: ${escaparHtml(item.registro_ans)}</span>
+      </summary>
+      <div class="faq-resposta">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 16px; margin-bottom:14px; font-size:0.82rem; color:var(--ink-soft);">
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Razão social:</strong> ${escaparHtml(item.razao_social)}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>CNPJ:</strong> ${item.cnpj ? escaparHtml(item.cnpj.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Telefone:</strong> ${telefone ? escaparHtml(telefone) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>E-mail:</strong> ${item.email ? escaparHtml(item.email) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere; grid-column:1 / -1;"><strong>Endereço:</strong> ${endereco ? escaparHtml(endereco) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Registrada na ANS em:</strong> ${item.data_registro_ans ? new Date(item.data_registro_ans).toLocaleDateString('pt-BR') : '—'}</div>
+        </div>
+        <p class="faq-fonte">Atualizado em ${item.atualizado_em ? new Date(item.atualizado_em).toLocaleDateString('pt-BR') : '—'}</p>
+      </div>
+    </details>`;
+}
+
+async function buscarOperadoras(termo) {
+  try {
+    const resp = await fetch(`/api/operadoras/buscar?q=${encodeURIComponent(termo)}`);
+    if (!resp.ok) throw new Error('Falha na requisição.');
+    const itens = await resp.json();
+    if (itens.length === 0) {
+      operadorasResultadoAreaEl.innerHTML = '<p class="msg vazio">Nenhuma operadora encontrada com esse termo.</p>';
+      return;
+    }
+    const aviso = itens.length >= 40
+      ? '<p class="ajustes-nota">Mostrando as 40 primeiras — refine a busca (nome mais específico, registro ANS ou CNPJ) se não achar a operadora.</p>'
+      : '';
+    operadorasResultadoAreaEl.innerHTML = aviso + itens.map(renderizarCardOperadora).join('');
+  } catch (err) {
+    console.error(err);
+    operadorasResultadoAreaEl.innerHTML = '<div class="msg erro">Erro ao buscar operadoras.</div>';
+  }
+}
+
+if (operadorasBuscaEl) {
+  operadorasBuscaEl.addEventListener('input', () => {
+    const termo = operadorasBuscaEl.value.trim();
+    clearTimeout(debounceTimerOperadoras);
+    if (termo.length < 2) {
+      operadorasResultadoAreaEl.innerHTML = '';
+      return;
+    }
+    debounceTimerOperadoras = setTimeout(() => buscarOperadoras(termo), 300);
+  });
+}
+
+const operadorasCompetenciaAreaEl = document.getElementById('operadoras-competencia-area');
+
+async function carregarStatusOperadoras() {
+  if (!operadorasCompetenciaAreaEl) return;
+  try {
+    const resp = await fetch('/api/operadoras/status');
+    const status = await resp.json();
+    renderizarStatusOperadoras(status);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderizarStatusOperadoras(status) {
+  const badge = status.publicadoEm
+    ? `<span class="sigtap-competencia-badge">Publicado em ${new Date(status.publicadoEm).toLocaleDateString('pt-BR')}${status.totalRegistros ? ` · ${status.totalRegistros.toLocaleString('pt-BR')} operadoras` : ''}</span>`
+    : '<span class="sigtap-competencia-badge">Base ainda não carregada</span>';
+  const botaoAtualizar = status.atualizacaoDisponivel
+    ? `<button type="button" id="btn-operadoras-atualizar" class="chip-btn disponivel">Atualizar para a versão de ${new Date(status.ultimaModificacao).toLocaleDateString('pt-BR')}</button>`
+    : '';
+  operadorasCompetenciaAreaEl.innerHTML = badge + botaoAtualizar;
+
+  const btn = document.getElementById('btn-operadoras-atualizar');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      const senha = window.prompt('Senha para atualizar a base de operadoras:');
+      if (!senha) return;
+      btn.disabled = true;
+      btn.textContent = 'Atualizando…';
+      try {
+        const resp = await fetch('/api/operadoras/atualizar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha }),
+        });
+        const dados = await resp.json();
+        if (!resp.ok) throw new Error(dados.erro || 'Falha ao atualizar.');
+        window.alert(`Base de operadoras atualizada: ${dados.totalRegistros} registros.`);
+        await carregarStatusOperadoras();
+        if (operadorasBuscaEl && operadorasBuscaEl.value.trim().length >= 2) buscarOperadoras(operadorasBuscaEl.value.trim());
+      } catch (err) {
+        console.error(err);
+        window.alert(`Erro ao atualizar: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = 'Tentar atualizar novamente';
+      }
+    });
+  }
+}
+
+carregarStatusOperadoras();
+
 // ---------- Favoritos (localStorage, sem login) ----------
 const FAVORITOS_KEY = 'cbhpm_favoritos';
 const listaFavoritosEl = document.getElementById('lista-favoritos');

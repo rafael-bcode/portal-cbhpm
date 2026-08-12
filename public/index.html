@@ -201,6 +201,7 @@
     <button type="button" class="tab-btn" data-tab="faq" id="tab-btn-faq" style="display:none" aria-hidden="true" tabindex="-1">Dúvidas frequentes</button>
     <button type="button" class="tab-btn" data-tab="indicadores" id="tab-btn-indicadores" style="display:none" aria-hidden="true" tabindex="-1">Indicadores ANAHP</button>
     <button type="button" class="tab-btn" data-tab="cmed" id="tab-btn-cmed" style="display:none" aria-hidden="true" tabindex="-1">Preço Teto CMED</button>
+    <button type="button" class="tab-btn" data-tab="operadoras" id="tab-btn-operadoras" style="display:none" aria-hidden="true" tabindex="-1">Operadoras ANS</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -1375,6 +1376,33 @@
 
   </div>
 
+  <div id="tab-operadoras" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Operadoras ANS — cadastro oficial</h2>
+      <div id="operadoras-competencia-area" class="sigtap-competencia-area"></div>
+    </div>
+    <p class="ajustes-nota">
+      Consulta ao Cadastro de Operadoras Ativas da ANS (Agência Nacional de Saúde Suplementar) — a mesma fonte
+      usada pra identificar a operadora pelo registro ANS no Validador de XML TISS, aqui como busca dedicada com
+      mais dados: CNPJ, endereço, telefone e e-mail cadastrados. Dado público e institucional (da empresa
+      registrada, não do beneficiário), atualizado direto da fonte oficial:
+      <a href="https://dadosabertos.ans.gov.br/FTP/PDA/operadoras_de_plano_de_saude_ativas/Relatorio_cadop.csv" target="_blank" rel="noopener">dadosabertos.ans.gov.br</a>.
+    </p>
+
+    <div class="field field-busca">
+      <label for="operadoras-busca">Nome, registro ANS ou CNPJ da operadora</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="operadoras-busca" placeholder="Ex: Unimed, 419761 ou CNPJ" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="operadoras-resultado-area"></section>
+
+  </div>
+
 </main>
 
 <aside class="eco-sidebar eco-sidebar-right">
@@ -1401,6 +1429,11 @@
   <a class="eco-card eco-card-faq" href="#" id="link-cmed-precos">
     <span class="eco-card-nome">💊 Preço Teto CMED</span>
     <span class="eco-card-desc">Consulta gratuita ao PF (hospital) e PMC (farmácia) oficiais da ANVISA/CMED — não substitui Simpro/Brasíndice, mas ajuda a flagrar cobrança acima do teto legal em qualquer ponta.</span>
+  </a>
+
+  <a class="eco-card eco-card-faq" href="#" id="link-operadoras-ans">
+    <span class="eco-card-nome">🏢 Operadoras ANS</span>
+    <span class="eco-card-desc">Busque uma operadora pelo nome, registro ANS ou CNPJ e veja endereço, telefone e e-mail — direto do cadastro oficial.</span>
   </a>
 </aside>
 

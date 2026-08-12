@@ -63,5 +63,10 @@
     "tag": "CMED",
     "titulo": "Preço Teto de medicamentos",
     "descricao": "Consulta gratuita ao Preço Fábrica e ao Preço Máximo ao Consumidor oficiais da ANVISA — pro hospital faturar e pra você conferir na farmácia."
+  },
+  {
+    "tag": "ANS",
+    "titulo": "Operadoras de saúde",
+    "descricao": "Busque uma operadora pelo nome, registro ANS ou CNPJ e veja endereço, telefone e e-mail, direto do cadastro oficial."
   }
 ]

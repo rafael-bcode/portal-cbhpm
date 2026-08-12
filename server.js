@@ -6,6 +6,7 @@ const packageJson = require('./package.json');
 const changelog = require('./CHANGELOG.json');
 const { competenciaLegivel, buscarUltimaDisponivelGitHub, atualizarSigtap } = require('./sigtap-atualizador');
 const { buscarUltimaModificacaoAnvisa, atualizarCmed } = require('./cmed-atualizador');
+const { buscarUltimaModificacaoAns, atualizarOperadoras } = require('./operadoras-atualizador');
 
 const app = express();
 app.use(express.json());
@@ -590,6 +591,85 @@ app.post('/api/cmed/atualizar', async (req, res) => {
   }
 });
 
+// Cadastro de Operadoras Ativas (ANS) — dado público/institucional (CNPJ,
+// endereço, telefone, e-mail da empresa registrada), sem nenhum dado de
+// beneficiário. Busca por razão social, nome fantasia, registro ANS ou CNPJ.
+app.get('/api/operadoras/buscar', async (req, res) => {
+  try {
+    const termo = (req.query.q || '').trim();
+    if (termo.length < 2) {
+      return res.json([]);
+    }
+    const termoDigitos = termo.replace(/\D/g, '');
+
+    const { rows } = await pool.query(
+      `SELECT
+         registro_ans, cnpj, razao_social, nome_fantasia, modalidade,
+         logradouro, numero, complemento, bairro, cidade, uf, cep, ddd,
+         telefone, fax, email, regiao_comercializacao, data_registro_ans,
+         atualizado_em
+       FROM operadoras_ans
+       WHERE registro_ans = $1 OR (length($3) > 0 AND cnpj = $3)
+          OR razao_social ILIKE $2 OR nome_fantasia ILIKE $2
+       ORDER BY (registro_ans = $1) DESC, razao_social
+       LIMIT 40`,
+      [termo, `%${termo}%`, termoDigitos]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca de operadoras:', err);
+    res.status(500).json({ erro: 'Erro ao buscar operadoras.' });
+  }
+});
+
+// Data de publicação do arquivo de operadoras carregado no banco, e se a
+// ANS já publicou uma versão mais nova.
+app.get('/api/operadoras/status', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT publicado_em, atualizado_em, total_registros FROM operadoras_metadata WHERE id = 1');
+    const atual = rows[0] || null;
+
+    let ultimaModificacao = null;
+    let erroVerificacao = null;
+    try {
+      ultimaModificacao = await buscarUltimaModificacaoAns();
+    } catch (err) {
+      console.error('Erro ao verificar atualização de operadoras na ANS:', err);
+      erroVerificacao = 'Não foi possível verificar atualizações agora.';
+    }
+
+    const publicadoEm = atual && atual.publicado_em ? new Date(atual.publicado_em) : null;
+    res.json({
+      publicadoEm,
+      atualizadoEm: atual ? atual.atualizado_em : null,
+      totalRegistros: atual ? atual.total_registros : null,
+      ultimaModificacao,
+      atualizacaoDisponivel: Boolean(publicadoEm && ultimaModificacao && ultimaModificacao > publicadoEm),
+      erroVerificacao,
+    });
+  } catch (err) {
+    console.error('Erro ao consultar status de operadoras:', err);
+    res.status(500).json({ erro: 'Erro ao consultar status de operadoras.' });
+  }
+});
+
+// Baixa e reimporta o Cadastro de Operadoras direto da ANS. Protegido pela
+// mesma senha administrativa do SIGTAP/CMED (SIGTAP_UPDATE_SENHA no .env).
+app.post('/api/operadoras/atualizar', async (req, res) => {
+  try {
+    const { senha } = req.body || {};
+    if (!process.env.SIGTAP_UPDATE_SENHA || senha !== process.env.SIGTAP_UPDATE_SENHA) {
+      return res.status(401).json({ erro: 'Senha inválida.' });
+    }
+
+    const resultado = await atualizarOperadoras(pool);
+    res.json(resultado);
+  } catch (err) {
+    console.error('Erro ao atualizar operadoras:', err);
+    res.status(500).json({ erro: 'Erro ao atualizar a base de operadoras.' });
+  }
+});
+
 // Competência atual da Tabela Unificada SIGTAP carregada no banco, e se há
 // uma competência mais nova disponível no espelho GitHub (RenatoKR/SIGTAP,
 // sincronizado diariamente com o FTP oficial do DATASUS).
@@ -947,6 +1027,26 @@ async function checarAtualizacaoAutomaticaCmed() {
   }
 }
 
+// Mesma lógica da rotina do CMED, pro Cadastro de Operadoras da ANS.
+const OPERADORAS_INTERVALO_AUTO_MS = 24 * 60 * 60 * 1000;
+async function checarAtualizacaoAutomaticaOperadoras() {
+  try {
+    const { rows } = await pool.query('SELECT publicado_em FROM operadoras_metadata WHERE id = 1');
+    const publicadoEm = rows[0]?.publicado_em ? new Date(rows[0].publicado_em) : null;
+    const ultimaModificacao = await buscarUltimaModificacaoAns();
+
+    if (!publicadoEm || (ultimaModificacao && ultimaModificacao > publicadoEm)) {
+      console.log('[operadoras] Nova versão detectada na ANS, atualizando automaticamente...');
+      const resultado = await atualizarOperadoras(pool);
+      console.log(`[operadoras] Atualização automática concluída: ${resultado.totalRegistros} registros, publicado em ${resultado.publicadoEm}.`);
+    } else {
+      console.log('[operadoras] Nenhuma atualização disponível (checagem automática).');
+    }
+  } catch (err) {
+    console.error('[operadoras] Erro na checagem/atualização automática:', err.message);
+  }
+}
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -955,6 +1055,9 @@ if (require.main === module) {
 
   setTimeout(checarAtualizacaoAutomaticaCmed, 10_000);
   setInterval(checarAtualizacaoAutomaticaCmed, CMED_INTERVALO_AUTO_MS);
+
+  setTimeout(checarAtualizacaoAutomaticaOperadoras, 15_000);
+  setInterval(checarAtualizacaoAutomaticaOperadoras, OPERADORAS_INTERVALO_AUTO_MS);
 }
 
 module.exports = app;
