@@ -617,6 +617,14 @@ body > * {
   color: var(--ink-soft);
   line-height: 1.5;
 }
+/* .ajustes-nota só tem margem no topo (pra não abrir espaço quando é a
+   última coisa dentro de um card) — mas quando vem um campo logo depois,
+   sem isso os dois ficam colados. Cobre .field em qualquer tela do portal
+   onde essa sequência nota→campo aparece, sem precisar de ajuste manual
+   em cada tela. */
+.ajustes-nota + .field {
+  margin-top: 16px;
+}
 .link-inline {
   background: none;
   border: none;

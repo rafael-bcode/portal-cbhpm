@@ -537,10 +537,33 @@ function linhaFaixasCmed(faixas) {
     </div>`;
 }
 
+// O Bulário Eletrônico da ANVISA aceita mais de um critério de busca
+// (Medicamento, Número do Registro, Expediente, Empresa...), cada um
+// independente dos outros. Busca por número de registro (só os 9
+// dígitos-base) não bate pra todo medicamento — confirmado com um caso real
+// (Tylenol) que não retornava nada por número, mas aparecia buscando pelo
+// nome. Como não dá pra checar pelo nosso lado se uma busca "achou" algo (o
+// site é protegido por Cloudflare, sem API acessível pra gente consultar
+// antes), a solução é oferecer os dois links — o usuário clica no que
+// funcionar pro caso dele.
+function linksBularioCmed(item) {
+  const links = [];
+  const nome = (item.produto || '').trim();
+  if (nome) {
+    links.push({ rotulo: 'por nome', url: `https://consultas.anvisa.gov.br/#/bulario/q/?nomeProduto=${encodeURIComponent(nome)}` });
+  }
+  const registroBase = (item.registro || '').replace(/\D/g, '').slice(0, 9);
+  if (registroBase.length === 9) {
+    links.push({ rotulo: 'por registro', url: `https://consultas.anvisa.gov.br/#/bulario/q/?numeroRegistro=${registroBase}` });
+  }
+  return links;
+}
+
 function renderizarCardCmed(item) {
   const foraDeLinha = item.comercializacao_2025 === false;
   const pfSemImpostos = item.pf_sem_impostos !== null ? fmtMoeda(item.pf_sem_impostos) : '—';
   const pmcSemImpostos = item.pmc_sem_impostos !== null ? fmtMoeda(item.pmc_sem_impostos) : '—';
+  const linksBula = linksBularioCmed(item);
 
   return `
     <details class="faq-item">
@@ -566,6 +589,14 @@ function renderizarCardCmed(item) {
 
         <p style="margin:14px 0 6px;"><strong>PMC · Preço Máximo ao Consumidor</strong> — teto pra venda direta ao paciente na farmácia (não usado no faturamento hospitalar), por alíquota de ICMS${item.pmc_sem_impostos !== null ? `; sem impostos: ${fmtMoeda(item.pmc_sem_impostos)}` : ''}</p>
         ${linhaFaixasCmed(item.pmc_faixas)}
+
+        ${linksBula.length > 0 ? `
+        <div style="margin-top:14px;">
+          <p class="ajustes-nota" style="margin:0 0 8px;">Consultar bula na ANVISA — se um critério não encontrar, tente o outro:</p>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${linksBula.map((l) => `<a class="faq-portal-link" href="${l.url}" target="_blank" rel="noopener noreferrer">📄 Bula ${l.rotulo} →</a>`).join('')}
+          </div>
+        </div>` : ''}
 
         <p class="faq-fonte">Atualizado em ${item.atualizado_em ? new Date(item.atualizado_em).toLocaleDateString('pt-BR') : '—'} · Código GGREM ${escaparHtml(item.codigo_ggrem)}</p>
       </div>
