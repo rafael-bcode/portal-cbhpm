@@ -780,6 +780,12 @@
       <button type="button" class="faq-subtab-btn" data-faqtab="glosas">Glosas</button>
       <button type="button" class="faq-subtab-btn" data-faqtab="certificacoes">Certificações</button>
       <button type="button" class="faq-subtab-btn" data-faqtab="medicamentos">Medicamentos</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="operadoras">Operadoras / ANS</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="opme">OPME</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="rol">Rol e DUT</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="auditoria">Auditoria</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="cnes">CNES</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="modelos">Pacote e diárias</button>
     </div>
 
     <div id="faqtab-sus" class="faq-subtab-panel">
@@ -1241,6 +1247,242 @@
           que qualquer sistema privado emite por conta própria. Hoje o portal não gera esse livro (é justamente
           por isso que ele precisa ser oficial), mas é um controle interno — planilha ou sistema próprio de
           movimentação de controlados — que pode facilitar a hora de lançar tudo certinho no livro oficial.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-operadoras" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual o prazo que a operadora tem pra pagar a conta hospitalar?</summary>
+        <div class="faq-resposta">
+          <p>Não é um prazo único fixado igual pra todo mundo — a Resolução Normativa nº 566/2022 da ANS (art.
+          10) trata do prazo de pagamento no âmbito do processo de glosa, mas o prazo geral de análise e
+          pagamento da conta é o que estiver definido em contrato entre o prestador e a operadora. Na prática, 30
+          dias corridos após o recebimento da conta é o mais comum no mercado — mas vale sempre conferir o que
+          está escrito no contrato específico, já que pode variar.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">A operadora atrasou o pagamento — o que fazer?</summary>
+        <div class="faq-resposta">
+          <p>Notifique formalmente a operadora cobrando o prazo contratual, com juros/correção se previstos em
+          contrato. Se não resolver, o caminho é o mesmo de uma glosa não resolvida: acionar a ANS pela NIP
+          (Notificação de Intermediação Preliminar) ou buscar vias administrativas/judiciais.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="faq" data-goto-faqtab="glosas">⚠️ Ver mais sobre recurso de glosa e NIP →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como sei se uma operadora está realmente ativa e registrada na ANS?</summary>
+        <div class="faq-resposta">
+          <p>Pelo registro ANS, nome ou CNPJ, direto no cadastro oficial — o mesmo dado que identifica a
+          operadora dentro de uma guia TISS.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="operadoras">🏢 Consultar uma operadora aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que significa operadora em "liquidação" ou sob "direção fiscal/técnica"?</summary>
+        <div class="faq-resposta">
+          <p>São regimes especiais que a ANS aplica quando identifica risco à operadora ou aos beneficiários:
+          <strong>direção técnica/fiscal</strong> é uma intervenção temporária, com um diretor nomeado pela ANS
+          acompanhando a gestão; <strong>liquidação</strong> é o processo de encerramento das atividades da
+          operadora. Prestadores com contas em aberto contra uma operadora nessas situações costumam ter que
+          habilitar crédito dentro do processo, e não só cobrar diretamente como em uma operação normal.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-opme" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é OPME?</summary>
+        <div class="faq-resposta">
+          <p>Órteses, Próteses e Materiais Especiais — dispositivos médicos usados pra substituir, auxiliar ou
+          complementar uma função do corpo em procedimentos cirúrgicos e terapêuticos (ex: próteses ortopédicas,
+          stents, marca-passos, telas cirúrgicas). Concentram alto valor unitário, exigência rígida de
+          rastreabilidade e risco elevado de glosa.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Por que OPME é uma das maiores causas de glosa?</summary>
+        <div class="faq-resposta">
+          <p>Porque envolve várias etapas que precisam bater exatamente: autorização prévia da operadora,
+          material realmente usado na cirurgia, nota fiscal vinculada, registro/rastreabilidade do item (lote,
+          fabricante, registro ANVISA) e o valor cobrado dentro do combinado (tabela própria, Simpro/Brasíndice
+          ou preço negociado). Qualquer divergência entre essas etapas — item diferente do autorizado, nota
+          fiscal não vinculada, falta de rastreabilidade — é motivo comum de glosa.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é a rastreabilidade de OPME que a operadora exige?</summary>
+        <div class="faq-resposta">
+          <p>É a capacidade de comprovar a origem e o histórico do material usado — normalmente com a etiqueta
+          do fabricante (lote, número de série, registro ANVISA) anexada à conta, além da nota fiscal de compra.
+          Serve tanto pra segurança do paciente (rastrear um lote com problema, se necessário) quanto pra
+          confirmar que o item cobrado é exatamente o que foi implantado.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O portal tem alguma ferramenta pra conferir OPME?</summary>
+        <div class="faq-resposta">
+          <p>Ainda não — hoje o portal cobre CBHPM, SUS/SIGTAP, TUSS, medicamentos (CMED) e Padrão TISS, mas não
+          tem uma base de preços ou de registro ANVISA de materiais/OPME carregada. É um assunto que fica
+          anotado pra uma próxima evolução do portal.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-rol" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é o Rol de Procedimentos e Eventos em Saúde da ANS?</summary>
+        <div class="faq-resposta">
+          <p>É a lista oficial dos procedimentos e eventos em saúde que os planos são obrigados a cobrir, de
+          acordo com o tipo de plano contratado (ambulatorial, hospitalar, referência etc.). Funciona como
+          referência mínima de cobertura — a operadora pode oferecer mais do que o Rol, mas não pode negar o que
+          está nele sem justificativa prevista em norma.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é DUT (Diretriz de Utilização)?</summary>
+        <div class="faq-resposta">
+          <p>É a condição clínica que a ANS anexa a alguns procedimentos do Rol pra definir quando a cobertura é
+          obrigatória — pode envolver idade, diagnóstico prévio, tratamentos já tentados, entre outros critérios.
+          Ou seja: o procedimento estar no Rol não significa cobertura automática em qualquer situação — se ele
+          tem DUT, a cobertura obrigatória vale só quando as condições da diretriz são atendidas e documentadas.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">A operadora pode negar um procedimento que está no Rol?</summary>
+        <div class="faq-resposta">
+          <p>Só em situações previstas em norma — por exemplo, quando o procedimento tem DUT e as condições da
+          diretriz não foram atendidas/documentadas, quando é uma exclusão contratual legal (como procedimento
+          estético sem indicação clínica) ou quando falta indicação médica adequada. Negativa fora dessas
+          hipóteses pode ser contestada — inclusive pela via da ANS (NIP) quando o caso envolve urgência.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-auditoria" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é auditoria de contas médicas e quem faz?</summary>
+        <div class="faq-resposta">
+          <p>É a conferência técnica e administrativa de uma conta hospitalar antes ou depois do envio à
+          operadora, verificando se o que foi cobrado corresponde ao que foi realmente prestado, autorizado e
+          documentado. É feita por médicos ou enfermeiros auditores — tanto do lado do prestador (auditoria
+          interna, pra reduzir glosa antes de enviar) quanto do lado da operadora (auditoria externa, pra
+          decidir o que paga).</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Quais são os tipos de auditoria (prévia, concorrente, retrospectiva)?</summary>
+        <div class="faq-resposta">
+          <p><strong>Prévia (ou prospectiva):</strong> antes do procedimento, avalia autorização e adequação do
+          que foi solicitado. <strong>Concorrente:</strong> durante a internação, acompanha em tempo real a
+          evolução do paciente e o uso de insumos, com visitas técnicas do auditor ao prestador.
+          <strong>Retrospectiva:</strong> depois do atendimento, é a mais comum na rotina — confere a conta
+          fechada antes do envio (do lado do prestador) ou depois do recebimento (do lado da operadora). As três
+          são complementares, cobrindo o ciclo inteiro da pré-autorização ao envio da conta.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como reduzir glosa na auditoria antes de enviar a conta?</summary>
+        <div class="faq-resposta">
+          <p>Conferindo cada item antes do envio: tabela e edição corretas, compatibilidade entre procedimentos,
+          habilitação exigida, código de glosa TISS de referência e o arquivo XML validado contra o schema
+          oficial — é exatamente o conjunto de conferências que o portal já reúne, pra fazer essa auditoria
+          prévia antes de mandar pra operadora.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validar o XML TISS aqui no portal →</button>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-cnes" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é o CNES?</summary>
+        <div class="faq-resposta">
+          <p>Cadastro Nacional de Estabelecimentos de Saúde — o código de identificação nacional de todo
+          estabelecimento de saúde (público, conveniado ou privado) no Brasil, mantido pelo DATASUS. Registra
+          infraestrutura física, tipo de atendimento, leitos, serviços especializados e profissionais vinculados.
+          O cadastro é obrigatório pra qualquer estabelecimento funcionar.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Por que o código CNES aparece nas guias e nos validadores do portal?</summary>
+        <div class="faq-resposta">
+          <p>Porque é o identificador oficial do estabelecimento que prestou o atendimento — aparece nas guias
+          TISS e nos arquivos de AIH/BPA/APAC do SUS. O layout do AIH, por exemplo, não traz o nome do
+          estabelecimento, só o código CNES + município — por isso o Validador AIH do portal busca o nome real
+          direto no CNESNet do DATASUS pra deixar o relatório de conferência legível.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador-sus" data-goto-subtab="aih">✅ Ver o Validador AIH aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como consultar o CNES de um estabelecimento?</summary>
+        <div class="faq-resposta">
+          <p>Direto no CNESNet, o sistema público do DATASUS — busca por nome, município ou código, e mostra
+          dados completos de infraestrutura, leitos e serviços do estabelecimento.</p>
+          <a class="faq-portal-link" href="https://cnes.datasus.gov.br/" target="_blank" rel="noopener">🌐 Consultar no CNESNet (DATASUS) →</a>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-modelos" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual a diferença entre pacote fechado e conta aberta?</summary>
+        <div class="faq-resposta">
+          <p><strong>Pacote fechado:</strong> um valor fixo é negociado pra um procedimento inteiro (ex: uma
+          cirurgia com um período de internação determinado) — o prestador é quem gerencia o uso de materiais e
+          serviços dentro desse valor, sem detalhar item a item na cobrança (exceto imprevistos/urgência, que
+          costumam ficar de fora do pacote). <strong>Conta aberta:</strong> cada item usado — material,
+          medicamento, taxa, diária — é cobrado separadamente, conforme o combinado em contrato.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é diária hospitalar, e o que muda entre diária aberta, global e semi-global?</summary>
+        <div class="faq-resposta">
+          <p>Diária é a cobrança pelo uso do leito por até 24 horas, variando pelo tipo de acomodação
+          (enfermaria, apartamento, UTI). <strong>Diária aberta:</strong> só os itens de hotelaria e EPI básico
+          (luvas, máscaras etc.) entram na diária — quase tudo o mais é cobrado à parte. <strong>Diária
+          global:</strong> a maior parte dos serviços e materiais de rotina já está incluída num valor único por
+          dia, reduzindo o que pode ser cobrado separadamente. <strong>Diária semi-global:</strong> fica no meio
+          termo — alguns grupos de itens entram na diária, outros continuam sendo cobrados à parte, conforme o
+          que estiver definido em contrato.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é "hospital-dia"? É a mesma coisa que "paciente-dia"?</summary>
+        <div class="faq-resposta">
+          <p>Não — são conceitos diferentes, fáceis de confundir. <strong>Hospital-dia</strong> é uma modalidade
+          de atendimento: o paciente fica na unidade por no máximo 12 horas (ex: quimioterapia, pequenas
+          cirurgias, procedimentos que não exigem pernoite), ocupando leito de observação, não leito de
+          internação. <strong>Paciente-dia</strong> é uma unidade de medida estatística: representa um paciente
+          internado ocupando um leito por um dia hospitalar completo, usada em indicadores como taxa de
+          ocupação e média de permanência — pacientes de hospital-dia não entram nessa contagem, justamente por
+          não serem internação.</p>
         </div>
       </details>
 

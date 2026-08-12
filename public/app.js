@@ -92,6 +92,10 @@ document.querySelectorAll('.faq-portal-link').forEach((btn) => {
     if (btn.dataset.gotoAcao === 'versoes-tiss') {
       document.getElementById('btn-versoes-tiss')?.click();
     }
+    if (btn.dataset.gotoFaqtab) {
+      const faqtabBtn = document.querySelector(`.faq-subtab-btn[data-faqtab="${btn.dataset.gotoFaqtab}"]`);
+      faqtabBtn?.click();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 });
