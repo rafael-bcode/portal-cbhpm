@@ -177,6 +177,14 @@
     <span class="eco-card-nome">Argus Clinical</span>
     <span class="eco-card-desc">Sistema completo de clínica — agenda, prontuário, faturamento, farmácia e financeiro.</span>
   </a>
+  <a class="eco-card" style="--pcolor:#7C3AED" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+    <span class="eco-card-nome">Argus SAM</span>
+    <span class="eco-card-desc">App médico com prontuário, agenda cirúrgica, plantão com GPS e repasses financeiros.</span>
+  </a>
+  <a class="eco-card" style="--pcolor:#EA580C" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
+    <span class="eco-card-nome">Argus ProSign</span>
+    <span class="eco-card-desc">Assinatura eletrônica com validade jurídica — OTP, biometria, ICP-Brasil e auditoria.</span>
+  </a>
 </aside>
 
 <main class="container">
@@ -192,6 +200,7 @@
     <button type="button" class="tab-btn" data-tab="verificadores">Verificadores</button>
     <button type="button" class="tab-btn" data-tab="faq" id="tab-btn-faq" style="display:none" aria-hidden="true" tabindex="-1">Dúvidas frequentes</button>
     <button type="button" class="tab-btn" data-tab="indicadores" id="tab-btn-indicadores" style="display:none" aria-hidden="true" tabindex="-1">Indicadores ANAHP</button>
+    <button type="button" class="tab-btn" data-tab="cmed" id="tab-btn-cmed" style="display:none" aria-hidden="true" tabindex="-1">Preço-teto CMED</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -1216,18 +1225,43 @@
 
   </div>
 
+  <div id="tab-cmed" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Preço-teto CMED — medicamentos</h2>
+      <div id="cmed-competencia-area" class="sigtap-competencia-area"></div>
+    </div>
+    <p class="ajustes-nota">
+      Consulta ao Preço Fábrica (PF) e Preço Máximo ao Consumidor (PMC) definidos pela CMED (Câmara de
+      Regulação do Mercado de Medicamentos) — o <strong>teto legal</strong> de venda de cada medicamento
+      registrado na ANVISA, por apresentação. Dado público e aberto, atualizado mensalmente, direto da fonte
+      oficial: <a href="https://dados.anvisa.gov.br/dados/TA_PRECO_MEDICAMENTO.csv" target="_blank" rel="noopener">dados.anvisa.gov.br</a>.
+    </p>
+    <p class="ajustes-nota">
+      <strong>Isto não é o Simpro nem a Brasíndice.</strong> É só o teto de preço definido por lei — útil como
+      checagem rápida e gratuita (se um valor cobrado está acima do PMC/PF da CMED, já é glosável, independente
+      de qualquer tabela comercial) — mas não cobre materiais, OPME e equipamentos, nem os campos comerciais
+      (código TUSS, classificação por convênio) que Simpro e Brasíndice agregam por assinatura paga. Quando o
+      contrato exigir especificamente uma dessas tabelas, a assinatura continua sendo necessária.
+    </p>
+
+    <div class="field field-busca">
+      <label for="cmed-busca">Nome do medicamento, substância ou nº de registro ANVISA</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="cmed-busca" placeholder="Ex: Dipirona ou 1018003900019" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="cmed-resultado-area"></section>
+
+  </div>
+
 </main>
 
 <aside class="eco-sidebar eco-sidebar-right">
   <a class="eco-sidebar-titulo" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">Ecossistema Argus</a>
-  <a class="eco-card" style="--pcolor:#7C3AED" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
-    <span class="eco-card-nome">Argus SAM</span>
-    <span class="eco-card-desc">App médico com prontuário, agenda cirúrgica, plantão com GPS e repasses financeiros.</span>
-  </a>
-  <a class="eco-card" style="--pcolor:#EA580C" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
-    <span class="eco-card-nome">Argus ProSign</span>
-    <span class="eco-card-desc">Assinatura eletrônica com validade jurídica — OTP, biometria, ICP-Brasil e auditoria.</span>
-  </a>
   <a class="eco-card" style="--pcolor:#E11D48" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
     <span class="eco-card-nome">Argus Partners</span>
     <span class="eco-card-desc">Gestão de fornecedores — contratos, medições, notas fiscais e assinatura, integrado ao ERP.</span>
@@ -1245,6 +1279,11 @@
   <a class="eco-card eco-card-faq" href="#" id="link-indicadores-anahp">
     <span class="eco-card-nome">📊 Indicadores ANAHP</span>
     <span class="eco-card-desc">Escolha um indicador hospitalar, informe seu resultado e o benchmark da ANAHP, e veja como você está em relação à referência.</span>
+  </a>
+
+  <a class="eco-card eco-card-faq" href="#" id="link-cmed-precos">
+    <span class="eco-card-nome">💊 Preço-teto CMED</span>
+    <span class="eco-card-desc">Consulta gratuita ao PF/PMC oficial de medicamentos (ANVISA/CMED) — não substitui Simpro/Brasíndice, mas ajuda a flagrar cobrança acima do teto legal.</span>
   </a>
 </aside>
 

@@ -1,5 +1,16 @@
 [
   {
+    "versao": "2.2.0",
+    "data": "2026-08-12",
+    "mudancas": [
+      "Nova aba 'Preço-teto CMED': consulta gratuita ao Preço Fábrica (PF) e Preço Máximo ao Consumidor (PMC) de medicamentos, direto do dado público e aberto da ANVISA/CMED (dados.anvisa.gov.br) — ~25.700 apresentações, por nome do produto, substância ou registro ANVISA. Não é o Simpro nem a Brasíndice (que continuam exigindo assinatura paga e cobrem também materiais/OPME): é só o teto legal de medicamento, útil como checagem rápida antes de faturar.",
+      "Tela de resultado em acordeão: cada apresentação mostra PF/PMC sem impostos já na linha resumida, e o detalhe completo (por alíquota de ICMS, laboratório, substância, classe terapêutica, tarja, restrição hospitalar) ao expandir — evita uma lista gigante já expandida quando a busca traz muitos resultados.",
+      "Rotina de atualização automática (a cada 24h, sem precisar de ação do usuário) comparando a data de publicação do arquivo oficial da ANVISA com a versão carregada no banco, e reimportando quando sai uma nova — mesmo mecanismo de badge + botão manual 'Atualizar' já usado na aba SUS/SIGTAP, mostrando a data de publicação vigente no cabeçalho da tela.",
+      "Corrige contraste dos botões de atalho dentro das Dúvidas frequentes e dos Indicadores ANAHP: os que apontavam para links externos (ex: 'Conhecer o Argus Quality') herdavam a cor azul de link padrão e ficavam ilegíveis sobre o fundo azul do botão — agora seguem o mesmo padrão visual dos atalhos internos (fundo sólido, texto branco, sem sublinhado).",
+      "Reequilibra as barras laterais do ecossistema Argus: Argus SAM e Argus ProSign passam para a barra esquerda, já que a direita tinha crescido bem mais alta depois dos cards de Dúvidas frequentes, Indicadores ANAHP e Preço-teto CMED."
+    ]
+  },
+  {
     "versao": "2.1.0",
     "data": "2026-08-12",
     "mudancas": [

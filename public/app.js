@@ -504,6 +504,160 @@ document.getElementById('link-indicadores-anahp')?.addEventListener('click', (e)
   window.scrollTo({ top: 0, behavior: 'smooth' });
 });
 
+// ---------- Preço-teto CMED (medicamentos, dado público ANVISA) ----------
+document.getElementById('link-cmed-precos')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('tab-btn-cmed')?.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+const cmedBuscaEl = document.getElementById('cmed-busca');
+const cmedResultadoAreaEl = document.getElementById('cmed-resultado-area');
+let debounceTimerCmed = null;
+
+const FAIXAS_CMED_EXIBIDAS = [
+  { chave: '0', rotulo: '0%' },
+  { chave: '17', rotulo: '17%' },
+  { chave: '18', rotulo: '18%' },
+  { chave: '19', rotulo: '19%' },
+  { chave: '20', rotulo: '20%' },
+];
+
+function linhaFaixasCmed(faixas) {
+  if (!faixas) return '<span class="ajustes-nota" style="margin:0;">Sem faixas de ICMS informadas (medicamento de preço liberado).</span>';
+  return `
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(70px,1fr)); gap:8px;">
+      ${FAIXAS_CMED_EXIBIDAS.map(
+        (f) => `
+        <div class="stat-card" style="padding:8px 10px;">
+          <div class="num" style="font-size:0.95rem;">${faixas[f.chave] !== undefined ? fmtMoeda(faixas[f.chave]) : '—'}</div>
+          <div class="lbl">ICMS ${f.rotulo}</div>
+        </div>`
+      ).join('')}
+    </div>`;
+}
+
+function renderizarCardCmed(item) {
+  const foraDeLinha = item.comercializacao_2025 === false;
+  const pfSemImpostos = item.pf_sem_impostos !== null ? fmtMoeda(item.pf_sem_impostos) : '—';
+  const pmcSemImpostos = item.pmc_sem_impostos !== null ? fmtMoeda(item.pmc_sem_impostos) : '—';
+
+  return `
+    <details class="faq-item">
+      <summary class="faq-pergunta" style="flex-wrap:wrap; gap:4px 14px;">
+        <span style="flex:1 1 320px;">${escaparHtml(item.produto)} <span style="font-weight:400; color:var(--ink-soft);">— ${escaparHtml(item.apresentacao)}</span></span>
+        <span style="font-weight:700; white-space:nowrap;">PF sem impostos: ${pfSemImpostos} · PMC sem impostos: ${pmcSemImpostos}</span>
+        ${foraDeLinha ? '<span class="favorito-chip" style="cursor:default; margin:0;">Sem comercialização confirmada em 2025</span>' : ''}
+      </summary>
+      <div class="faq-resposta">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(160px,1fr)); gap:10px; margin-bottom:14px; font-size:0.82rem; color:var(--ink-soft);">
+          <div><strong>Laboratório:</strong> ${escaparHtml(item.laboratorio || '—')}</div>
+          <div><strong>Substância:</strong> ${escaparHtml(item.substancia || '—')}</div>
+          <div><strong>Classe terapêutica:</strong> ${escaparHtml(item.classe_terapeutica || '—')}</div>
+          <div><strong>Tipo:</strong> ${escaparHtml(item.tipo_produto || '—')}</div>
+          <div><strong>Registro ANVISA:</strong> ${escaparHtml(item.registro || '—')}</div>
+          <div><strong>Tarja:</strong> ${escaparHtml(item.tarja || '—')}</div>
+          <div><strong>Restrição hospitalar:</strong> ${item.restricao_hospitalar ? 'Sim' : 'Não'}</div>
+          <div><strong>Regime de preço:</strong> ${escaparHtml(item.regime_preco || '—')}</div>
+        </div>
+
+        <p style="margin:0 0 6px;"><strong>Preço Fábrica (PF) por alíquota de ICMS</strong>${item.pf_sem_impostos !== null ? ` — sem impostos: ${fmtMoeda(item.pf_sem_impostos)}` : ''}</p>
+        ${linhaFaixasCmed(item.pf_faixas)}
+
+        <p style="margin:14px 0 6px;"><strong>Preço Máximo ao Consumidor (PMC) por alíquota de ICMS</strong>${item.pmc_sem_impostos !== null ? ` — sem impostos: ${fmtMoeda(item.pmc_sem_impostos)}` : ''}</p>
+        ${linhaFaixasCmed(item.pmc_faixas)}
+
+        <p class="faq-fonte">Atualizado em ${item.atualizado_em ? new Date(item.atualizado_em).toLocaleDateString('pt-BR') : '—'} · Código GGREM ${escaparHtml(item.codigo_ggrem)}</p>
+      </div>
+    </details>`;
+}
+
+async function buscarCmed(termo) {
+  try {
+    const resp = await fetch(`/api/cmed/buscar?q=${encodeURIComponent(termo)}`);
+    if (!resp.ok) throw new Error('Falha na requisição.');
+    const itens = await resp.json();
+    if (itens.length === 0) {
+      cmedResultadoAreaEl.innerHTML = '<p class="msg vazio">Nenhum medicamento encontrado com esse termo.</p>';
+      return;
+    }
+    const aviso = itens.length >= 40
+      ? '<p class="ajustes-nota">Mostrando os 40 primeiros resultados — refine a busca (com o registro ANVISA ou um trecho mais específico) se não achar a apresentação que procura.</p>'
+      : '';
+    cmedResultadoAreaEl.innerHTML = aviso + itens.map(renderizarCardCmed).join('');
+  } catch (err) {
+    console.error(err);
+    cmedResultadoAreaEl.innerHTML = '<div class="msg erro">Erro ao buscar na base CMED.</div>';
+  }
+}
+
+if (cmedBuscaEl) {
+  cmedBuscaEl.addEventListener('input', () => {
+    const termo = cmedBuscaEl.value.trim();
+    clearTimeout(debounceTimerCmed);
+    if (termo.length < 2) {
+      cmedResultadoAreaEl.innerHTML = '';
+      return;
+    }
+    debounceTimerCmed = setTimeout(() => buscarCmed(termo), 300);
+  });
+}
+
+// Data de publicação do arquivo CMED carregado (a mesma rotina que roda
+// sozinha a cada 24h no servidor) — o botão "Atualizar" força uma checagem
+// imediata, sem precisar esperar a rotina automática.
+const cmedCompetenciaAreaEl = document.getElementById('cmed-competencia-area');
+
+async function carregarStatusCmed() {
+  if (!cmedCompetenciaAreaEl) return;
+  try {
+    const resp = await fetch('/api/cmed/status');
+    const status = await resp.json();
+    renderizarStatusCmed(status);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderizarStatusCmed(status) {
+  const badge = status.publicadoEm
+    ? `<span class="sigtap-competencia-badge">Publicado em ${new Date(status.publicadoEm).toLocaleDateString('pt-BR')}${status.totalRegistros ? ` · ${status.totalRegistros.toLocaleString('pt-BR')} apresentações` : ''}</span>`
+    : '<span class="sigtap-competencia-badge">Base ainda não carregada</span>';
+  const botaoAtualizar = status.atualizacaoDisponivel
+    ? `<button type="button" id="btn-cmed-atualizar" class="chip-btn disponivel">Atualizar para a versão de ${new Date(status.ultimaModificacao).toLocaleDateString('pt-BR')}</button>`
+    : '';
+  cmedCompetenciaAreaEl.innerHTML = badge + botaoAtualizar;
+
+  const btn = document.getElementById('btn-cmed-atualizar');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      const senha = window.prompt('Senha para atualizar a base CMED:');
+      if (!senha) return;
+      btn.disabled = true;
+      btn.textContent = 'Atualizando…';
+      try {
+        const resp = await fetch('/api/cmed/atualizar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha }),
+        });
+        const dados = await resp.json();
+        if (!resp.ok) throw new Error(dados.erro || 'Falha ao atualizar.');
+        window.alert(`Base CMED atualizada: ${dados.totalRegistros} apresentações.`);
+        await carregarStatusCmed();
+        if (cmedBuscaEl && cmedBuscaEl.value.trim().length >= 2) buscarCmed(cmedBuscaEl.value.trim());
+      } catch (err) {
+        console.error(err);
+        window.alert(`Erro ao atualizar: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = 'Tentar atualizar novamente';
+      }
+    });
+  }
+}
+
+carregarStatusCmed();
+
 // ---------- Favoritos (localStorage, sem login) ----------
 const FAVORITOS_KEY = 'cbhpm_favoritos';
 const listaFavoritosEl = document.getElementById('lista-favoritos');

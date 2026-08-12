@@ -5,6 +5,7 @@ const { Pool } = require('pg');
 const packageJson = require('./package.json');
 const changelog = require('./CHANGELOG.json');
 const { competenciaLegivel, buscarUltimaDisponivelGitHub, atualizarSigtap } = require('./sigtap-atualizador');
+const { buscarUltimaModificacaoAnvisa, atualizarCmed } = require('./cmed-atualizador');
 
 const app = express();
 app.use(express.json());
@@ -511,6 +512,84 @@ app.get('/api/sigtap/buscar', async (req, res) => {
   }
 });
 
+// Preço-teto CMED (medicamentos) — dado público/aberto da ANVISA (não é Simpro
+// nem Brasíndice, que são bases comerciais pagas). Busca por nome do produto,
+// substância ou número de registro ANVISA.
+app.get('/api/cmed/buscar', async (req, res) => {
+  try {
+    const termo = (req.query.q || '').trim();
+    if (termo.length < 2) {
+      return res.json([]);
+    }
+
+    const { rows } = await pool.query(
+      `SELECT
+         codigo_ggrem, substancia, laboratorio, registro, produto, apresentacao,
+         classe_terapeutica, tipo_produto, regime_preco, pf_sem_impostos,
+         pmc_sem_impostos, pf_faixas, pmc_faixas, restricao_hospitalar, tarja,
+         comercializacao_2025, atualizado_em
+       FROM cmed_medicamentos
+       WHERE registro = $1 OR produto ILIKE $2 OR substancia ILIKE $2
+       ORDER BY (registro = $1) DESC, produto
+       LIMIT 40`,
+      [termo, `%${termo}%`]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca CMED:', err);
+    res.status(500).json({ erro: 'Erro ao buscar medicamentos na base CMED.' });
+  }
+});
+
+// Data de publicação do arquivo CMED carregado no banco (header Last-Modified
+// da fonte oficial ANVISA), e se a ANVISA já publicou uma versão mais nova.
+app.get('/api/cmed/status', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT publicado_em, atualizado_em, total_registros FROM cmed_metadata WHERE id = 1');
+    const atual = rows[0] || null;
+
+    let ultimaModificacao = null;
+    let erroVerificacao = null;
+    try {
+      ultimaModificacao = await buscarUltimaModificacaoAnvisa();
+    } catch (err) {
+      console.error('Erro ao verificar atualização CMED na ANVISA:', err);
+      erroVerificacao = 'Não foi possível verificar atualizações agora.';
+    }
+
+    const publicadoEm = atual && atual.publicado_em ? new Date(atual.publicado_em) : null;
+    res.json({
+      publicadoEm,
+      atualizadoEm: atual ? atual.atualizado_em : null,
+      totalRegistros: atual ? atual.total_registros : null,
+      ultimaModificacao,
+      atualizacaoDisponivel: Boolean(publicadoEm && ultimaModificacao && ultimaModificacao > publicadoEm),
+      erroVerificacao,
+    });
+  } catch (err) {
+    console.error('Erro ao consultar status do CMED:', err);
+    res.status(500).json({ erro: 'Erro ao consultar status do CMED.' });
+  }
+});
+
+// Baixa e reimporta o Preço-teto CMED direto da ANVISA. Protegido pela mesma
+// senha administrativa do SIGTAP (SIGTAP_UPDATE_SENHA no .env) — evita que
+// qualquer visitante dispare o download/reescrita do banco.
+app.post('/api/cmed/atualizar', async (req, res) => {
+  try {
+    const { senha } = req.body || {};
+    if (!process.env.SIGTAP_UPDATE_SENHA || senha !== process.env.SIGTAP_UPDATE_SENHA) {
+      return res.status(401).json({ erro: 'Senha inválida.' });
+    }
+
+    const resultado = await atualizarCmed(pool);
+    res.json(resultado);
+  } catch (err) {
+    console.error('Erro ao atualizar CMED:', err);
+    res.status(500).json({ erro: 'Erro ao atualizar a base CMED.' });
+  }
+});
+
 // Competência atual da Tabela Unificada SIGTAP carregada no banco, e se há
 // uma competência mais nova disponível no espelho GitHub (RenatoKR/SIGTAP,
 // sincronizado diariamente com o FTP oficial do DATASUS).
@@ -843,11 +922,39 @@ app.post('/api/cnes/lote', async (req, res) => {
   }
 });
 
+// Rotina automática do Preço-teto CMED: a ANVISA publica uma nova versão do
+// arquivo por mês, sempre na mesma URL — então "atualizar" é só comparar o
+// header Last-Modified contra o que já está no banco (cmed_metadata) e
+// reimportar se houver algo mais novo. Roda sozinha, sem senha nem clique
+// (é só releitura de dado público), verificando a cada 24h; o botão manual
+// na tela continua disponível pra forçar uma checagem imediata.
+const CMED_INTERVALO_AUTO_MS = 24 * 60 * 60 * 1000;
+async function checarAtualizacaoAutomaticaCmed() {
+  try {
+    const { rows } = await pool.query('SELECT publicado_em FROM cmed_metadata WHERE id = 1');
+    const publicadoEm = rows[0]?.publicado_em ? new Date(rows[0].publicado_em) : null;
+    const ultimaModificacao = await buscarUltimaModificacaoAnvisa();
+
+    if (!publicadoEm || (ultimaModificacao && ultimaModificacao > publicadoEm)) {
+      console.log('[cmed] Nova versão detectada na ANVISA, atualizando automaticamente...');
+      const resultado = await atualizarCmed(pool);
+      console.log(`[cmed] Atualização automática concluída: ${resultado.totalRegistros} registros, publicado em ${resultado.publicadoEm}.`);
+    } else {
+      console.log('[cmed] Nenhuma atualização disponível (checagem automática).');
+    }
+  } catch (err) {
+    console.error('[cmed] Erro na checagem/atualização automática:', err.message);
+  }
+}
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
   });
+
+  setTimeout(checarAtualizacaoAutomaticaCmed, 10_000);
+  setInterval(checarAtualizacaoAutomaticaCmed, CMED_INTERVALO_AUTO_MS);
 }
 
 module.exports = app;

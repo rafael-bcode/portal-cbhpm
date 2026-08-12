@@ -1625,8 +1625,10 @@ body > * {
 }
 .faq-resposta p { margin: 0 0 10px; }
 .faq-resposta p:last-child { margin-bottom: 0; }
-.faq-resposta a { color: var(--teal-dark); font-weight: 600; }
-.faq-portal-link {
+.faq-resposta a:not(.faq-portal-link) { color: var(--teal-dark); font-weight: 600; }
+.faq-portal-link,
+a.faq-portal-link,
+a.faq-portal-link:visited {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -1638,10 +1640,12 @@ body > * {
   border-radius: 999px;
   background: var(--teal);
   color: #fff;
+  text-decoration: none;
   cursor: pointer;
   margin-top: 4px;
 }
-.faq-portal-link:hover { background: var(--teal-dark); }
+.faq-portal-link:hover,
+a.faq-portal-link:hover { background: var(--teal-dark); color: #fff; }
 .faq-fonte {
   font-size: 0.72rem;
   color: var(--ink-soft);
