@@ -73,6 +73,437 @@ document.querySelectorAll('.subtab-btn').forEach((btn) => {
   });
 });
 
+// ---------- Acesso à aba de Dúvidas frequentes (link no card da barra lateral) ----------
+document.getElementById('link-faq-duvidas')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('tab-btn-faq')?.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+// ---------- Atalhos "abrir no portal" dentro das respostas do FAQ ----------
+document.querySelectorAll('.faq-portal-link').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    const tabBtn = document.querySelector(`.tab-btn[data-tab="${btn.dataset.gotoTab}"]`);
+    tabBtn?.click();
+    if (btn.dataset.gotoSubtab) {
+      const subtabBtn = document.querySelector(`.subtab-btn[data-subtab="${btn.dataset.gotoSubtab}"]`);
+      subtabBtn?.click();
+    }
+    if (btn.dataset.gotoAcao === 'versoes-tiss') {
+      document.getElementById('btn-versoes-tiss')?.click();
+    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+});
+
+// ---------- Abas (sub-navegação) dentro do FAQ, por assunto ----------
+document.querySelectorAll('.faq-subtab-btn').forEach((btn) => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.faq-subtab-btn').forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll('.faq-subtab-panel').forEach((p) => p.classList.add('hidden'));
+    btn.classList.add('active');
+    document.getElementById(`faqtab-${btn.dataset.faqtab}`).classList.remove('hidden');
+  });
+});
+
+// ---------- Indicadores hospitalares (benchmark ANAHP, informado pelo usuário) ----------
+// Nomes e definições dos indicadores seguem terminologia padrão do setor (a mesma usada por
+// ANVISA/ANAHP/literatura de gestão hospitalar) — descrições escritas por nós, sem copiar texto
+// nem valores do site da ANAHP. Os grupos (Econômico-Financeiro, Sustentabilidade, Gestão de
+// Pessoas, Assistencial) seguem a mesma organização usada por eles, só pra facilitar comparação.
+const CATEGORIAS_INDICADOR = {
+  financeiro: 'Econômico-Financeiro',
+  sustentabilidade: 'Sustentabilidade',
+  pessoas: 'Gestão de Pessoas',
+  assistencial: 'Assistencial',
+};
+
+const INDICADORES_ANAHP = [
+  {
+    id: 'indice-glosas',
+    categoria: 'financeiro',
+    nome: 'Índice de Glosas',
+    unidade: '%',
+    definicao: 'Percentual do valor faturado que foi glosado (recusado) por operadoras ou pelo SUS no período, sobre o total faturado.',
+    sentido: 'menor',
+    promo: ['fatura-glosas'],
+  },
+  {
+    id: 'prazo-recebimento',
+    categoria: 'financeiro',
+    nome: 'Prazo Médio de Recebimento',
+    unidade: 'dias',
+    definicao: 'Tempo médio, em dias, entre o faturamento de uma conta e o efetivo recebimento do valor pela operadora/SUS/particular.',
+    sentido: 'menor',
+    promo: [],
+  },
+  {
+    id: 'prazo-pagamento',
+    categoria: 'financeiro',
+    nome: 'Prazo Médio de Pagamento',
+    unidade: 'dias',
+    definicao: 'Tempo médio, em dias, entre a compra/serviço recebido e o efetivo pagamento a fornecedores.',
+    sentido: 'contexto',
+    promo: [],
+  },
+  {
+    id: 'margem-ebitda',
+    categoria: 'financeiro',
+    nome: 'Margem EBITDA',
+    unidade: '%',
+    definicao: 'Percentual do EBITDA (lucro antes de juros, impostos, depreciação e amortização) sobre a receita líquida do período.',
+    sentido: 'maior',
+    promo: [],
+  },
+  {
+    id: 'composicao-despesas',
+    categoria: 'financeiro',
+    nome: 'Composição de Despesas',
+    unidade: '%',
+    definicao: 'Distribuição percentual das despesas por natureza (pessoal, materiais, medicamentos, serviços de terceiros etc.) sobre o total de despesas.',
+    sentido: 'contexto',
+    promo: [],
+  },
+  {
+    id: 'consumo-agua',
+    categoria: 'sustentabilidade',
+    nome: 'Consumo de Água por Paciente-dia',
+    unidade: 'm³',
+    definicao: 'Volume de água consumido na instituição, dividido pelo total de pacientes-dia no período.',
+    sentido: 'menor',
+    promo: [],
+  },
+  {
+    id: 'consumo-energia',
+    categoria: 'sustentabilidade',
+    nome: 'Consumo de Energia por Paciente-dia',
+    unidade: 'kWh',
+    definicao: 'Energia elétrica consumida na instituição, dividida pelo total de pacientes-dia no período.',
+    sentido: 'menor',
+    promo: [],
+  },
+  {
+    id: 'residuos-reciclaveis',
+    categoria: 'sustentabilidade',
+    nome: 'Geração de Resíduos Recicláveis',
+    unidade: '%',
+    definicao: 'Percentual dos resíduos gerados pela instituição classificados como recicláveis, sobre o total de resíduos.',
+    sentido: 'maior',
+    promo: [],
+  },
+  {
+    id: 'rotatividade',
+    categoria: 'pessoas',
+    nome: 'Rotatividade de Pessoal (Turnover)',
+    unidade: '%',
+    definicao: 'Percentual de colaboradores desligados (ou substituídos) em relação ao quadro médio de funcionários no período.',
+    sentido: 'menor',
+    promo: [],
+  },
+  {
+    id: 'absenteismo',
+    categoria: 'pessoas',
+    nome: 'Absenteísmo (afastamentos até 15 dias)',
+    unidade: '%',
+    definicao: 'Percentual de horas/dias não trabalhados por afastamento (até 15 dias) em relação ao total de horas/dias previstos.',
+    sentido: 'menor',
+    promo: [],
+  },
+  {
+    id: 'taxa-ocupacao',
+    categoria: 'assistencial',
+    nome: 'Taxa de Ocupação',
+    unidade: '%',
+    definicao: 'Percentual de leitos ocupados em relação ao total de leitos operacionais disponíveis no período.',
+    sentido: 'contexto',
+    promo: ['watch'],
+  },
+  {
+    id: 'permanencia-uti-adulto',
+    categoria: 'assistencial',
+    nome: 'Média de Permanência — UTI Adulto',
+    unidade: 'dias',
+    definicao: 'Tempo médio de internação dos pacientes na UTI adulto, do ingresso à alta/óbito/transferência.',
+    sentido: 'menor',
+    promo: ['watch'],
+  },
+  {
+    id: 'permanencia-uti-neonatal',
+    categoria: 'assistencial',
+    nome: 'Média de Permanência — UTI Neonatal',
+    unidade: 'dias',
+    definicao: 'Tempo médio de internação dos pacientes na UTI neonatal, do ingresso à alta/óbito/transferência.',
+    sentido: 'menor',
+    promo: ['watch'],
+  },
+  {
+    id: 'permanencia-maternidade',
+    categoria: 'assistencial',
+    nome: 'Média de Permanência — Maternidade',
+    unidade: 'dias',
+    definicao: 'Tempo médio de internação das pacientes na maternidade, do ingresso à alta.',
+    sentido: 'menor',
+    promo: ['watch'],
+  },
+  {
+    id: 'mortalidade-institucional',
+    categoria: 'assistencial',
+    nome: 'Taxa de Mortalidade Institucional',
+    unidade: '%',
+    definicao: 'Percentual de óbitos em relação ao total de saídas (altas + óbitos) da instituição no período.',
+    sentido: 'menor',
+    promo: ['quality'],
+  },
+  {
+    id: 'mortalidade-operatoria',
+    categoria: 'assistencial',
+    nome: 'Taxa de Mortalidade Operatória',
+    unidade: '%',
+    definicao: 'Percentual de óbitos ocorridos em decorrência de procedimento cirúrgico, em relação ao total de cirurgias realizadas no período.',
+    sentido: 'menor',
+    promo: ['quality'],
+  },
+  {
+    id: 'infeccao-corrente-sanguinea',
+    categoria: 'assistencial',
+    nome: 'Densidade de Incidência de Infecção de Corrente Sanguínea (associada a CVC)',
+    unidade: '‰ (por 1000 cateteres-dia)',
+    definicao: 'Número de infecções de corrente sanguínea associadas a cateter venoso central (CVC), por 1000 cateteres-dia, no período.',
+    sentido: 'menor',
+    promo: ['watch', 'quality'],
+  },
+  {
+    id: 'infeccao-trato-urinario',
+    categoria: 'assistencial',
+    nome: 'Densidade de Incidência de Infecção do Trato Urinário (associada a CVD)',
+    unidade: '‰ (por 1000 cateteres-dia)',
+    definicao: 'Número de infecções do trato urinário associadas a cateter vesical de demora (CVD), por 1000 cateteres-dia, no período.',
+    sentido: 'menor',
+    promo: ['watch', 'quality'],
+  },
+  {
+    id: 'pneumonia-vm',
+    categoria: 'assistencial',
+    nome: 'Densidade de Incidência de Pneumonia (associada à ventilação mecânica)',
+    unidade: '‰ (por 1000 ventiladores-dia)',
+    definicao: 'Número de pneumonias associadas ao uso de ventilação mecânica (TQT/IOT), por 1000 ventiladores-dia, no período.',
+    sentido: 'menor',
+    promo: ['watch', 'quality'],
+  },
+  {
+    id: 'infeccao-sitio-cirurgico',
+    categoria: 'assistencial',
+    nome: 'Taxa de Infecção de Sítio Cirúrgico',
+    unidade: '%',
+    definicao: 'Percentual de cirurgias que evoluíram com infecção no sítio cirúrgico, em relação ao total de cirurgias realizadas no período.',
+    sentido: 'menor',
+    promo: ['watch', 'quality'],
+  },
+  {
+    id: 'lesao-por-pressao',
+    categoria: 'assistencial',
+    nome: 'Incidência de Lesão por Pressão',
+    unidade: '‰ (por 1000 pacientes-dia)',
+    definicao: 'Número de pacientes que desenvolveram lesão por pressão durante a internação, por 1000 pacientes-dia, no período.',
+    sentido: 'menor',
+    promo: ['quality'],
+  },
+  {
+    id: 'quedas',
+    categoria: 'assistencial',
+    nome: 'Incidência de Quedas',
+    unidade: '‰ (por 1000 pacientes-dia)',
+    definicao: 'Número de quedas de pacientes durante a internação, por 1000 pacientes-dia, no período.',
+    sentido: 'menor',
+    promo: ['quality'],
+  },
+  {
+    id: 'parto-normal',
+    categoria: 'assistencial',
+    nome: 'Taxa de Parto Normal',
+    unidade: '%',
+    definicao: 'Percentual de partos normais em relação ao total de partos realizados no período (a OMS recomenda reduzir cesáreas sem indicação clínica).',
+    sentido: 'maior',
+    promo: ['quality'],
+  },
+  {
+    id: 'erro-medicacao',
+    categoria: 'assistencial',
+    nome: 'Taxa de Erros de Medicação',
+    unidade: '‰ (por 1000 pacientes-dia)',
+    definicao: 'Número de erros de medicação identificados (dose, via, horário, paciente ou medicamento incorretos), por 1000 pacientes-dia, no período.',
+    sentido: 'menor',
+    promo: ['quality'],
+  },
+];
+
+const PROMO_INDICADOR = {
+  watch: {
+    cor: '#0891B2',
+    titulo: 'Argus Watch pode ajudar',
+    texto: 'Acompanha ocupação, leitos e permanência por unidade em tempo real, e monitora isolamentos (contato/gotícula/aérea) e dispositivos invasivos (CVC, PICC, CVD, TQT/IOT) — a mesma linha de frente que gera esse indicador.',
+    href: 'https://argusbc.com.br/',
+  },
+  quality: {
+    cor: '#F59E0B',
+    titulo: 'Argus Quality pode ajudar',
+    texto: 'Cadastra o indicador com meta, tendência e análise crítica por período, e conecta não conformidades e planos de ação corretiva quando o resultado fugir da meta.',
+    href: 'https://argusbc.com.br/',
+  },
+};
+
+function indicadorPromoHtml(indicador) {
+  if (!indicador.promo || indicador.promo.length === 0) return '';
+  const boxes = indicador.promo
+    .map((chave) => {
+      if (chave === 'fatura-glosas') {
+        return `
+        <div class="eco-card indicador-promo" style="--pcolor:var(--teal)">
+          <span class="eco-card-nome">🧾 Você já tem essa ferramenta aqui no portal</span>
+          <span class="eco-card-desc">O Validador de XML TISS e a tabela de códigos de glosa ajudam a identificar a causa antes de virar índice de glosa.</span>
+          <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
+            <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+            <button type="button" class="faq-portal-link" data-goto-tab="tiss-tabelas">📋 Tabelas de glosa TISS →</button>
+          </div>
+        </div>`;
+      }
+      const p = PROMO_INDICADOR[chave];
+      if (!p) return '';
+      return `
+      <a class="eco-card indicador-promo" style="--pcolor:${p.cor}" href="${p.href}" target="_blank" rel="noopener noreferrer">
+        <span class="eco-card-nome">${escaparHtml(p.titulo)}</span>
+        <span class="eco-card-desc">${escaparHtml(p.texto)}</span>
+      </a>`;
+    })
+    .join('');
+  return `<div class="indicador-promo-grid">${boxes}</div>`;
+}
+
+const indicadorSelectEl = document.getElementById('indicador-select');
+const indicadorInfoEl = document.getElementById('indicador-info');
+const indicadorFormEl = document.getElementById('indicador-form');
+const btnIndicadorCompararEl = document.getElementById('btn-indicador-comparar');
+const indicadorResultadoAreaEl = document.getElementById('indicador-resultado-area');
+const INDICADORES_STORAGE_KEY = 'cbhpm_indicadores_anahp';
+
+if (indicadorSelectEl) {
+  const gruposHtml = Object.entries(CATEGORIAS_INDICADOR)
+    .map(([chave, rotulo]) => {
+      const opcoes = INDICADORES_ANAHP
+        .filter((i) => i.categoria === chave)
+        .map((i) => `<option value="${i.id}">${escaparHtml(i.nome)}</option>`)
+        .join('');
+      return `<optgroup label="${escaparHtml(rotulo)}">${opcoes}</optgroup>`;
+    })
+    .join('');
+  indicadorSelectEl.insertAdjacentHTML('beforeend', gruposHtml);
+
+  function carregarComparacoesSalvas() {
+    try {
+      return JSON.parse(localStorage.getItem(INDICADORES_STORAGE_KEY)) || {};
+    } catch {
+      return {};
+    }
+  }
+
+  function salvarComparacao(id, dados) {
+    const todas = carregarComparacoesSalvas();
+    todas[id] = dados;
+    localStorage.setItem(INDICADORES_STORAGE_KEY, JSON.stringify(todas));
+  }
+
+  function renderizarResultado(indicador, periodo, meuValor, benchmark) {
+    const diferenca = meuValor - benchmark;
+    const diferencaPct = benchmark !== 0 ? (diferenca / Math.abs(benchmark)) * 100 : null;
+    let veredito = '';
+    let corVeredito = 'var(--ink-soft)';
+    if (indicador.sentido === 'menor') {
+      veredito = diferenca <= 0 ? '✅ Melhor que o benchmark' : '⚠️ Pior que o benchmark';
+      corVeredito = diferenca <= 0 ? '#059669' : '#DC2626';
+    } else if (indicador.sentido === 'maior') {
+      veredito = diferenca >= 0 ? '✅ Melhor que o benchmark' : '⚠️ Pior que o benchmark';
+      corVeredito = diferenca >= 0 ? '#059669' : '#DC2626';
+    } else {
+      veredito = 'ℹ️ Sem "melhor/pior" único — depende do contexto da instituição';
+    }
+
+    indicadorResultadoAreaEl.innerHTML = `
+      <div class="grupo grupo-principal" style="margin-top:8px;">
+        <div class="grupo-corpo" style="padding:16px;">
+          <div class="mp-header" style="margin:0 0 10px;">
+            <h3 style="margin:0;">${escaparHtml(indicador.nome)} — ${escaparHtml(periodo || 'período informado')}</h3>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:14px; margin-bottom:12px;">
+            <div class="stat-card"><div class="num">${meuValor}${escaparHtml(indicador.unidade)}</div><div class="lbl">Seu resultado</div></div>
+            <div class="stat-card"><div class="num">${benchmark}${escaparHtml(indicador.unidade)}</div><div class="lbl">Benchmark ANAHP</div></div>
+            <div class="stat-card"><div class="num">${diferenca > 0 ? '+' : ''}${diferenca.toFixed(2)}${escaparHtml(indicador.unidade)}</div><div class="lbl">Diferença absoluta</div></div>
+            <div class="stat-card"><div class="num">${diferencaPct === null ? '—' : `${diferencaPct > 0 ? '+' : ''}${diferencaPct.toFixed(1)}%`}</div><div class="lbl">Diferença percentual</div></div>
+          </div>
+          <p style="font-weight:700; color:${corVeredito}; margin:0 0 4px;">${veredito}</p>
+          <p class="ajustes-nota" style="margin:0;">Comparação calculada com os valores que você informou — o benchmark ANAHP não é armazenado nem exibido automaticamente pelo portal.</p>
+        </div>
+      </div>
+      ${indicadorPromoHtml(indicador)}
+    `;
+    document.querySelectorAll('.faq-portal-link').forEach((btn) => {
+      if (btn.dataset.bound) return;
+      btn.dataset.bound = '1';
+      btn.addEventListener('click', () => {
+        const tabBtn = document.querySelector(`.tab-btn[data-tab="${btn.dataset.gotoTab}"]`);
+        tabBtn?.click();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      });
+    });
+  }
+
+  indicadorSelectEl.addEventListener('change', () => {
+    const indicador = INDICADORES_ANAHP.find((i) => i.id === indicadorSelectEl.value);
+    indicadorResultadoAreaEl.innerHTML = '';
+    if (!indicador) {
+      indicadorInfoEl.innerHTML = '';
+      indicadorFormEl.classList.add('hidden');
+      btnIndicadorCompararEl.classList.add('hidden');
+      return;
+    }
+    indicadorInfoEl.innerHTML = `
+      <div class="grupo grupo-principal" style="margin:12px 0;">
+        <div class="grupo-corpo" style="padding:14px 16px;">
+          <p style="margin:0 0 8px;"><strong>${escaparHtml(indicador.nome)}</strong> <span class="ajustes-nota" style="margin:0;">(unidade: ${escaparHtml(indicador.unidade)})</span></p>
+          <p style="margin:0;">${escaparHtml(indicador.definicao)}</p>
+        </div>
+      </div>
+    `;
+    indicadorFormEl.classList.remove('hidden');
+    btnIndicadorCompararEl.classList.remove('hidden');
+
+    const salvas = carregarComparacoesSalvas();
+    const anterior = salvas[indicador.id];
+    document.getElementById('indicador-periodo').value = anterior?.periodo || '';
+    document.getElementById('indicador-meu-valor').value = anterior?.meuValor ?? '';
+    document.getElementById('indicador-benchmark').value = anterior?.benchmark ?? '';
+  });
+
+  btnIndicadorCompararEl.addEventListener('click', () => {
+    const indicador = INDICADORES_ANAHP.find((i) => i.id === indicadorSelectEl.value);
+    if (!indicador) return;
+    const periodo = document.getElementById('indicador-periodo').value.trim();
+    const meuValor = parseFloat(document.getElementById('indicador-meu-valor').value);
+    const benchmark = parseFloat(document.getElementById('indicador-benchmark').value);
+    if (Number.isNaN(meuValor) || Number.isNaN(benchmark)) {
+      indicadorResultadoAreaEl.innerHTML = '<p class="msg vazio">Informe seu resultado e o benchmark ANAHP (números) pra comparar.</p>';
+      return;
+    }
+    salvarComparacao(indicador.id, { periodo, meuValor, benchmark });
+    renderizarResultado(indicador, periodo, meuValor, benchmark);
+  });
+}
+
+document.getElementById('link-indicadores-anahp')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('tab-btn-indicadores')?.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
 // ---------- Favoritos (localStorage, sem login) ----------
 const FAVORITOS_KEY = 'cbhpm_favoritos';
 const listaFavoritosEl = document.getElementById('lista-favoritos');

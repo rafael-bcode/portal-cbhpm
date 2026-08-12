@@ -1,0 +1,41 @@
+Para: contato@anahp.com.br
+Assunto: Solicitação de autorização para uso de referência dos Indicadores Hospitalares ANAHP — parceria Argus Fatura
+
+Prezados,
+
+Meu nome é Rafael, da Baumgratz Code, empresa de tecnologia especializada em soluções digitais
+para o setor da saúde (ecossistema Argus — argusbc.com.br), responsável também pelo Argus Fatura,
+portal gratuito de apoio ao faturamento em saúde (consulta de CBHPM, SUS/SIGTAP, TUSS, CID-10 e
+validação de arquivos do Padrão TISS/ANS), usado por faturistas e gestores hospitalares.
+
+Estamos desenvolvendo, dentro do Argus Fatura, uma área de comparação de indicadores hospitalares,
+na qual o usuário escolhe um indicador (organizado nos mesmos grupos usados pela ANAHP —
+Econômico-Financeiro, Sustentabilidade, Gestão de Pessoas e Assistencial), informa o próprio
+resultado no período e pode comparar com o valor de referência (benchmark) do setor.
+
+Ao consultar os Termos e Condições de Uso do site de vocês, identificamos que a reprodução total
+ou parcial do conteúdo — incluindo os indicadores e valores publicados em
+anahp.com.br/indicadores-hospitalares — depende de autorização expressa da ANAHP. Por isso, hoje
+a ferramenta não exibe nenhum valor de benchmark da ANAHP automaticamente: o próprio usuário
+precisa consultar o valor diretamente no site oficial de vocês e digitá-lo manualmente para que o
+portal calcule a comparação.
+
+Gostaríamos de saber se haveria interesse da ANAHP em autorizar, formal ou comercialmente, o uso
+dos indicadores e/ou valores de benchmark (do site público ou do SINHA) dentro dessa funcionalidade,
+com a devida atribuição e link de volta para a ANAHP em cada indicador exibido. Do nosso lado,
+enxergamos isso como uma via de mão dupla: o portal levaria mais visibilidade aos indicadores e à
+metodologia da ANAHP para quem fatura no dia a dia, e a comparação ficaria mais completa e imediata
+para o usuário.
+
+Ficamos à disposição para:
+- Assinar acordo de uso de dados ou termo de confidencialidade, conforme exigido;
+- Detalhar tecnicamente como o valor seria exibido, atualizado e atribuído à ANAHP;
+- Ajustar formato, escopo (quais indicadores) ou qualquer condição que a ANAHP considerar necessária.
+
+Desde já agradecemos a atenção, e ficamos no aguardo de um retorno para avaliarmos os próximos
+passos.
+
+Atenciosamente,
+Rafael
+Baumgratz Code — Ecossistema Argus
+rafael@baumgratzcode.com.br

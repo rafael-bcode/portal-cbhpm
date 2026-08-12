@@ -190,6 +190,8 @@
     <button type="button" class="tab-btn" data-tab="tiss-tabelas">Tabelas TISS</button>
     <button type="button" class="tab-btn" data-tab="cid10">CID-10</button>
     <button type="button" class="tab-btn" data-tab="verificadores">Verificadores</button>
+    <button type="button" class="tab-btn" data-tab="faq" id="tab-btn-faq" style="display:none" aria-hidden="true" tabindex="-1">Dúvidas frequentes</button>
+    <button type="button" class="tab-btn" data-tab="indicadores" id="tab-btn-indicadores" style="display:none" aria-hidden="true" tabindex="-1">Indicadores ANAHP</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -745,6 +747,475 @@
 
   </div>
 
+  <div id="tab-faq" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Dúvidas frequentes sobre faturamento em saúde</h2>
+    </div>
+    <p class="ajustes-nota faq-intro">
+      Perguntas comuns de quem fatura para o SUS, para operadoras de saúde suplementar ou em consultório
+      particular — organizadas por assunto, com base em fontes oficiais (AMB, ANS, DATASUS) e nos sites da
+      Simpro e da Brasíndice. Sempre que a resposta é algo que o próprio portal já resolve, tem um atalho direto
+      pra ferramenta — sem precisar sair daqui.
+    </p>
+
+    <div class="tabs subtabs faq-subtabs">
+      <button type="button" class="faq-subtab-btn active" data-faqtab="sus">SUS / SIGTAP</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="cbhpm">CBHPM</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="simpro">Simpro</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="brasindice">Brasíndice</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="tiss">TISS / TUSS</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="particular">Particular</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="glosas">Glosas</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="certificacoes">Certificações</button>
+    </div>
+
+    <div id="faqtab-sus" class="faq-subtab-panel">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é a SIGTAP e para que ela serve?</summary>
+        <div class="faq-resposta">
+          <p>SIGTAP é o Sistema de Gerenciamento da Tabela de Procedimentos, Medicamentos e OPM do SUS — a tabela
+          oficial do Ministério da Saúde/DATASUS. Para cada procedimento, ela traz código, valores de repasse
+          (Serviço Profissional, Hospitalar e Ambulatorial), complexidade, modalidade de atendimento e em quais
+          instrumentos de registro (BPA, APAC, AIH) ele pode ser faturado. É atualizada mensalmente, por
+          competência.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="sigtap">🔎 Consultar a SIGTAP aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que são as "modalidades" de um procedimento na SIGTAP?</summary>
+        <div class="faq-resposta">
+          <p>Modalidade identifica o nível/contexto de atenção em que o procedimento pode ser realizado (por
+          exemplo, ambulatorial, hospitalar ou de urgência). Cada procedimento tem uma ou mais modalidades
+          permitidas — faturar fora da modalidade prevista é uma causa comum de glosa. A tabela também organiza
+          tudo por Grupo, Subgrupo e Forma de Organização, do mais genérico ao mais específico.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="sigtap">🔎 Consultar a SIGTAP aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual a diferença entre BPA, AIH e APAC, e como valido meu arquivo?</summary>
+        <div class="faq-resposta">
+          <p><strong>BPA</strong> (Boletim de Produção Ambulatorial) registra atendimentos ambulatoriais simples;
+          <strong>AIH</strong> (Autorização de Internação Hospitalar) registra internações; <strong>APAC</strong>
+          (Autorização de Procedimento Ambulatorial de Alta Complexidade/Custo) registra procedimentos
+          ambulatoriais que exigem autorização prévia, como quimioterapia e diálise.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador-sus" data-goto-subtab="bpa">✅ Validar BPA, AIH ou APAC aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como confiro se dois procedimentos SIGTAP podem ser faturados juntos?</summary>
+        <div class="faq-resposta">
+          <p>A própria tabela SIGTAP tem um registro oficial de compatibilidade entre procedimentos — se não há
+          registro de compatibilidade, o par não deveria ser lançado na mesma guia (embora isso não seja
+          absoluto: ausência de registro nem sempre é a mesma coisa que incompatibilidade confirmada).</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🔗 Verificar compatibilidade aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Meu procedimento exige alguma habilitação do prestador — como sei?</summary>
+        <div class="faq-resposta">
+          <p>Procedimentos de maior complexidade (UTI, oncologia, alta complexidade etc.) costumam exigir
+          habilitação específica do prestador junto ao SUS/operadora — faturar sem ela é uma causa clássica de
+          glosa por "credenciado não habilitado".</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🔗 Conferir habilitação exigida aqui no portal →</button>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-cbhpm" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é a CBHPM?</summary>
+        <div class="faq-resposta">
+          <p>Classificação Brasileira Hierarquizada de Procedimentos Médicos, publicada pela Associação Médica
+          Brasileira (AMB) — a referência nacional pra nomear e classificar procedimentos médicos e calcular
+          honorários (Porte, UCO e Filme) tanto na saúde suplementar quanto no particular. Ela não é uma tabela
+          de preços prontos em reais: define o procedimento e o porte, e o valor final depende do valor de
+          referência de Porte/UCO negociado com cada convênio.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="consulta">🧮 Calcular um procedimento pela CBHPM aqui →</button>
+          <p class="faq-fonte">Fonte oficial: <a href="https://amb.org.br/cbhpm/" target="_blank" rel="noopener">amb.org.br/cbhpm</a></p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como calcular o valor de um procedimento pela CBHPM (Porte, UCO, Filme)?</summary>
+        <div class="faq-resposta">
+          <p>O valor do procedimento é a soma de Porte (já calculado na tabela, ajustável por %), UCO (quantidade
+          × valor de referência da edição) e Filme (m² × valor informado). Porte Anestésico e
+          Auxiliares/Instrumentador são honorários de outros profissionais e entram em blocos separados.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="consulta">🧮 Abrir a Consulta por procedimento →</button>
+          <p>Pra cirurgia com mais de um procedimento no mesmo ato (com redução de porte por via de acesso), use
+          a calculadora de múltiplos procedimentos.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="multiplos">🧮 Abrir Múltiplos procedimentos →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Preciso comprar a CBHPM pra consultar os valores?</summary>
+        <div class="faq-resposta">
+          <p>Não é obrigatório só pra consultar códigos, portes e valores de referência — isso o Argus Fatura já
+          faz, gratuitamente, em qualquer edição de 2004 até a atual. A AMB vende o livro oficial (físico ou
+          digital) com o conteúdo completo e as resoluções normativas, útil se você precisa do documento oficial
+          em si — mas não é pré-requisito pra usar a tabela no dia a dia.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="consulta">🧮 Consultar valores por edição aqui →</button>
+          <p class="faq-fonte">Compra do livro oficial: <a href="https://amb.org.br/adquirir-cbhpm/" target="_blank" rel="noopener">amb.org.br/adquirir-cbhpm</a></p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual a diferença entre CBHPM, TUSS e SIGTAP? Como converto um código?</summary>
+        <div class="faq-resposta">
+          <p><strong>CBHPM</strong> é a classificação médica da AMB, usada pra negociar e calcular honorário.
+          <strong>TUSS</strong> é a terminologia padronizada da ANS, usada nas guias do Padrão TISS entre
+          prestador e operadora. <strong>SIGTAP</strong> é a tabela oficial do SUS. Um mesmo procedimento pode
+          ter três códigos diferentes, um em cada tabela.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🔗 Converter um código entre as três tabelas →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que muda entre as edições da CBHPM (2010 a 2022)?</summary>
+        <div class="faq-resposta">
+          <p>Cada edição revisa a lista de procedimentos, os portes e os percentuais de equipe — por exemplo, os
+          percentuais de auxiliar foram de 30/20/20/20 (até a edição 2017) pra 60/40/30/30 a partir da edição
+          2018. Usar a edição errada é uma das causas mais comuns de glosa por divergência de valor.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="consulta">🧮 Comparar edições na Consulta por procedimento →</button>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-simpro" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é a Simpro?</summary>
+        <div class="faq-resposta">
+          <p>É uma revista/base de referência de preços máximos de medicamentos e materiais/produtos para saúde,
+          usada como parâmetro em negociações entre hospitais e operadoras — em faturamento de contas
+          hospitalares, análise de contas médicas, cotações e licitações.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como assino a revista Simpro?</summary>
+        <div class="faq-resposta">
+          <p>A assinatura é feita direto no site oficial, com emissão de boleto pelo próprio site ou depósito
+          identificado; pra propostas comerciais/planos corporativos, o contato é pelo e-mail
+          comercial@simpro.com.br.</p>
+          <a class="faq-portal-link" href="https://www.simpro.com.br/PortalPages/Revista/Assinatura.aspx" target="_blank" rel="noopener">🌐 Ir pra página oficial de assinatura da Simpro →</a>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O Argus Fatura tem os preços da tabela Simpro?</summary>
+        <div class="faq-resposta">
+          <p>Ainda não — hoje o portal cobre CBHPM, SUS/SIGTAP, TUSS, CID-10 e Padrão TISS, mas não tem a base de
+          preços da Simpro carregada. É um assunto que fica anotado pra uma próxima evolução do portal.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Simpro e Brasíndice são a mesma coisa?</summary>
+        <div class="faq-resposta">
+          <p>Não — são publicações independentes, de empresas diferentes, com a mesma finalidade (preço de
+          referência de medicamentos e materiais). Muitos contratos entre hospital e operadora especificam qual
+          das duas (ou as duas) vale como referência de faturamento, então vale checar isso no contrato.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-brasindice" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é a Brasíndice?</summary>
+        <div class="faq-resposta">
+          <p>É um guia farmacêutico com os preços de medicamentos calculados e registrados pelos laboratórios
+          fabricantes na CMED (Câmara de Regulação do Mercado de Medicamentos), de publicação obrigatória nas
+          revistas de preço. Junto com a Simpro, é uma das referências mais usadas pra faturar medicamentos e
+          materiais em contas hospitalares.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como assino a Brasíndice?</summary>
+        <div class="faq-resposta">
+          <p>Pela loja oficial, com opções impressa, online ou combinada, em diferentes planos (básico,
+          intermediário, avançado) e pagamento por cartão, boleto ou Pix. Também dá pra negociar por telefone/
+          WhatsApp: (11) 3223-5111 / (11) 91782-0028.</p>
+          <a class="faq-portal-link" href="https://www.loja.brasindice.com.br/revista-brasindice" target="_blank" rel="noopener">🌐 Ir pra loja oficial da Brasíndice →</a>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O Argus Fatura tem os preços da Brasíndice?</summary>
+        <div class="faq-resposta">
+          <p>Ainda não — pelo mesmo motivo da Simpro: hoje o portal não tem a base de preços de medicamentos da
+          Brasíndice carregada. Também fica anotado como possível evolução futura.</p>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-tiss" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é o Padrão TISS?</summary>
+        <div class="faq-resposta">
+          <p>É o padrão obrigatório da ANS pra troca eletrônica de informações (guias, faturas, glosas) entre
+          prestadores e operadoras de saúde suplementar — define a estrutura dos arquivos XML enviados.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validar um XML TISS aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como confiro meu arquivo XML antes de enviar pra operadora?</summary>
+        <div class="faq-resposta">
+          <p>O validador do portal confere o hash, a versão do padrão, os tipos de guia, os códigos de tabela, os
+          valores por item e o total de cada guia — e roda toda a validação de estrutura contra o XSD oficial da
+          versão vigente <strong>sem que o arquivo saia do seu navegador</strong>.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Abrir o Validador de XML TISS →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é a TUSS, e onde consulto as tabelas de domínio (glosa, CBO etc.)?</summary>
+        <div class="faq-resposta">
+          <p>TUSS (Terminologia Unificada da Saúde Suplementar) é o conjunto de tabelas de domínio da ANS com os
+          códigos e nomenclaturas padronizados usados dentro dos arquivos do Padrão TISS — pra procedimentos,
+          materiais, medicamentos, tipos de despesa, códigos de glosa etc. Um código TUSS errado numa guia é
+          causa comum de glosa mesmo com o XML estruturalmente válido.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="tiss-tabelas">📋 Consultar as Tabelas TISS aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Minha versão do TISS ficou desatualizada — quais versões existem?</summary>
+        <div class="faq-resposta">
+          <p>A ANS define datas a partir das quais versões antigas passam a ser rejeitadas — por exemplo, desde
+          janeiro de 2026 a versão 3.05.00 não é mais aceita. O portal mostra o resumo de cada versão recente e
+          desde quando ela é obrigatória.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador" data-goto-acao="versoes-tiss">📜 Ver histórico de versões do TISS →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Reenviei um arquivo depois de uma glosa — como comparo com o original?</summary>
+        <div class="faq-resposta">
+          <p>Dá pra comparar as guias de dois arquivos pelo número da guia (prestador) e ver o que mudou item a
+          item — quantidade, valor e a diferença de total — direto no validador.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador">🔁 Comparar dois arquivos XML aqui →</button>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-particular" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Sou obrigado a emitir nota fiscal ou recibo de consulta particular?</summary>
+        <div class="faq-resposta">
+          <p>Sim. Deixar de emitir comprovante da prestação de serviço é crime contra a ordem tributária (art. 1º
+          da Lei 8.137/90). Médico pessoa física deve usar o app Receita Saúde, da Receita Federal (obrigatório
+          desde 01/01/2025 — recibo emitido manualmente sem ele deixou de ter validade fiscal); médico pessoa
+          jurídica (com CNPJ) emite nota fiscal de serviço normalmente, pela prefeitura do seu município.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como definir o valor de uma consulta ou procedimento particular?</summary>
+        <div class="faq-resposta">
+          <p>Não existe tabela oficial obrigatória pro particular — a prática comum é usar a CBHPM como
+          referência de porte e multiplicar pelo valor de UCO que você pratica, ajustando os percentuais
+          livremente. Simpro e Brasíndice, por sua vez, servem de referência pra materiais e medicamentos usados
+          no procedimento, quando cobrados à parte.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="consulta">🧮 Simular um valor pela CBHPM aqui →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Dá pra gerar uma guia/fatura simulada pro paciente particular?</summary>
+        <div class="faq-resposta">
+          <p>Sim — depois de consultar um procedimento na aba "Consulta por procedimento", aparece o botão
+          "Guia/Fatura" pra gerar um documento com os valores calculados, pronto pra imprimir (não é um XML do
+          Padrão TISS nem é enviado a nenhuma operadora).</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="consulta">🧾 Ir até a Consulta por procedimento →</button>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-glosas" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é glosa?</summary>
+        <div class="faq-resposta">
+          <p>Glosa é quando a operadora ou o SUS recusa o pagamento — total ou parcial — de um item faturado,
+          geralmente por divergência de valor, tabela, código, documentação ou regra de cobertura. O primeiro
+          passo pra contestar é entender o motivo, a partir do código de glosa TISS.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="tiss-tabelas">📋 Consultar códigos de glosa TISS aqui →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual o prazo pra recorrer de uma glosa?</summary>
+        <div class="faq-resposta">
+          <p>Varia por operadora e por contrato — normalmente entre 30 e 90 dias após a notificação, conforme
+          definido no manual do prestador de cada convênio. Não existe um prazo único fixado pela ANS: vale
+          sempre checar o prazo específico no contrato ou no manual do prestador.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Esgotei o recurso com a operadora e a glosa foi mantida — o que fazer?</summary>
+        <div class="faq-resposta">
+          <p>É possível acionar a ANS pela NIP (Notificação de Intermediação Preliminar) ou buscar outras vias
+          administrativas/judiciais. Por regra, a operadora não pode impedir contratualmente o prestador de
+          contestar glosas nem negar acesso às justificativas.</p>
+          <a class="faq-portal-link" href="https://www.gov.br/ans/pt-br" target="_blank" rel="noopener">🌐 Portal oficial da ANS →</a>
+        </div>
+      </details>
+
+    </div>
+
+    <div id="faqtab-certificacoes" class="faq-subtab-panel hidden">
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é acreditação hospitalar e por que ela importa?</summary>
+        <div class="faq-resposta">
+          <p>É uma avaliação externa voluntária, feita por uma entidade independente, que confere se a
+          instituição atende padrões reconhecidos de segurança do paciente, qualidade assistencial e gestão.
+          Importa porque reduz risco assistencial e eventos adversos, fortalece a credibilidade da instituição
+          perante pacientes, operadoras e investidores — e em vários contratos com operadoras ou redes
+          hospitalares já é pré-requisito, não diferencial.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Quais são as principais acreditações usadas no Brasil?</summary>
+        <div class="faq-resposta">
+          <p>A mais adotada é a <strong>ONA</strong> (Organização Nacional de Acreditação), com três níveis
+          crescentes de exigência: Nível 1 (Acreditado), Nível 2 (Acreditado Pleno) e Nível 3 (Acreditado com
+          Excelência). Também são usadas certificações internacionais como a <strong>Joint Commission
+          International (JCI)</strong> e o <strong>Qmentum International</strong> (Accreditation Canada), mais
+          comuns em grandes hospitais e redes.</p>
+          <p class="faq-fonte">Fonte oficial: <a href="https://ona.org.br/" target="_blank" rel="noopener">ona.org.br</a></p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que a instituição precisa organizar pra se preparar pra uma acreditação?</summary>
+        <div class="faq-resposta">
+          <p>Em linhas gerais: documentos e processos padronizados (POPs, manuais, políticas) com controle de
+          versão e validade; indicadores de desempenho com meta e acompanhamento por período; um fluxo
+          estruturado de não conformidades e planos de ação corretiva; gestão de riscos; e trilha de auditoria
+          de tudo isso, pra apresentar evidência durante a avaliação — reunir isso às pressas na véspera é uma
+          das maiores causas de reprovação ou pendência numa avaliação.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Como o Argus Quality ajuda nesse processo?</summary>
+        <div class="faq-resposta">
+          <p>É exatamente esse conjunto que o Argus Quality organiza numa única plataforma: documentos
+          controlados com ciclo de vida completo (rascunho, revisão, aprovação, publicação, validade),
+          indicadores com meta/tendência/análise crítica, não conformidades e planos de ação conectados a cada
+          desvio, gestão de riscos e relatórios/trilha de auditoria prontos pra qualquer avaliação externa —
+          reduzindo o trabalho manual de reunir evidência quando a auditoria se aproxima.</p>
+          <a class="faq-portal-link" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">🏅 Conhecer o Argus Quality →</a>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Indicadores fazem parte da avaliação de acreditação?</summary>
+        <div class="faq-resposta">
+          <p>Sim — acompanhar indicadores de forma contínua (não só quando a auditoria está próxima) é um dos
+          critérios avaliados nos principais modelos. Comparar seu resultado com uma referência de mercado, como
+          os indicadores da ANAHP, ajuda a mostrar que a instituição não só mede, mas também usa o dado pra
+          melhorar.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="indicadores">📊 Comparar seus indicadores com a ANAHP aqui →</button>
+        </div>
+      </details>
+
+    </div>
+
+  </section>
+
+  </div>
+
+  <div id="tab-indicadores" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Indicadores hospitalares — compare com o benchmark ANAHP</h2>
+    </div>
+    <p class="ajustes-nota">
+      Escolha um indicador (organizados nos mesmos 4 grupos usados pela ANAHP: Econômico-Financeiro,
+      Sustentabilidade, Gestão de Pessoas e Assistencial), informe o seu resultado no período e o valor de
+      benchmark que você consultou na ANAHP pra aquele período, e veja como você está em relação à referência.
+    </p>
+    <p class="ajustes-nota">
+      <strong>Por que preciso digitar o benchmark, se ele já está no site da ANAHP?</strong> Os indicadores e
+      valores publicados pela ANAHP são conteúdo proprietário — os
+      <a href="https://www.anahp.com.br/pdf/Anahp-Termos-e-Condicoes-de-uso-Sites.pdf" target="_blank" rel="noopener">termos de uso oficiais</a>
+      proíbem reprodução total ou parcial sem autorização expressa. Por isso o portal não copia o valor de
+      benchmark automaticamente — você consulta no
+      <a href="https://www.anahp.com.br/indicadores-hospitalares/" target="_blank" rel="noopener">site oficial de indicadores da ANAHP</a>
+      e informa aqui; o portal só faz a comparação com o que você digitou.
+    </p>
+
+    <div class="eco-card quality-banner" style="--pcolor:#F59E0B;">
+      <span class="eco-card-nome">🏅 Meça, acompanhe e avance rumo à acreditação com o Argus Quality</span>
+      <span class="eco-card-desc">
+        Medir e controlar indicadores de forma consistente — não só olhar o número uma vez por ano — é a base
+        de qualquer processo de acreditação hospitalar (ONA, Qmentum, Joint Commission e outras). O Argus
+        Quality organiza cada indicador com meta, tendência e análise crítica por período, conecta não
+        conformidades e planos de ação a todo resultado fora da meta, e mantém documentos e trilha de auditoria
+        prontos pra qualquer avaliação externa — o apoio de gestão que a comparação isolada aqui do portal não
+        substitui.
+      </span>
+      <a href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer" class="faq-portal-link quality-banner-cta">🏅 Conhecer o Argus Quality →</a>
+    </div>
+
+    <div class="field">
+      <label for="indicador-select">Indicador</label>
+      <select id="indicador-select">
+        <option value="">Selecione um indicador…</option>
+      </select>
+    </div>
+
+    <div id="indicador-info"></div>
+
+    <div id="indicador-form" class="ajustes-grid hidden" style="margin-top:4px;">
+      <div class="field">
+        <label for="indicador-periodo">Período (ex: 2025, 1º trimestre/2026)</label>
+        <input type="text" id="indicador-periodo" placeholder="Ex: 2025">
+      </div>
+      <div class="field">
+        <label for="indicador-meu-valor">Seu resultado no período</label>
+        <input type="number" id="indicador-meu-valor" step="0.01" placeholder="Ex: 4.8">
+      </div>
+      <div class="field">
+        <label for="indicador-benchmark">Benchmark ANAHP (informado por você)</label>
+        <input type="number" id="indicador-benchmark" step="0.01" placeholder="Ex: 6.2">
+      </div>
+    </div>
+
+    <button type="button" id="btn-indicador-comparar" class="btn-consultar hidden" style="margin-top:6px;">Comparar</button>
+
+  </section>
+
+  <section id="indicador-resultado-area"></section>
+
+  </div>
+
 </main>
 
 <aside class="eco-sidebar eco-sidebar-right">
@@ -764,6 +1235,16 @@
   <a class="eco-card" style="--pcolor:#2563EB" href="https://argusbc.com.br/" target="_blank" rel="noopener noreferrer">
     <span class="eco-card-nome">Argus TaxInvoice</span>
     <span class="eco-card-desc">Captura, valida e arquiva notas fiscais — conferência fiscal automatizada com o ERP.</span>
+  </a>
+
+  <a class="eco-card eco-card-faq" href="#" id="link-faq-duvidas">
+    <span class="eco-card-nome">❓ Dúvidas frequentes</span>
+    <span class="eco-card-desc">SUS, CBHPM, Simpro, Brasíndice e TISS — respostas rápidas, com atalho direto pra cada ferramenta aqui do portal.</span>
+  </a>
+
+  <a class="eco-card eco-card-faq" href="#" id="link-indicadores-anahp">
+    <span class="eco-card-nome">📊 Indicadores ANAHP</span>
+    <span class="eco-card-desc">Escolha um indicador hospitalar, informe seu resultado e o benchmark da ANAHP, e veja como você está em relação à referência.</span>
   </a>
 </aside>
 

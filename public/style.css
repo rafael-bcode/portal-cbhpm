@@ -232,6 +232,16 @@ body > * {
 .eco-card-nome { font-size: 0.78rem; font-weight: 700; color: var(--pcolor, var(--ink)); }
 .eco-card-desc { font-size: 0.72rem; line-height: 1.4; color: var(--ink-soft); }
 
+/* Link de acesso ao FAQ — junto dos cards do ecossistema, mas com destaque
+   próprio (fundo tintado + separador) por não ser um produto externo, e sim
+   uma seção interna do próprio portal. */
+.eco-card-faq {
+  margin-top: 4px;
+  padding-top: 13px;
+  border-top: 1px dashed var(--border);
+  background: var(--teal-tint);
+}
+
 .btn-ajuda {
   width: 24px;
   height: 24px;
@@ -1559,3 +1569,114 @@ body > * {
   .go-observacao { min-height: 12px; padding: 3px 6px; }
   .go-totais { margin-top: 0; }
 }
+
+/* ---------- FAQ (Dúvidas frequentes) ---------- */
+.faq-intro { margin-bottom: 20px; }
+.faq-subtabs { margin-bottom: 20px; }
+.faq-subtab-btn {
+  font-family: var(--sans);
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 9px 16px;
+  border: none;
+  background: none;
+  color: var(--ink-soft);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1.5px;
+}
+.faq-subtab-btn:hover { color: var(--teal-dark); }
+.faq-subtab-btn.active { color: var(--teal-dark); border-bottom-color: var(--teal); }
+.faq-subtab-panel.hidden { display: none; }
+
+.faq-item {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.faq-pergunta {
+  list-style: none;
+  cursor: pointer;
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 14px 16px;
+  background: var(--teal-tint);
+  font-weight: 700;
+  font-size: 0.92rem;
+  color: var(--ink);
+  user-select: none;
+}
+.faq-pergunta::-webkit-details-marker { display: none; }
+.faq-pergunta::before {
+  content: '▸';
+  font-size: 0.7rem;
+  color: var(--teal-dark);
+  transition: transform 0.15s;
+  flex-shrink: 0;
+}
+.faq-item[open] > .faq-pergunta::before { transform: rotate(90deg); }
+.faq-resposta {
+  padding: 14px 16px 16px;
+  font-size: 0.88rem;
+  line-height: 1.65;
+  color: var(--ink-soft);
+}
+.faq-resposta p { margin: 0 0 10px; }
+.faq-resposta p:last-child { margin-bottom: 0; }
+.faq-resposta a { color: var(--teal-dark); font-weight: 600; }
+.faq-portal-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--sans);
+  font-size: 0.8rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: var(--teal);
+  color: #fff;
+  cursor: pointer;
+  margin-top: 4px;
+}
+.faq-portal-link:hover { background: var(--teal-dark); }
+.faq-fonte {
+  font-size: 0.72rem;
+  color: var(--ink-soft);
+  opacity: 0.85;
+  margin-top: 10px !important;
+}
+
+/* ---------- Indicadores ANAHP ---------- */
+.stat-card {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+}
+.stat-card .num { font-size: 1.15rem; font-weight: 800; color: var(--ink); line-height: 1.1; }
+.stat-card .lbl { font-size: 0.72rem; color: var(--ink-soft); line-height: 1.3; margin-top: 4px; }
+
+.indicador-promo-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.indicador-promo.eco-card {
+  padding: 14px 16px;
+}
+.indicador-promo .eco-card-nome { font-size: 0.85rem; }
+.indicador-promo .eco-card-desc { font-size: 0.8rem; }
+
+.quality-banner {
+  padding: 18px 20px;
+  margin-bottom: 20px;
+  background: rgba(245, 158, 11, 0.08);
+  gap: 8px;
+}
+.quality-banner .eco-card-nome { font-size: 1rem; }
+.quality-banner .eco-card-desc { font-size: 0.86rem; line-height: 1.6; }
+.quality-banner-cta { margin-top: 4px; align-self: flex-start; }
