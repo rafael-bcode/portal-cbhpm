@@ -1,5 +1,15 @@
 [
   {
+    "versao": "2.1.0",
+    "data": "2026-08-12",
+    "mudancas": [
+      "Nova aba 'Dúvidas frequentes': perguntas comuns sobre faturamento em saúde organizadas por assunto (SUS/SIGTAP, CBHPM, Simpro, Brasíndice, TISS/TUSS, particular, glosas e certificações/acreditação hospitalar), com base em fontes oficiais (AMB, ANS, DATASUS, ONA). Sempre que a resposta é algo que o próprio portal já resolve, a pergunta tem um atalho que leva direto pra ferramenta certa (Consulta por procedimento, Validador de XML TISS, Tabelas TISS etc.), em vez de mandar o usuário pra outro site.",
+      "Nova aba 'Indicadores ANAHP': o usuário escolhe um indicador hospitalar (organizado nos mesmos 4 grupos usados pela ANAHP — Econômico-Financeiro, Sustentabilidade, Gestão de Pessoas e Assistencial), informa o próprio resultado no período e o valor de benchmark que consultou no site oficial da ANAHP, e o portal calcula a comparação (diferença absoluta, percentual e veredito). O benchmark não é reproduzido automaticamente — os termos de uso da ANAHP proíbem reprodução do conteúdo deles sem autorização expressa, então o próprio usuário informa o valor.",
+      "A tela de indicadores traz propaganda contextual do ecossistema Argus: indicadores de infecção (corrente sanguínea, trato urinário, pneumonia, sítio cirúrgico) destacam o Argus Watch (isolamentos e dispositivos invasivos monitorados em tempo real); indicadores assistenciais em geral e o banner fixo da tela destacam o Argus Quality (gestão de indicadores, não conformidades e apoio a acreditações ONA/JCI/Qmentum); e o Índice de Glosas aponta de volta pro próprio Validador de XML TISS e pra tabela de códigos de glosa do portal.",
+      "Ambas as abas novas ficam acessíveis por cards na barra lateral direita (abaixo do ecossistema Argus), sem entrar na navegação principal de abas — mantendo a tela de ferramentas como estava."
+    ]
+  },
+  {
     "versao": "2.0.0",
     "data": "2026-08-07",
     "mudancas": [
