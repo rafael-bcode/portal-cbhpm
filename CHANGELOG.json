@@ -1,5 +1,40 @@
 [
   {
+    "versao": "2.9.0",
+    "data": "2026-08-13",
+    "mudancas": [
+      "Atualiza a resposta sobre nota fiscal do particular nas Dúvidas frequentes: além do app Receita Saúde (2025), passa a explicar o padrão nacional único de NFS-e (Lei Complementar 214/2025) — autônomo e profissional liberal isento no Emissor Nacional a partir de 1º/08/2026, com a ressalva de que o prazo pode variar por município (ex: São Paulo adiou pra 2027).",
+      "Nova pergunta em Glosas: 'A glosa não resolvida virou processo judicial — o que ajuda a montar o caso?', com o dado do IESS (processos contra operadoras cresceram 112% entre 2020 e 2024) e um atalho pra trilha de conferência que os validadores do portal já deixam pronta (XML validado, comparação de reenvio, Demonstrativo de Glosa, relatórios PDF)."
+    ]
+  },
+  {
+    "versao": "2.8.0",
+    "data": "2026-08-13",
+    "mudancas": [
+      "Nova aba 'OPME': consulta ao Registro/Cadastro de Produtos para Saúde da ANVISA — mais de 115 mil registros (cobre OPME e demais produtos regulados nessa base), por nome comercial, categoria (nome técnico), detentor do registro ou número de registro/cadastro. É a última fonte pública que faltava no leque do portal (junto com CBHPM, SUS/SIGTAP, TUSS, CID-10, CMED, CNES e Operadoras ANS).",
+      "A base da ANVISA só lista registros atualmente vigentes — então não encontrar o material na busca já é o sinal de alerta (registro vencido, cancelado ou nome diferente do oficial), em vez de esperar um item marcado como 'vencido' dentro do resultado. Quando encontrado, mostra até quando o registro vale.",
+      "Rotina de atualização automática a cada 24h (produto-saude-atualizador.js), no mesmo padrão do Preço-teto CMED: compara o header Last-Modified do arquivo oficial da ANVISA contra a versão carregada e reimporta quando há uma nova.",
+      "Atualiza a pergunta 'O portal tem alguma ferramenta pra conferir OPME?' nas Dúvidas frequentes, que antes dizia que essa base não estava carregada."
+    ]
+  },
+  {
+    "versao": "2.7.0",
+    "data": "2026-08-13",
+    "mudancas": [
+      "Nova seção 'Checklist pré-envio' na aba Verificadores: cola-se o(s) código(s) SIGTAP de uma guia uma única vez e roda de uma vez as 3 conferências que antes eram consultas isoladas (habilitação exigida, equivalência TUSS/CBHPM e, com 2 ou mais códigos, compatibilidade entre eles), com um resumo visual único verde/amarelo/vermelho no lugar de repetir a mesma busca 3 vezes.",
+      "Não cobre compatibilidade com o diagnóstico (CID) — deixado explícito na tela: essa tabela oficial procedimento×CID ainda não está carregada no portal."
+    ]
+  },
+  {
+    "versao": "2.6.0",
+    "data": "2026-08-13",
+    "mudancas": [
+      "Nova ferramenta no Validador de XML TISS: Leitor de Demonstrativo de Glosa (DAC) — lê, só no navegador, o XML de retorno que a operadora manda de volta (Demonstrativo de Análise de Conta Médica, padrão TISS ≥4.01.00) e mostra, por protocolo e por guia, o que foi pago e o que foi glosado item a item, com o motivo já traduzido pelo dicionário de causas do portal.",
+      "Resumo por motivo de glosa: soma o valor glosado por código (dm_tipoGlosa) entre todos os arquivos carregados na mesma leva, ordenado do motivo que mais pesa pro que menos pesa — em vez de reler cada glosa isolada.",
+      "Painel de padrão de glosa por operadora: acumula um resumo (nunca o XML) de cada demonstrativo já lido neste navegador e agrupa por operadora, mostrando o total glosado, o percentual sobre o informado e os 3 motivos que mais se repetem com aquela operadora especificamente."
+    ]
+  },
+  {
     "versao": "2.5.0",
     "data": "2026-08-12",
     "mudancas": [

@@ -1017,6 +1017,23 @@ body > * {
 .glosa-card-linha:last-child { margin-bottom: 0; }
 .glosa-card-linha .label { font-weight: 700; color: var(--ink-soft); margin-right: 4px; }
 
+/* ---------- Ranking de motivos de glosa (Leitor de DAC) ---------- */
+.dac-ranking-item { margin-bottom: 12px; }
+.dac-ranking-item:last-child { margin-bottom: 0; }
+.dac-ranking-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.82rem;
+  margin-bottom: 4px;
+}
+.dac-ranking-head .codigo { font-family: var(--mono); font-weight: 700; color: var(--teal-dark); }
+.dac-ranking-head .valor { font-family: var(--mono); font-weight: 600; white-space: nowrap; }
+.dac-ranking-head .valor .detail { font-weight: 400; color: var(--ink-soft); }
+.dac-ranking-track { height: 6px; background: var(--border); border-radius: 3px; overflow: hidden; }
+.dac-ranking-fill { height: 100%; background: var(--amber); border-radius: 3px; }
+.dac-ranking-evitar { font-size: 0.76rem; color: var(--ink-soft); margin-top: 4px; }
+
 /* ---------- Tabelas de Domínio TISS ---------- */
 .tiss-tabela-bloco {
   background: var(--panel);

@@ -954,6 +954,136 @@ function renderizarStatusCnesTab(status) {
 
 carregarStatusCnesTab();
 
+// ---------- OPME / Produtos para Saúde (ANVISA) ----------
+document.getElementById('link-opme')?.addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('tab-btn-opme')?.click();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+const opmeBuscaEl = document.getElementById('opme-busca');
+const opmeResultadoAreaEl = document.getElementById('opme-resultado-area');
+let debounceTimerOpme = null;
+
+function fmtDataOpme(v) {
+  return v ? new Date(v).toLocaleDateString('pt-BR') : null;
+}
+
+function renderizarValidadeOpme(item) {
+  if (item.vencido) {
+    return `<span class="validador-linha erro" style="border:none; padding:0; display:inline;">✘ Registro vencido em ${escaparHtml(fmtDataOpme(item.validade_data))} — confira se já foi renovado antes de faturar</span>`;
+  }
+  if (item.validade_data) {
+    return `<span class="validador-linha ok" style="border:none; padding:0; display:inline;">✔ Vigente até ${escaparHtml(fmtDataOpme(item.validade_data))}</span>`;
+  }
+  return `<span class="validador-linha ok" style="border:none; padding:0; display:inline;">✔ Vigente (sem prazo definido)</span>`;
+}
+
+function renderizarCardOpme(item) {
+  return `
+    <details class="faq-item">
+      <summary class="faq-pergunta" style="flex-wrap:wrap; gap:4px 14px;">
+        <span style="flex:1 1 320px;">${escaparHtml(item.nome_comercial)} <span style="font-weight:400; color:var(--ink-soft);">— ${escaparHtml(item.nome_tecnico) || 'categoria não informada'}</span></span>
+        <span style="font-family:var(--mono); font-weight:700; white-space:nowrap;">Registro ${escaparHtml(item.numero_registro_cadastro)}</span>
+      </summary>
+      <div class="faq-resposta">
+        <div style="margin-bottom:10px;">${renderizarValidadeOpme(item)}</div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:10px 16px; margin-bottom:14px; font-size:0.82rem; color:var(--ink-soft);">
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Classe de risco:</strong> ${item.classe_risco ? escaparHtml(item.classe_risco) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Detentor do registro:</strong> ${item.detentor_registro_cadastro ? escaparHtml(item.detentor_registro_cadastro) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>CNPJ do detentor:</strong> ${item.cnpj_detentor ? escaparHtml(item.cnpj_detentor.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Fabricante:</strong> ${item.nome_fabricante ? escaparHtml(item.nome_fabricante) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>País do fabricante:</strong> ${item.pais_fabricante ? escaparHtml(item.pais_fabricante) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Publicado em:</strong> ${fmtDataOpme(item.data_publicacao) || '—'}</div>
+        </div>
+        <p class="faq-fonte">Dado da ANVISA atualizado em ${fmtDataOpme(item.atualizado_em) || '—'}</p>
+      </div>
+    </details>`;
+}
+
+async function buscarOpme(termo) {
+  try {
+    const resp = await fetch(`/api/produto-saude/buscar?q=${encodeURIComponent(termo)}`);
+    if (!resp.ok) throw new Error('Falha na requisição.');
+    const itens = await resp.json();
+    if (itens.length === 0) {
+      opmeResultadoAreaEl.innerHTML = '<p class="msg vazio">Nenhum produto encontrado com esse termo.</p>';
+      return;
+    }
+    const aviso = itens.length >= 60
+      ? '<p class="ajustes-nota">Mostrando os 60 primeiros — refine a busca (nome mais específico, categoria ou número de registro) se não achar o produto.</p>'
+      : '';
+    opmeResultadoAreaEl.innerHTML = aviso + itens.map(renderizarCardOpme).join('');
+  } catch (err) {
+    console.error(err);
+    opmeResultadoAreaEl.innerHTML = '<div class="msg erro">Erro ao buscar produtos para saúde na base ANVISA.</div>';
+  }
+}
+
+if (opmeBuscaEl) {
+  opmeBuscaEl.addEventListener('input', () => {
+    const termo = opmeBuscaEl.value.trim();
+    clearTimeout(debounceTimerOpme);
+    if (termo.length < 2) {
+      opmeResultadoAreaEl.innerHTML = '';
+      return;
+    }
+    debounceTimerOpme = setTimeout(() => buscarOpme(termo), 300);
+  });
+}
+
+const opmeCompetenciaAreaEl = document.getElementById('opme-competencia-area');
+
+async function carregarStatusOpme() {
+  if (!opmeCompetenciaAreaEl) return;
+  try {
+    const resp = await fetch('/api/produto-saude/status');
+    const status = await resp.json();
+    renderizarStatusOpme(status);
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderizarStatusOpme(status) {
+  const badge = status.publicadoEm
+    ? `<span class="sigtap-competencia-badge">Publicado em ${new Date(status.publicadoEm).toLocaleDateString('pt-BR')}${status.totalRegistros ? ` · ${status.totalRegistros.toLocaleString('pt-BR')} produtos` : ''}</span>`
+    : '<span class="sigtap-competencia-badge">Base ainda não carregada</span>';
+  const botaoAtualizar = status.atualizacaoDisponivel
+    ? `<button type="button" id="btn-opme-atualizar" class="chip-btn disponivel">Atualizar para a versão de ${new Date(status.ultimaModificacao).toLocaleDateString('pt-BR')}</button>`
+    : '';
+  opmeCompetenciaAreaEl.innerHTML = badge + botaoAtualizar;
+
+  const btn = document.getElementById('btn-opme-atualizar');
+  if (btn) {
+    btn.addEventListener('click', async () => {
+      const senha = window.prompt('Senha para atualizar a base de Produtos para Saúde:');
+      if (!senha) return;
+      btn.disabled = true;
+      btn.textContent = 'Atualizando… (arquivo grande, pode levar alguns minutos)';
+      try {
+        const resp = await fetch('/api/produto-saude/atualizar', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ senha }),
+        });
+        const dados = await resp.json();
+        if (!resp.ok) throw new Error(dados.erro || 'Falha ao atualizar.');
+        window.alert(`Base de Produtos para Saúde atualizada: ${dados.totalRegistros} registros.`);
+        await carregarStatusOpme();
+        if (opmeBuscaEl && opmeBuscaEl.value.trim().length >= 2) buscarOpme(opmeBuscaEl.value.trim());
+      } catch (err) {
+        console.error(err);
+        window.alert(`Erro ao atualizar: ${err.message}`);
+        btn.disabled = false;
+        btn.textContent = 'Tentar atualizar novamente';
+      }
+    });
+  }
+}
+
+carregarStatusOpme();
+
 // ---------- Favoritos (localStorage, sem login) ----------
 const FAVORITOS_KEY = 'cbhpm_favoritos';
 const listaFavoritosEl = document.getElementById('lista-favoritos');
@@ -4360,6 +4490,466 @@ if (btnCompararArquivos) {
   });
 }
 
+// ---------- Leitor de Demonstrativo de Glosa (DAC) ----------
+// Lê o retorno que a operadora manda de volta em XML padrão TISS — o
+// Demonstrativo de Análise de Conta Médica (elemento <ans:demonstrativosRetorno>,
+// ct_demonstrativoRetorno/ctm_demonstrativoAnaliseConta no XSD oficial) — e
+// cruza cada código de glosa (dm_tipoGlosa) com o dicionário de causas que
+// já existe na aba Tabelas TISS. Roda inteiramente no navegador, igual ao
+// Validador de XML TISS: o arquivo nunca sai do computador.
+const dacArquivoEl = document.getElementById('dac-arquivo');
+const dacResultadoEl = document.getElementById('dac-resultado-area');
+
+const DAC_SITUACAO_PROTOCOLO = {
+  '1': 'Recebido',
+  '2': 'Em análise',
+  '3': 'Liberado para pagamento',
+  '4': 'Encerrado sem pagamento',
+  '5': 'Analisado e aguardando liberação para pagamento',
+  '6': 'Pagamento efetuado',
+  '7': 'Não localizado',
+  '8': 'Aguardando informação complementar',
+  '9': 'Cancelado',
+  '10': 'Bloqueio judicial — prestador',
+};
+const DAC_SITUACAO_CLASSE = {
+  '3': 'ok', '5': 'ok', '6': 'ok',
+  '1': 'aviso', '2': 'aviso', '7': 'aviso', '8': 'aviso',
+  '4': 'erro', '9': 'erro', '10': 'erro',
+};
+
+function buscarNoDicionarioGlosas(codigo) {
+  if (!glosasDicionarioCache || !codigo) return null;
+  for (const cat of glosasDicionarioCache.categorias) {
+    const item = cat.itens.find((i) => i.codigo === codigo);
+    if (item) return item;
+  }
+  return null;
+}
+
+function extrairMotivoGlosaDac(el) {
+  if (!el) return null;
+  return { codigo: textoDeTiss(el, 'codigoGlosa'), descricao: textoDeTiss(el, 'descricaoGlosa') };
+}
+
+function analisarItemDac(detalheEl) {
+  const procEl = filhoTiss(detalheEl, 'procedimento');
+  const glosas = filhosTiss(detalheEl, 'relacaoGlosa').map((g) => ({
+    valorGlosa: numDeTiss(textoDeTiss(g, 'valorGlosa')) || 0,
+    tipoGlosa: textoDeTiss(g, 'tipoGlosa'),
+  }));
+  return {
+    sequencialItem: textoDeTiss(detalheEl, 'sequencialItem'),
+    dataRealizacao: textoDeTiss(detalheEl, 'dataRealizacao'),
+    codigoTabela: procEl ? textoDeTiss(procEl, 'codigoTabela') : '',
+    codigoProcedimento: procEl ? textoDeTiss(procEl, 'codigoProcedimento') : '',
+    descricaoProcedimento: procEl ? textoDeTiss(procEl, 'descricaoProcedimento') : '',
+    valorInformado: numDeTiss(textoDeTiss(detalheEl, 'valorInformado')) || 0,
+    qtdExecutada: numDeTiss(textoDeTiss(detalheEl, 'qtdExecutada')) || 0,
+    valorProcessado: numDeTiss(textoDeTiss(detalheEl, 'valorProcessado')) || 0,
+    valorLiberado: numDeTiss(textoDeTiss(detalheEl, 'valorLiberado')) || 0,
+    glosas,
+  };
+}
+
+function analisarGuiaDac(guiaEl) {
+  return {
+    numeroGuiaPrestador: textoDeTiss(guiaEl, 'numeroGuiaPrestador'),
+    numeroGuiaOperadora: textoDeTiss(guiaEl, 'numeroGuiaOperadora'),
+    numeroCarteira: textoDeTiss(guiaEl, 'numeroCarteira'),
+    dataInicioFat: textoDeTiss(guiaEl, 'dataInicioFat'),
+    dataFimFat: textoDeTiss(guiaEl, 'dataFimFat'),
+    situacaoGuia: textoDeTiss(guiaEl, 'situacaoGuia'),
+    motivosGlosaGuia: filhosTiss(guiaEl, 'motivoGlosaGuia').map(extrairMotivoGlosaDac),
+    itens: filhosTiss(guiaEl, 'detalhesGuia').map(analisarItemDac),
+    valorInformadoGuia: numDeTiss(textoDeTiss(guiaEl, 'valorInformadoGuia')) || 0,
+    valorProcessadoGuia: numDeTiss(textoDeTiss(guiaEl, 'valorProcessadoGuia')) || 0,
+    valorLiberadoGuia: numDeTiss(textoDeTiss(guiaEl, 'valorLiberadoGuia')) || 0,
+    valorGlosaGuia: numDeTiss(textoDeTiss(guiaEl, 'valorGlosaGuia')) || 0,
+    observacao: textoDeTiss(guiaEl, 'observacao'),
+  };
+}
+
+function analisarProtocoloDac(protoEl) {
+  return {
+    numeroLotePrestador: textoDeTiss(protoEl, 'numeroLotePrestador'),
+    numeroProtocolo: textoDeTiss(protoEl, 'numeroProtocolo'),
+    dataProtocolo: textoDeTiss(protoEl, 'dataProtocolo'),
+    situacaoProtocolo: textoDeTiss(protoEl, 'situacaoProtocolo'),
+    glosaProtocolo: extrairMotivoGlosaDac(filhoTiss(protoEl, 'GlosaProtocolo')),
+    guias: filhosTiss(protoEl, 'relacaoGuias').map(analisarGuiaDac),
+    valorInformadoProtocolo: numDeTiss(textoDeTiss(protoEl, 'valorInformadoProtocolo')) || 0,
+    valorProcessadoProtocolo: numDeTiss(textoDeTiss(protoEl, 'valorProcessadoProtocolo')) || 0,
+    valorLiberadoProtocolo: numDeTiss(textoDeTiss(protoEl, 'valorLiberadoProtocolo')) || 0,
+    valorGlosaProtocolo: numDeTiss(textoDeTiss(protoEl, 'valorGlosaProtocolo')) || 0,
+  };
+}
+
+function analisarDemonstrativoAnaliseConta(demEl) {
+  const cabEl = filhoTiss(demEl, 'cabecalhoDemonstrativo');
+  const prestadorEl = filhoTiss(demEl, 'dadosPrestador');
+  const contratadoEl = prestadorEl ? filhoTiss(prestadorEl, 'dadosContratado') : null;
+  const dadosContaEl = filhoTiss(demEl, 'dadosConta');
+  return {
+    cabecalho: {
+      registroANS: textoDeTiss(cabEl, 'registroANS'),
+      numeroDemonstrativo: textoDeTiss(cabEl, 'numeroDemonstrativo'),
+      nomeOperadora: textoDeTiss(cabEl, 'nomeOperadora'),
+      cnpj: textoDeTiss(cabEl, 'numeroCNPJ'),
+      dataEmissao: textoDeTiss(cabEl, 'dataEmissao'),
+    },
+    prestador: {
+      codigoNaOperadora: contratadoEl ? textoDeTiss(contratadoEl, 'codigoPrestadorNaOperadora') : '',
+      cnpj: contratadoEl ? textoDeTiss(contratadoEl, 'cnpjContratado') : '',
+      cnes: prestadorEl ? textoDeTiss(prestadorEl, 'CNES') : '',
+    },
+    protocolos: dadosContaEl ? filhosTiss(dadosContaEl, 'dadosProtocolo').map(analisarProtocoloDac) : [],
+    valorInformadoGeral: numDeTiss(textoDeTiss(demEl, 'valorInformadoGeral')) || 0,
+    valorProcessadoGeral: numDeTiss(textoDeTiss(demEl, 'valorProcessadoGeral')) || 0,
+    valorLiberadoGeral: numDeTiss(textoDeTiss(demEl, 'valorLiberadoGeral')) || 0,
+    valorGlosaGeral: numDeTiss(textoDeTiss(demEl, 'valorGlosaGeral')) || 0,
+    observacao: textoDeTiss(demEl, 'observacao'),
+  };
+}
+
+async function analisarArquivoDac(file) {
+  const textoXml = await lerArquivoTiss(file);
+  const doc = new DOMParser().parseFromString(textoXml, 'text/xml');
+  const erroParseEl = doc.querySelector('parsererror');
+  const resultado = {
+    nomeArquivo: file.name,
+    erro: erroParseEl ? erroParseEl.textContent.trim() : null,
+    mensagemErro: null,
+    demonstrativos: [],
+  };
+  if (resultado.erro) return resultado;
+
+  const raiz = doc.documentElement;
+  const demonstrativosRetornoEl = buscarProfundoTiss(raiz, 'demonstrativosRetorno');
+  if (!demonstrativosRetornoEl) {
+    resultado.erro = 'Não encontramos <demonstrativosRetorno> neste arquivo — confira se é realmente o XML de retorno da operadora (Demonstrativo de Análise de Conta), e não o lote que foi enviado.';
+    return resultado;
+  }
+
+  const mensagemErroEl = filhoTiss(demonstrativosRetornoEl, 'mensagemErro');
+  if (mensagemErroEl) resultado.mensagemErro = extrairMotivoGlosaDac(mensagemErroEl);
+
+  resultado.demonstrativos = filhosTiss(demonstrativosRetornoEl, 'demonstrativoAnaliseConta').map(analisarDemonstrativoAnaliseConta);
+  return resultado;
+}
+
+// Soma o valor glosado (e a contagem de ocorrências) por código de motivo,
+// juntando todos os arquivos carregados na mesma leva — é o que transforma
+// "várias guias glosadas" em "esse motivo aqui é o que mais pesa".
+function ranquearMotivosGlosaDac(resultados) {
+  const mapa = new Map();
+  const soma = (codigo, valor) => {
+    if (!codigo) return;
+    const acc = mapa.get(codigo) || { codigo, valor: 0, ocorrencias: 0 };
+    acc.valor += valor || 0;
+    acc.ocorrencias += 1;
+    mapa.set(codigo, acc);
+  };
+  resultados.forEach((r) => {
+    (r.demonstrativos || []).forEach((dem) => {
+      dem.protocolos.forEach((proto) => {
+        proto.guias.forEach((guia) => {
+          guia.motivosGlosaGuia.forEach((m) => soma(m.codigo, 0));
+          guia.itens.forEach((it) => it.glosas.forEach((g) => soma(g.tipoGlosa, g.valorGlosa)));
+        });
+      });
+    });
+  });
+  return Array.from(mapa.values()).sort((a, b) => b.valor - a.valor || b.ocorrencias - a.ocorrencias);
+}
+
+function renderizarRankingMotivosDac(ranking) {
+  if (ranking.length === 0) return '';
+  const maiorValor = Math.max(...ranking.map((r) => r.valor), 0.01);
+  const linhas = ranking
+    .slice(0, 15)
+    .map((r) => {
+      const dic = buscarNoDicionarioGlosas(r.codigo);
+      const pct = Math.max((r.valor / maiorValor) * 100, r.valor > 0 ? 3 : 0);
+      return `
+        <div class="dac-ranking-item">
+          <div class="dac-ranking-head">
+            <span><span class="codigo">${escaparHtml(r.codigo)}</span> — ${escaparHtml(dic ? dic.causaProvavel : 'Motivo fora do dicionário do portal — confira a descrição no próprio demonstrativo.')}</span>
+            <span class="valor">${fmtMoeda(r.valor)} <span class="detail">(${r.ocorrencias}×)</span></span>
+          </div>
+          <div class="dac-ranking-track"><div class="dac-ranking-fill" style="width:${pct}%"></div></div>
+          ${dic ? `<div class="dac-ranking-evitar">Como evitar: ${escaparHtml(dic.comoEvitar)}</div>` : ''}
+        </div>`;
+    })
+    .join('');
+  return `
+    <div class="edicao-card" style="margin-bottom:16px;">
+      <div class="edicao-card-head">
+        <span class="nome">Resumo por motivo de glosa (${ranking.length} motivo${ranking.length === 1 ? '' : 's'} diferente${ranking.length === 1 ? '' : 's'})</span>
+      </div>
+      <div class="breakdown">${linhas}</div>
+    </div>`;
+}
+
+function renderizarItemDac(it) {
+  const glosado = it.glosas.reduce((s, g) => s + (g.valorGlosa || 0), 0);
+  const glosasHtml = it.glosas
+    .map((g) => {
+      const dic = buscarNoDicionarioGlosas(g.tipoGlosa);
+      return `<div class="validador-linha erro">✘ [${escaparHtml(g.tipoGlosa)}] ${fmtMoeda(g.valorGlosa)}${dic ? ` — ${escaparHtml(dic.causaProvavel)}` : ''}</div>`;
+    })
+    .join('');
+  return `
+    <tr>
+      <td>${escaparHtml(it.dataRealizacao)}</td>
+      <td>${escaparHtml(it.codigoProcedimento)}<div class="detail">${escaparHtml(it.descricaoProcedimento)}</div></td>
+      <td style="text-align:right">${it.qtdExecutada}</td>
+      <td style="text-align:right">${fmtMoeda(it.valorInformado)}</td>
+      <td style="text-align:right">${fmtMoeda(it.valorLiberado)}${glosado > 0 ? `<div class="detail" style="color:#A0341C;">−${fmtMoeda(glosado)}</div>` : ''}</td>
+    </tr>
+    ${glosasHtml ? `<tr><td colspan="5" style="padding-top:0;">${glosasHtml}</td></tr>` : ''}`;
+}
+
+function renderizarGuiaDac(guia) {
+  const motivosGuiaHtml = guia.motivosGlosaGuia
+    .map((m) => {
+      const dic = buscarNoDicionarioGlosas(m.codigo);
+      return `<div class="validador-linha erro">✘ [${escaparHtml(m.codigo)}] ${escaparHtml(m.descricao) || (dic ? dic.causaProvavel : 'Motivo de glosa da guia inteira')}</div>`;
+    })
+    .join('');
+  const itensComGlosa = guia.itens.filter((it) => it.glosas.length > 0);
+  const itensParaMostrar = itensComGlosa.length > 0 ? itensComGlosa : guia.itens;
+  const tituloItens = itensComGlosa.length > 0
+    ? `Itens com glosa (${itensComGlosa.length} de ${guia.itens.length})`
+    : `Itens (${guia.itens.length})`;
+  const itensHtml = itensParaMostrar.length
+    ? `<details class="grupo grupo-secundario" style="margin-top:6px;">
+        <summary class="grupo-summary"><span class="grupo-nome">${tituloItens}</span></summary>
+        <div class="grupo-corpo" style="overflow-x:auto;">
+          <table class="guia-doc-tabela">
+            <thead><tr><th>Data</th><th>Procedimento</th><th style="text-align:right">Qtd</th><th style="text-align:right">Informado</th><th style="text-align:right">Liberado</th></tr></thead>
+            <tbody>${itensParaMostrar.map(renderizarItemDac).join('')}</tbody>
+          </table>
+        </div>
+      </details>`
+    : '';
+
+  return `
+    <div class="edicao-card" style="margin-bottom:12px;">
+      <div class="edicao-card-head">
+        <span class="nome">Guia ${escaparHtml(guia.numeroGuiaPrestador) || '—'}</span>
+        <span class="ano">${DAC_SITUACAO_PROTOCOLO[guia.situacaoGuia] || guia.situacaoGuia || '—'}</span>
+      </div>
+      <div class="breakdown">
+        <div class="breakdown-row"><span class="label">Informado</span><span class="value">${fmtMoeda(guia.valorInformadoGuia)}</span></div>
+        <div class="breakdown-row"><span class="label">Liberado</span><span class="value">${fmtMoeda(guia.valorLiberadoGuia)}</span></div>
+        ${guia.valorGlosaGuia > 0 ? `<div class="breakdown-row"><span class="label">Glosado</span><span class="value" style="color:#A0341C;">${fmtMoeda(guia.valorGlosaGuia)}</span></div>` : ''}
+      </div>
+      ${motivosGuiaHtml}
+      ${itensHtml}
+    </div>`;
+}
+
+function renderizarProtocoloDac(proto) {
+  const classe = DAC_SITUACAO_CLASSE[proto.situacaoProtocolo] || 'aviso';
+  const linhaGlosaProtocolo = proto.glosaProtocolo
+    ? `<div class="validador-linha erro">✘ Protocolo glosado — [${escaparHtml(proto.glosaProtocolo.codigo)}] ${escaparHtml(proto.glosaProtocolo.descricao)}</div>`
+    : '';
+  return `
+    <details class="grupo grupo-principal" open style="margin-top:10px;">
+      <summary class="grupo-summary">
+        <span class="grupo-nome">Protocolo ${escaparHtml(proto.numeroProtocolo) || '—'} (lote ${escaparHtml(proto.numeroLotePrestador) || '—'})</span>
+        <span class="validador-linha ${classe}" style="border:none; padding:0;">${DAC_SITUACAO_PROTOCOLO[proto.situacaoProtocolo] || proto.situacaoProtocolo || '—'}</span>
+      </summary>
+      <div class="grupo-corpo">
+        ${linhaGlosaProtocolo}
+        <div class="breakdown">
+          <div class="breakdown-row"><span class="label">Informado</span><span class="value">${fmtMoeda(proto.valorInformadoProtocolo)}</span></div>
+          <div class="breakdown-row"><span class="label">Liberado</span><span class="value">${fmtMoeda(proto.valorLiberadoProtocolo)}</span></div>
+          ${proto.valorGlosaProtocolo > 0 ? `<div class="breakdown-row"><span class="label">Glosado</span><span class="value" style="color:#A0341C;">${fmtMoeda(proto.valorGlosaProtocolo)}</span></div>` : ''}
+        </div>
+        <div style="padding:0 16px 12px;">${proto.guias.map(renderizarGuiaDac).join('')}</div>
+      </div>
+    </details>`;
+}
+
+function renderizarDemonstrativoDac(dem, nomeArquivo) {
+  const pctGlosa = dem.valorInformadoGeral > 0 ? (dem.valorGlosaGeral / dem.valorInformadoGeral) * 100 : 0;
+  return `
+    <div class="edicao-card" style="margin-bottom:12px;">
+      <div class="edicao-card-head">
+        <span class="nome">${escaparHtml(dem.cabecalho.nomeOperadora) || 'Operadora não identificada'}</span>
+        <span class="ano">${escaparHtml(dem.cabecalho.dataEmissao)}</span>
+      </div>
+      <div class="edicao-card-desc">
+        Demonstrativo ${escaparHtml(dem.cabecalho.numeroDemonstrativo) || '—'} · registro ANS ${escaparHtml(dem.cabecalho.registroANS) || '—'}
+        ${dem.prestador.cnes ? ` · CNES ${escaparHtml(dem.prestador.cnes)}` : ''}
+      </div>
+      <div class="breakdown">
+        <div class="breakdown-row"><span class="label">Valor informado</span><span class="value">${fmtMoeda(dem.valorInformadoGeral)}</span></div>
+        <div class="breakdown-row"><span class="label">Valor liberado</span><span class="value">${fmtMoeda(dem.valorLiberadoGeral)}</span></div>
+        <div class="breakdown-row"><span class="label">Valor glosado</span><span class="value" style="color:${dem.valorGlosaGeral > 0 ? '#A0341C' : 'inherit'}">${fmtMoeda(dem.valorGlosaGeral)} ${dem.valorInformadoGeral > 0 ? `<span class="pct-badge">${pctGlosa.toFixed(1)}%</span>` : ''}</span></div>
+      </div>
+    </div>
+    ${dem.protocolos.map(renderizarProtocoloDac).join('')}`;
+}
+
+async function renderizarResultadosDac(resultados) {
+  await carregarGlosasDicionario();
+  const ranking = ranquearMotivosGlosaDac(resultados);
+  const rankingHtml = renderizarRankingMotivosDac(ranking);
+
+  const arquivosHtml = resultados
+    .map((r) => {
+      if (r.erro) return `<div class="msg erro">${escaparHtml(r.nomeArquivo)}: ${escaparHtml(r.erro)}</div>`;
+      if (r.mensagemErro) {
+        return `<div class="msg erro">${escaparHtml(r.nomeArquivo)}: a operadora retornou um erro — [${escaparHtml(r.mensagemErro.codigo)}] ${escaparHtml(r.mensagemErro.descricao)}</div>`;
+      }
+      if (r.demonstrativos.length === 0) {
+        return `<div class="msg vazio">${escaparHtml(r.nomeArquivo)}: nenhum demonstrativo de análise de conta encontrado neste arquivo.</div>`;
+      }
+      return `<div style="margin-bottom:24px;">
+        <p class="ajustes-nota" style="margin:0 0 8px;font-family:var(--mono);font-size:0.72rem;">${escaparHtml(r.nomeArquivo)}</p>
+        ${r.demonstrativos.map((dem) => renderizarDemonstrativoDac(dem, r.nomeArquivo)).join('')}
+      </div>`;
+    })
+    .join('');
+
+  dacResultadoEl.innerHTML = rankingHtml + arquivosHtml;
+}
+
+if (dacArquivoEl) {
+  dacArquivoEl.addEventListener('change', async () => {
+    const files = Array.from(dacArquivoEl.files);
+    if (files.length === 0) return;
+    dacResultadoEl.innerHTML = '<div class="msg vazio">Analisando…</div>';
+    try {
+      const resultados = [];
+      for (const file of files) {
+        const resultado = await analisarArquivoDac(file);
+        resultados.push(resultado);
+        registrarHistoricoDac(resultado);
+      }
+      await renderizarResultadosDac(resultados);
+    } catch (err) {
+      console.error(err);
+      dacResultadoEl.innerHTML = `<div class="msg erro">Erro ao analisar o(s) arquivo(s): ${err.message}</div>`;
+    }
+  });
+}
+
+// ---------- Histórico de demonstrativos e painel por operadora (P2) ----------
+// Guarda só um resumo (operadora, valores gerais e motivos de glosa com
+// valor/ocorrências) de cada demonstrativo já lido — nunca o XML em si —
+// pra construir, ao longo do tempo, o painel de "essa operadora sempre
+// glosa por X" sem precisar re-carregar os arquivos originais.
+const DAC_HISTORICO_KEY = 'cbhpmDacHistorico';
+const DAC_HISTORICO_MAX = 200;
+
+function carregarHistoricoDac() {
+  try {
+    const bruto = localStorage.getItem(DAC_HISTORICO_KEY);
+    const lista = bruto ? JSON.parse(bruto) : [];
+    return Array.isArray(lista) ? lista : [];
+  } catch {
+    return [];
+  }
+}
+
+function registrarHistoricoDac(resultado) {
+  if (resultado.erro || resultado.demonstrativos.length === 0) return;
+  const lista = carregarHistoricoDac();
+  resultado.demonstrativos.forEach((dem) => {
+    lista.unshift({
+      data: new Date().toISOString(),
+      nomeArquivo: resultado.nomeArquivo,
+      registroANS: dem.cabecalho.registroANS,
+      operadora: dem.cabecalho.nomeOperadora || `Registro ANS ${dem.cabecalho.registroANS}`,
+      valorInformadoGeral: dem.valorInformadoGeral,
+      valorLiberadoGeral: dem.valorLiberadoGeral,
+      valorGlosaGeral: dem.valorGlosaGeral,
+      motivos: ranquearMotivosGlosaDac([{ demonstrativos: [dem] }]),
+    });
+  });
+  try {
+    localStorage.setItem(DAC_HISTORICO_KEY, JSON.stringify(lista.slice(0, DAC_HISTORICO_MAX)));
+  } catch {
+    /* localStorage indisponível ou cheio — histórico é conveniência, não crítico */
+  }
+  renderizarPainelDac();
+}
+
+// Agrupa o histórico por operadora e soma os motivos de glosa de todos os
+// demonstrativos já lidos daquela operadora — é o que responde "com essa
+// operadora especificamente, o que costuma pegar?".
+function agruparPainelDacPorOperadora() {
+  const lista = carregarHistoricoDac();
+  const porOperadora = new Map();
+  lista.forEach((e) => {
+    const chave = e.registroANS || e.operadora;
+    if (!porOperadora.has(chave)) {
+      porOperadora.set(chave, { operadora: e.operadora, registroANS: e.registroANS, demonstrativos: 0, valorInformado: 0, valorGlosa: 0, motivos: new Map() });
+    }
+    const acc = porOperadora.get(chave);
+    acc.demonstrativos += 1;
+    acc.valorInformado += e.valorInformadoGeral || 0;
+    acc.valorGlosa += e.valorGlosaGeral || 0;
+    (e.motivos || []).forEach((m) => {
+      const mAcc = acc.motivos.get(m.codigo) || { codigo: m.codigo, valor: 0, ocorrencias: 0 };
+      mAcc.valor += m.valor || 0;
+      mAcc.ocorrencias += m.ocorrencias || 0;
+      acc.motivos.set(m.codigo, mAcc);
+    });
+  });
+  return Array.from(porOperadora.values())
+    .map((acc) => ({ ...acc, motivos: Array.from(acc.motivos.values()).sort((a, b) => b.valor - a.valor || b.ocorrencias - a.ocorrencias) }))
+    .sort((a, b) => b.valorGlosa - a.valorGlosa);
+}
+
+function renderizarPainelDac() {
+  const alvo = document.getElementById('dac-painel-lista');
+  if (!alvo) return;
+  const operadoras = agruparPainelDacPorOperadora();
+  if (operadoras.length === 0) {
+    alvo.innerHTML = '<p class="ajustes-nota" style="margin:0 16px;">Nenhum demonstrativo de glosa conferido ainda neste navegador.</p>';
+    return;
+  }
+  alvo.innerHTML = operadoras
+    .map((op) => {
+      const pct = op.valorInformado > 0 ? (op.valorGlosa / op.valorInformado) * 100 : 0;
+      const top3 = op.motivos.slice(0, 3);
+      const motivosHtml = top3
+        .map((m) => {
+          const dic = buscarNoDicionarioGlosas(m.codigo);
+          return `<div class="detail" style="display:block;">[${escaparHtml(m.codigo)}] ${dic ? escaparHtml(dic.causaProvavel) : 'motivo fora do dicionário'} — ${fmtMoeda(m.valor)}</div>`;
+        })
+        .join('');
+      return `
+        <div class="edicao-card" style="margin-bottom:10px;">
+          <div class="edicao-card-head">
+            <span class="nome">${escaparHtml(op.operadora)}</span>
+            <span class="ano">${op.demonstrativos} demonstrativo${op.demonstrativos === 1 ? '' : 's'}</span>
+          </div>
+          <div class="breakdown">
+            <div class="breakdown-row"><span class="label">Total informado</span><span class="value">${fmtMoeda(op.valorInformado)}</span></div>
+            <div class="breakdown-row"><span class="label">Total glosado</span><span class="value" style="color:${op.valorGlosa > 0 ? '#A0341C' : 'inherit'}">${fmtMoeda(op.valorGlosa)} <span class="pct-badge">${pct.toFixed(1)}%</span></span></div>
+          </div>
+          ${motivosHtml ? `<div style="padding:0 16px 12px;"><span class="label" style="font-size:0.8rem;color:var(--ink-soft);">Motivos que mais pesam:</span>${motivosHtml}</div>` : ''}
+        </div>`;
+    })
+    .join('');
+}
+
+const btnLimparHistoricoDac = document.getElementById('btn-limpar-historico-dac');
+if (btnLimparHistoricoDac) {
+  btnLimparHistoricoDac.addEventListener('click', () => {
+    localStorage.removeItem(DAC_HISTORICO_KEY);
+    renderizarPainelDac();
+  });
+}
+
+renderizarPainelDac();
+
 // ---------- SUS / SIGTAP ----------
 const sigtapBuscaEl = document.getElementById('sigtap-busca');
 const sigtapResultadoAreaEl = document.getElementById('sigtap-resultado-area');
@@ -4959,6 +5549,128 @@ if (conversorCodigoEl) {
       return;
     }
     debounceTimerConversor = setTimeout(() => converterCodigo(codigo), 300);
+  });
+}
+
+// ---------- Checklist pré-envio unificado ----------
+// Cola-se o(s) código(s) SIGTAP uma vez e roda, de uma vez só, as 3
+// conferências que hoje existem soltas nesta aba (habilitação, conversor e,
+// com 2+ códigos, compatibilidade) — mesma lógica e mesmos endpoints de
+// cada verificador individual, só reorganizados num resumo único
+// verde/amarelo/vermelho. Não cobre compatibilidade com o diagnóstico
+// (CID): essa tabela oficial (procedimento×CID) ainda não está carregada
+// no portal — ver aba Dúvidas frequentes > Auditoria.
+const checklistCodigosEl = document.getElementById('checklist-codigos');
+const btnChecklistVerificarEl = document.getElementById('btn-checklist-verificar');
+const checklistResultadoAreaEl = document.getElementById('checklist-resultado-area');
+
+async function buscarJson(url) {
+  const resp = await fetch(url);
+  const dados = await resp.json();
+  if (!resp.ok) throw new Error(dados.erro || `Falha ao consultar ${url}`);
+  return dados;
+}
+
+function renderizarLinhaChecklist(status, texto) {
+  const icone = { ok: '✔', aviso: '⚠', erro: '✘' }[status] || '—';
+  return `<div class="validador-linha ${status}">${icone} ${texto}</div>`;
+}
+
+function renderizarCardChecklistCodigo(codigo, habilitacao, conversor) {
+  const linhas = [];
+  let statusCodigo = 'ok';
+
+  if (!habilitacao.procedimentoNome) {
+    linhas.push(renderizarLinhaChecklist('erro', 'Código não encontrado na tabela SIGTAP.'));
+    statusCodigo = 'erro';
+  } else {
+    linhas.push(renderizarLinhaChecklist('ok', `Encontrado no SIGTAP: ${escaparHtml(habilitacao.procedimentoNome)}`));
+    if (habilitacao.habilitacoes.length > 0) {
+      linhas.push(renderizarLinhaChecklist('aviso', `Exige habilitação do prestador: ${habilitacao.habilitacoes.map((h) => escaparHtml(h.nome)).join(', ')} — confirme antes de faturar.`));
+      if (statusCodigo === 'ok') statusCodigo = 'aviso';
+    } else {
+      linhas.push(renderizarLinhaChecklist('ok', 'Não exige habilitação específica do prestador.'));
+    }
+  }
+
+  if (!conversor.encontrado) {
+    linhas.push(renderizarLinhaChecklist('aviso', 'Sem equivalência encontrada nas tabelas CBHPM/TUSS — confira se é mesmo um código SIGTAP.'));
+    if (statusCodigo === 'ok') statusCodigo = 'aviso';
+  } else {
+    const qtdEquivalencias = conversor.cbhpmTuss.length + conversor.tussSigtap.length + (conversor.sigtapDireto ? 1 : 0);
+    linhas.push(renderizarLinhaChecklist('ok', `Equivalência encontrada nas tabelas (${qtdEquivalencias}) — confira na aba Conversor abaixo se a tabela exigida pela operadora está entre elas.`));
+  }
+
+  return { statusCodigo, html: `
+    <div class="edicao-card" style="margin-bottom:10px;">
+      <div class="edicao-card-head">
+        <span class="nome">${escaparHtml(codigo)}</span>
+        <span class="ano">${{ ok: '✔', aviso: '⚠', erro: '✘' }[statusCodigo]}</span>
+      </div>
+      ${linhas.join('')}
+    </div>` };
+}
+
+function renderizarChecklist(codigos, habilitacoes, conversores, compat) {
+  const ordemStatusChecklist = { ok: 0, aviso: 1, erro: 2 };
+  const cards = codigos.map((c, i) => renderizarCardChecklistCodigo(c, habilitacoes[i], conversores[i]));
+  let statusGeral = cards.reduce((pior, c) => (ordemStatusChecklist[c.statusCodigo] > ordemStatusChecklist[pior] ? c.statusCodigo : pior), 'ok');
+
+  let compatHtml = '';
+  if (compat) {
+    const naoEncontradosHtml = compat.codigosNaoEncontrados.length
+      ? renderizarLinhaChecklist('erro', `Código(s) não encontrado(s) no SIGTAP para checar compatibilidade: ${compat.codigosNaoEncontrados.map(escaparHtml).join(', ')}`)
+      : '';
+    if (compat.codigosNaoEncontrados.length && statusGeral !== 'erro') statusGeral = 'erro';
+    const paresHtml = compat.pares
+      .map((par) => {
+        if (!par.compativel && statusGeral === 'ok') statusGeral = 'aviso';
+        return renderizarLinhaChecklist(
+          par.compativel ? 'ok' : 'aviso',
+          `${escaparHtml(par.codigoA)} ↔ ${escaparHtml(par.codigoB)}: ${par.compativel ? 'compatibilidade registrada' : 'sem registro de compatibilidade — confirme antes de lançar juntos'}`
+        );
+      })
+      .join('');
+    compatHtml = `
+      <div class="edicao-card" style="margin-bottom:10px;">
+        <div class="edicao-card-head"><span class="nome">Compatibilidade entre os códigos</span></div>
+        ${naoEncontradosHtml}${paresHtml}
+      </div>`;
+  }
+
+  const badge = {
+    ok: '<div class="msg" style="color:var(--teal-dark);font-weight:600;">✔ Nenhum ponto de atenção encontrado nos 3 verificadores.</div>',
+    aviso: '<div class="msg" style="color:var(--amber);font-weight:600;">⚠ Encontramos pontos que merecem confirmação antes de enviar.</div>',
+    erro: '<div class="msg erro" style="font-weight:600;">✘ Encontramos problema(s) que provavelmente geram glosa.</div>',
+  }[statusGeral];
+
+  checklistResultadoAreaEl.innerHTML = badge + cards.map((c) => c.html).join('') + compatHtml;
+}
+
+async function rodarChecklist() {
+  const codigos = checklistCodigosEl.value.split(',').map((c) => c.trim()).filter(Boolean);
+  if (codigos.length === 0) {
+    checklistResultadoAreaEl.innerHTML = '<div class="msg erro">Informe pelo menos 1 código SIGTAP.</div>';
+    return;
+  }
+  checklistResultadoAreaEl.innerHTML = '<div class="msg vazio">Rodando checklist…</div>';
+  try {
+    const [habilitacoes, conversores, compat] = await Promise.all([
+      Promise.all(codigos.map((c) => buscarJson(`/api/sigtap/habilitacao?codigo=${encodeURIComponent(c)}`))),
+      Promise.all(codigos.map((c) => buscarJson(`/api/conversor?codigo=${encodeURIComponent(c)}`))),
+      codigos.length >= 2 ? buscarJson(`/api/sigtap/compatibilidade?codigos=${encodeURIComponent(codigos.join(','))}`) : Promise.resolve(null),
+    ]);
+    renderizarChecklist(codigos, habilitacoes, conversores, compat);
+  } catch (err) {
+    console.error(err);
+    checklistResultadoAreaEl.innerHTML = `<div class="msg erro">Erro ao rodar checklist: ${escaparHtml(err.message)}</div>`;
+  }
+}
+
+if (btnChecklistVerificarEl) {
+  btnChecklistVerificarEl.addEventListener('click', rodarChecklist);
+  checklistCodigosEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') rodarChecklist();
   });
 }
 

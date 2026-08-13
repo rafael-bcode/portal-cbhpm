@@ -8,6 +8,7 @@ const { competenciaLegivel, buscarUltimaDisponivelGitHub, atualizarSigtap } = re
 const { buscarUltimaModificacaoAnvisa, atualizarCmed } = require('./cmed-atualizador');
 const { buscarUltimaModificacaoAns, atualizarOperadoras } = require('./operadoras-atualizador');
 const { buscarUltimaCompetenciaDisponivel: buscarUltimaCompetenciaCnes, atualizarCnes } = require('./cnes-atualizador');
+const { buscarUltimaModificacaoAnvisa: buscarUltimaModificacaoProdutoSaude, atualizarProdutoSaude } = require('./produto-saude-atualizador');
 
 const app = express();
 app.use(express.json());
@@ -751,6 +752,88 @@ app.post('/api/cnes/atualizar', async (req, res) => {
   }
 });
 
+// Produtos para Saúde regularizados na ANVISA (Registro/Cadastro) — cobre
+// OPME (órteses, próteses e materiais especiais) e demais produtos para
+// saúde. Busca por número de registro/cadastro, nome comercial, nome
+// técnico (categoria) ou detentor do registro. "vencido" é calculado aqui
+// (validade_data < hoje) pra não duplicar a lógica de data no front.
+app.get('/api/produto-saude/buscar', async (req, res) => {
+  try {
+    const termo = (req.query.q || '').trim();
+    if (termo.length < 2) {
+      return res.json([]);
+    }
+
+    const { rows } = await pool.query(
+      `SELECT
+         numero_registro_cadastro, numero_processo, nome_tecnico, classe_risco, nome_comercial,
+         cnpj_detentor, detentor_registro_cadastro, nome_fabricante, pais_fabricante,
+         data_publicacao, validade_bruta, validade_data,
+         (validade_data IS NOT NULL AND validade_data < CURRENT_DATE) AS vencido,
+         atualizado_em
+       FROM produtos_saude_anvisa
+       WHERE numero_registro_cadastro = $1
+          OR nome_comercial ILIKE $2 OR nome_tecnico ILIKE $2 OR detentor_registro_cadastro ILIKE $2
+       ORDER BY (numero_registro_cadastro = $1) DESC, nome_comercial
+       LIMIT 60`,
+      [termo, `%${termo}%`]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca de Produtos para Saúde:', err);
+    res.status(500).json({ erro: 'Erro ao buscar produtos para saúde na base ANVISA.' });
+  }
+});
+
+// Data de publicação do arquivo de Produtos para Saúde carregado no banco
+// (header Last-Modified da fonte oficial ANVISA), e se a ANVISA já publicou
+// uma versão mais nova.
+app.get('/api/produto-saude/status', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT publicado_em, atualizado_em, total_registros FROM produto_saude_metadata WHERE id = 1');
+    const atual = rows[0] || null;
+
+    let ultimaModificacao = null;
+    let erroVerificacao = null;
+    try {
+      ultimaModificacao = await buscarUltimaModificacaoProdutoSaude();
+    } catch (err) {
+      console.error('Erro ao verificar atualização de Produtos para Saúde na ANVISA:', err);
+      erroVerificacao = 'Não foi possível verificar atualizações agora.';
+    }
+
+    const publicadoEm = atual && atual.publicado_em ? new Date(atual.publicado_em) : null;
+    res.json({
+      publicadoEm,
+      atualizadoEm: atual ? atual.atualizado_em : null,
+      totalRegistros: atual ? atual.total_registros : null,
+      ultimaModificacao,
+      atualizacaoDisponivel: Boolean(publicadoEm && ultimaModificacao && ultimaModificacao > publicadoEm),
+      erroVerificacao,
+    });
+  } catch (err) {
+    console.error('Erro ao consultar status de Produtos para Saúde:', err);
+    res.status(500).json({ erro: 'Erro ao consultar status de Produtos para Saúde.' });
+  }
+});
+
+// Baixa e reimporta Produtos para Saúde direto da ANVISA. Protegido pela
+// mesma senha administrativa do SIGTAP/CMED/Operadoras/CNES.
+app.post('/api/produto-saude/atualizar', async (req, res) => {
+  try {
+    const { senha } = req.body || {};
+    if (!process.env.SIGTAP_UPDATE_SENHA || senha !== process.env.SIGTAP_UPDATE_SENHA) {
+      return res.status(401).json({ erro: 'Senha inválida.' });
+    }
+
+    const resultado = await atualizarProdutoSaude(pool);
+    res.json(resultado);
+  } catch (err) {
+    console.error('Erro ao atualizar Produtos para Saúde:', err);
+    res.status(500).json({ erro: 'Erro ao atualizar a base de Produtos para Saúde.' });
+  }
+});
+
 // Competência atual da Tabela Unificada SIGTAP carregada no banco, e se há
 // uma competência mais nova disponível no espelho GitHub (RenatoKR/SIGTAP,
 // sincronizado diariamente com o FTP oficial do DATASUS).
@@ -1151,6 +1234,27 @@ async function checarAtualizacaoAutomaticaCnes() {
   }
 }
 
+// Mesma lógica do CMED (URL sempre vigente, Last-Modified como gatilho),
+// pros Produtos para Saúde da ANVISA (inclui OPME).
+const PRODUTO_SAUDE_INTERVALO_AUTO_MS = 24 * 60 * 60 * 1000;
+async function checarAtualizacaoAutomaticaProdutoSaude() {
+  try {
+    const { rows } = await pool.query('SELECT publicado_em FROM produto_saude_metadata WHERE id = 1');
+    const publicadoEm = rows[0]?.publicado_em ? new Date(rows[0].publicado_em) : null;
+    const ultimaModificacao = await buscarUltimaModificacaoProdutoSaude();
+
+    if (!publicadoEm || (ultimaModificacao && ultimaModificacao > publicadoEm)) {
+      console.log('[produto-saude] Nova versão detectada na ANVISA, atualizando automaticamente...');
+      const resultado = await atualizarProdutoSaude(pool);
+      console.log(`[produto-saude] Atualização automática concluída: ${resultado.totalRegistros} registros, publicado em ${resultado.publicadoEm}.`);
+    } else {
+      console.log('[produto-saude] Nenhuma atualização disponível (checagem automática).');
+    }
+  } catch (err) {
+    console.error('[produto-saude] Erro na checagem/atualização automática:', err.message);
+  }
+}
+
 const PORT = process.env.PORT || 3000;
 if (require.main === module) {
   app.listen(PORT, () => {
@@ -1165,6 +1269,9 @@ if (require.main === module) {
 
   setTimeout(checarAtualizacaoAutomaticaCnes, 20_000);
   setInterval(checarAtualizacaoAutomaticaCnes, CNES_INTERVALO_AUTO_MS);
+
+  setTimeout(checarAtualizacaoAutomaticaProdutoSaude, 25_000);
+  setInterval(checarAtualizacaoAutomaticaProdutoSaude, PRODUTO_SAUDE_INTERVALO_AUTO_MS);
 }
 
 module.exports = app;

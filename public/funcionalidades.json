@@ -73,5 +73,10 @@
     "tag": "CNES",
     "titulo": "Estabelecimentos de saúde",
     "descricao": "Busque um hospital, clínica ou laboratório pelo nome, CNES ou CNPJ e veja endereço, telefone, e-mail e site — cadastro nacional completo."
+  },
+  {
+    "tag": "OPME",
+    "titulo": "Registro ANVISA de materiais",
+    "descricao": "Busque um material ou OPME pelo nome, categoria ou número de registro e veja na hora se o registro está vencido — direto do cadastro oficial da ANVISA."
   }
 ]

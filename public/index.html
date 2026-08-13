@@ -203,6 +203,7 @@
     <button type="button" class="tab-btn" data-tab="cmed" id="tab-btn-cmed" style="display:none" aria-hidden="true" tabindex="-1">Preço Teto CMED</button>
     <button type="button" class="tab-btn" data-tab="operadoras" id="tab-btn-operadoras" style="display:none" aria-hidden="true" tabindex="-1">Operadoras ANS</button>
     <button type="button" class="tab-btn" data-tab="cnes" id="tab-btn-cnes" style="display:none" aria-hidden="true" tabindex="-1">CNES</button>
+    <button type="button" class="tab-btn" data-tab="opme" id="tab-btn-opme" style="display:none" aria-hidden="true" tabindex="-1">OPME</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -523,6 +524,40 @@
 
   <section id="validador-resultado-area"></section>
 
+  <section class="search-panel" style="margin-top:32px;" id="dac-secao">
+    <div class="mp-header">
+      <h2>Leitor de Demonstrativo de Glosa (DAC)</h2>
+    </div>
+    <p class="ajustes-nota">
+      Lê o <strong>Demonstrativo de Análise de Conta Médica (DAC)</strong> — o XML padrão TISS que a operadora
+      devolve dizendo item a item o que pagou e o que glosou — <strong>só no seu navegador</strong>, o arquivo
+      nunca sai do computador. Traduz cada código de glosa pelo dicionário de causas do portal e soma o valor
+      glosado por motivo, pra você ver o padrão em vez de reler guia por guia.
+      <br>Pode carregar mais de um arquivo de uma vez (ex: vários protocolos da mesma operadora).
+    </p>
+    <div class="field">
+      <label for="dac-arquivo">Arquivo(s) de retorno XML (Demonstrativo de Glosa)</label>
+      <input type="file" id="dac-arquivo" accept=".xml" multiple>
+    </div>
+
+    <details class="grupo grupo-principal" id="dac-painel-bloco">
+      <summary class="grupo-summary"><span class="grupo-nome">Padrão de glosa por operadora (histórico neste navegador)</span></summary>
+      <div class="grupo-corpo">
+        <p class="ajustes-nota" style="margin:10px 16px 0;">
+          Acumula um resumo de cada Demonstrativo de Glosa já conferido aqui (operadora, valores e motivos de
+          glosa — nunca o conteúdo do XML) pra mostrar, por operadora, quais motivos mais se repetem ao longo do
+          tempo. Fica salvo só neste navegador (localStorage).
+        </p>
+        <div id="dac-painel-lista"></div>
+        <div style="margin:10px 16px;">
+          <button type="button" id="btn-limpar-historico-dac" class="acao-btn">🗑 Limpar histórico de demonstrativos</button>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <section id="dac-resultado-area"></section>
+
   </div>
 
   <div id="tab-validador-sus" class="tab-panel hidden">
@@ -697,7 +732,28 @@
 
   <div id="tab-verificadores" class="tab-panel hidden">
 
-  <section class="search-panel">
+  <section class="search-panel" id="checklist-secao">
+    <div class="mp-header">
+      <h2>Checklist pré-envio</h2>
+    </div>
+    <p class="ajustes-nota">
+      Cola o(s) código(s) SIGTAP de uma guia (1 ou mais, separados por vírgula) e roda de uma vez as 3
+      conferências abaixo — habilitação exigida, equivalência nas tabelas (TUSS/CBHPM) e, quando há 2 ou mais
+      códigos, compatibilidade entre eles — com um resumo visual único no lugar de 3 consultas separadas.
+      <strong>Não cobre</strong> a compatibilidade com o diagnóstico (CID) nem a documentação clínica: o portal
+      ainda não tem a tabela oficial de compatibilidade procedimento×CID carregada.
+    </p>
+    <div class="field field-busca">
+      <label for="checklist-codigos">Código(s) SIGTAP</label>
+      <div class="busca-wrapper" style="max-width:620px;">
+        <input type="text" id="checklist-codigos" placeholder="Ex: 0303170077, 0206010010" autocomplete="off">
+      </div>
+    </div>
+    <button type="button" id="btn-checklist-verificar" class="btn-consultar">Rodar checklist</button>
+    <section id="checklist-resultado-area" style="margin-top:16px;"></section>
+  </section>
+
+  <section class="search-panel" style="margin-top:32px;">
     <div class="mp-header">
       <h2>Verificador de compatibilidade entre procedimentos</h2>
     </div>
@@ -1067,9 +1123,16 @@
         <summary class="faq-pergunta">Sou obrigado a emitir nota fiscal ou recibo de consulta particular?</summary>
         <div class="faq-resposta">
           <p>Sim. Deixar de emitir comprovante da prestação de serviço é crime contra a ordem tributária (art. 1º
-          da Lei 8.137/90). Médico pessoa física deve usar o app Receita Saúde, da Receita Federal (obrigatório
-          desde 01/01/2025 — recibo emitido manualmente sem ele deixou de ter validade fiscal); médico pessoa
-          jurídica (com CNPJ) emite nota fiscal de serviço normalmente, pela prefeitura do seu município.</p>
+          da Lei 8.137/90). Médico pessoa física continua usando o app <strong>Receita Saúde</strong>, da Receita
+          Federal (obrigatório desde 01/01/2025 — recibo emitido manualmente sem ele deixou de ter validade
+          fiscal).</p>
+          <p>Além disso, o Brasil está migrando pro <strong>padrão nacional único de NFS-e</strong> (Lei
+          Complementar 214/2025): autônomo e profissional liberal isento passam a emitir pelo Emissor Nacional
+          (gov.br/nfse) a partir de 1º/08/2026 — mas o prazo pode variar por município (São Paulo, por exemplo,
+          adiou pra 2027), então vale confirmar o calendário da prefeitura antes de assumir a data nacional como
+          regra geral. Médico pessoa jurídica (com CNPJ) segue emitindo a NFS-e normalmente, agora dentro desse
+          padrão único.</p>
+          <p class="faq-fonte">Fonte oficial: <a href="https://www.gov.br/nfse/pt-br" target="_blank" rel="noopener">gov.br/nfse</a></p>
         </div>
       </details>
 
@@ -1124,6 +1187,21 @@
           administrativas/judiciais. Por regra, a operadora não pode impedir contratualmente o prestador de
           contestar glosas nem negar acesso às justificativas.</p>
           <a class="faq-portal-link" href="https://www.gov.br/ans/pt-br" target="_blank" rel="noopener">🌐 Portal oficial da ANS →</a>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">A glosa não resolvida virou processo judicial — o que ajuda a montar o caso?</summary>
+        <div class="faq-resposta">
+          <p>É um caminho cada vez mais comum: segundo o IESS, os processos judiciais contra operadoras cresceram
+          112% entre 2020 e 2024 (quase 300 mil novos processos só em 2024), a maioria por negativa de
+          cobertura. Documentação organizada desde o envio original é o que sustenta o caso depois — e é
+          justamente a trilha que os validadores do portal já deixam pronta: o XML validado e a comparação entre
+          o arquivo original e o reenviado (Validador de XML TISS), o Demonstrativo de Glosa da operadora já
+          cruzado com o motivo (Leitor de DAC) e os relatórios de conferência em PDF (Validador SUS) — vale
+          guardar esses documentos junto com a guia e a autorização original.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Ver a trilha de conferência do Validador de XML TISS →</button>
+          <p class="faq-fonte">Fonte: IESS, "Judicialização" (série Caminhos da Saúde Suplementar, 2025)</p>
         </div>
       </details>
 
@@ -1360,9 +1438,12 @@
       <details class="faq-item">
         <summary class="faq-pergunta">O portal tem alguma ferramenta pra conferir OPME?</summary>
         <div class="faq-resposta">
-          <p>Ainda não — hoje o portal cobre CBHPM, SUS/SIGTAP, TUSS, medicamentos (CMED) e Padrão TISS, mas não
-          tem uma base de preços ou de registro ANVISA de materiais/OPME carregada. É um assunto que fica
-          anotado pra uma próxima evolução do portal.</p>
+          <p>Sim — a consulta ao Registro/Cadastro de Produtos para Saúde da ANVISA, que só lista registros
+          atualmente vigentes: se o material não aparece na busca, é sinal de registro vencido, cancelado ou
+          nome diferente do oficial — uma causa direta de glosa em OPME. Quando encontrado, mostra até quando o
+          registro vale. Não é preço: a ANVISA não regula preço de material/OPME, só o registro sanitário —
+          pra isso a referência continua sendo Simpro ou Brasíndice.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="opme">🦴 Consultar o registro de um OPME aqui no portal →</button>
         </div>
       </details>
 
@@ -1756,6 +1837,39 @@
 
   </div>
 
+  <div id="tab-opme" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>OPME — Produtos para Saúde (ANVISA)</h2>
+      <div id="opme-competencia-area" class="sigtap-competencia-area"></div>
+    </div>
+    <p class="ajustes-nota">
+      Consulta ao Registro/Cadastro de Produtos para Saúde da ANVISA — cobre OPME (órteses, próteses e
+      materiais especiais) junto com os demais produtos regulados nessa base (mais de 115 mil registros),
+      direto da fonte oficial e aberta: <a href="https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv" target="_blank" rel="noopener">dados.anvisa.gov.br</a>.
+      Busque por número de registro/cadastro, nome comercial, categoria (nome técnico) ou detentor do registro.
+    </p>
+    <p class="ajustes-nota">
+      Essa base da ANVISA só lista registros <strong>atualmente vigentes</strong> — então não achar o material
+      aqui é o próprio sinal de alerta (registro vencido, cancelado, ou nome diferente do que consta
+      oficialmente — vale tentar outro termo antes de concluir que não existe). Quando encontrado, mostra até
+      quando o registro vale. Não é preço (a ANVISA não regula preço de material/OPME, só registro sanitário)
+      nem confirma se aquele item específico está coberto pelo contrato com a operadora.
+    </p>
+
+    <div class="field field-busca">
+      <label for="opme-busca">Número de registro/cadastro, nome comercial, categoria ou detentor</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="opme-busca" placeholder="Ex: prótese de quadril, cateter, ou o número do registro" autocomplete="off">
+      </div>
+    </div>
+  </section>
+
+  <section id="opme-resultado-area"></section>
+
+  </div>
+
 </main>
 
 <aside class="eco-sidebar eco-sidebar-right">
@@ -1792,6 +1906,11 @@
   <a class="eco-card eco-card-faq" href="#" id="link-cnes">
     <span class="eco-card-nome">🏥 CNES</span>
     <span class="eco-card-desc">Busque um estabelecimento de saúde pelo nome, CNES ou CNPJ e veja endereço, telefone, e-mail e site — cadastro nacional completo.</span>
+  </a>
+
+  <a class="eco-card eco-card-faq" href="#" id="link-opme">
+    <span class="eco-card-nome">🦴 OPME</span>
+    <span class="eco-card-desc">Consulte o registro ANVISA de um material/OPME por nome, categoria ou número — e veja na hora se o registro está vencido.</span>
   </a>
 </aside>
 
