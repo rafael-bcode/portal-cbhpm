@@ -979,6 +979,26 @@ function renderizarValidadeOpme(item) {
   return `<span class="validador-linha ok" style="border:none; padding:0; display:inline;">✔ Vigente (sem prazo definido)</span>`;
 }
 
+// Um registro pode listar várias fábricas autorizadas (multinacional com
+// planta em cada país) — o backend já agrupa por registro e devolve
+// "fabricantes" como lista, então aqui é 1 card por produto, com as
+// fábricas dentro de um <details> só quando há mais de uma.
+function renderizarFabricantesOpme(fabricantes) {
+  const lista = (fabricantes || []).filter((f) => f.nome_fabricante);
+  if (lista.length === 0) return '<div><strong>Fabricante:</strong> —</div>';
+  if (lista.length === 1) {
+    return `<div><strong>Fabricante:</strong> ${escaparHtml(lista[0].nome_fabricante)}${lista[0].pais_fabricante ? ` (${escaparHtml(lista[0].pais_fabricante)})` : ''}</div>`;
+  }
+  const itensHtml = lista
+    .map((f) => `<div class="detail" style="display:block;">${escaparHtml(f.nome_fabricante)}${f.pais_fabricante ? ` — ${escaparHtml(f.pais_fabricante)}` : ''}</div>`)
+    .join('');
+  return `
+    <details style="grid-column:1 / -1;">
+      <summary style="cursor:pointer;"><strong>${lista.length} fábricas autorizadas</strong> — ver todas</summary>
+      <div style="margin-top:6px;">${itensHtml}</div>
+    </details>`;
+}
+
 function renderizarCardOpme(item) {
   return `
     <details class="faq-item">
@@ -992,8 +1012,7 @@ function renderizarCardOpme(item) {
           <div style="min-width:0; overflow-wrap:anywhere;"><strong>Classe de risco:</strong> ${item.classe_risco ? escaparHtml(item.classe_risco) : '—'}</div>
           <div style="min-width:0; overflow-wrap:anywhere;"><strong>Detentor do registro:</strong> ${item.detentor_registro_cadastro ? escaparHtml(item.detentor_registro_cadastro) : '—'}</div>
           <div style="min-width:0; overflow-wrap:anywhere;"><strong>CNPJ do detentor:</strong> ${item.cnpj_detentor ? escaparHtml(item.cnpj_detentor.replace(/(\d{2})(\d{3})(\d{3})(\d{4})(\d{2})/, '$1.$2.$3/$4-$5')) : '—'}</div>
-          <div style="min-width:0; overflow-wrap:anywhere;"><strong>Fabricante:</strong> ${item.nome_fabricante ? escaparHtml(item.nome_fabricante) : '—'}</div>
-          <div style="min-width:0; overflow-wrap:anywhere;"><strong>País do fabricante:</strong> ${item.pais_fabricante ? escaparHtml(item.pais_fabricante) : '—'}</div>
+          <div style="min-width:0; overflow-wrap:anywhere;">${renderizarFabricantesOpme(item.fabricantes)}</div>
           <div style="min-width:0; overflow-wrap:anywhere;"><strong>Publicado em:</strong> ${fmtDataOpme(item.data_publicacao) || '—'}</div>
         </div>
         <p class="faq-fonte">Dado da ANVISA atualizado em ${fmtDataOpme(item.atualizado_em) || '—'}</p>
@@ -1010,8 +1029,8 @@ async function buscarOpme(termo) {
       opmeResultadoAreaEl.innerHTML = '<p class="msg vazio">Nenhum produto encontrado com esse termo.</p>';
       return;
     }
-    const aviso = itens.length >= 60
-      ? '<p class="ajustes-nota">Mostrando os 60 primeiros — refine a busca (nome mais específico, categoria ou número de registro) se não achar o produto.</p>'
+    const aviso = itens.length >= 40
+      ? '<p class="ajustes-nota">Mostrando os 40 primeiros — refine a busca (nome mais específico, categoria ou número de registro) se não achar o produto.</p>'
       : '';
     opmeResultadoAreaEl.innerHTML = aviso + itens.map(renderizarCardOpme).join('');
   } catch (err) {

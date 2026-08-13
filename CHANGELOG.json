@@ -1,5 +1,13 @@
 [
   {
+    "versao": "2.9.1",
+    "data": "2026-08-13",
+    "mudancas": [
+      "Corrige a busca de OPME: um mesmo registro ANVISA pode ter até dezenas de linhas na base oficial (uma por fábrica autorizada — casos de multinacional chegam a 36), o que fazia o mesmo produto aparecer repetido na tela. Agora agrupa por registro e lista as fábricas dentro de um único card, expansível quando há mais de uma.",
+      "Reequilibra as barras laterais do ecossistema Argus: Argus Partners passa pra barra esquerda (abaixo do Argus ProSign), já que a direita tinha ficado mais alta depois dos cards de Preço-teto CMED, Operadoras ANS, CNES e OPME."
+    ]
+  },
+  {
     "versao": "2.9.0",
     "data": "2026-08-13",
     "mudancas": [

@@ -757,6 +757,13 @@ app.post('/api/cnes/atualizar', async (req, res) => {
 // saúde. Busca por número de registro/cadastro, nome comercial, nome
 // técnico (categoria) ou detentor do registro. "vencido" é calculado aqui
 // (validade_data < hoje) pra não duplicar a lógica de data no front.
+//
+// Um registro pode ter várias linhas na base (uma por fábrica autorizada —
+// ex: multinacional com planta em cada país). Confirmado que nome
+// comercial, validade, classe de risco e detentor são idênticos entre
+// essas linhas (só fabricante/país variam), então agrupamos por registro e
+// devolvemos os fabricantes como lista — 1 card por produto, não 1 por
+// fábrica.
 app.get('/api/produto-saude/buscar', async (req, res) => {
   try {
     const termo = (req.query.q || '').trim();
@@ -766,16 +773,21 @@ app.get('/api/produto-saude/buscar', async (req, res) => {
 
     const { rows } = await pool.query(
       `SELECT
-         numero_registro_cadastro, numero_processo, nome_tecnico, classe_risco, nome_comercial,
-         cnpj_detentor, detentor_registro_cadastro, nome_fabricante, pais_fabricante,
-         data_publicacao, validade_bruta, validade_data,
-         (validade_data IS NOT NULL AND validade_data < CURRENT_DATE) AS vencido,
-         atualizado_em
+         numero_registro_cadastro, MAX(nome_tecnico) AS nome_tecnico, MAX(classe_risco) AS classe_risco,
+         MAX(nome_comercial) AS nome_comercial, MAX(cnpj_detentor) AS cnpj_detentor,
+         MAX(detentor_registro_cadastro) AS detentor_registro_cadastro,
+         MAX(data_publicacao) AS data_publicacao, MAX(validade_bruta) AS validade_bruta,
+         MAX(validade_data) AS validade_data,
+         bool_or(validade_data IS NOT NULL AND validade_data < CURRENT_DATE) AS vencido,
+         MAX(atualizado_em) AS atualizado_em,
+         COUNT(*) AS total_fabricantes,
+         json_agg(DISTINCT jsonb_build_object('nome_fabricante', nome_fabricante, 'pais_fabricante', pais_fabricante)) AS fabricantes
        FROM produtos_saude_anvisa
        WHERE numero_registro_cadastro = $1
           OR nome_comercial ILIKE $2 OR nome_tecnico ILIKE $2 OR detentor_registro_cadastro ILIKE $2
-       ORDER BY (numero_registro_cadastro = $1) DESC, nome_comercial
-       LIMIT 60`,
+       GROUP BY numero_registro_cadastro
+       ORDER BY (numero_registro_cadastro = $1) DESC, MAX(nome_comercial)
+       LIMIT 40`,
       [termo, `%${termo}%`]
     );
     res.json(rows);
