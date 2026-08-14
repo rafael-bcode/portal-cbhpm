@@ -1,5 +1,12 @@
 [
   {
+    "versao": "2.10.1",
+    "data": "2026-08-14",
+    "mudancas": [
+      "Corrige overflow horizontal no topbar em telas abaixo de ~420px (ex: iPhone SE/mini, 390px): o botão de alternar tema (🌙) ficava cortado na borda direita. Confirmado com Playwright em viewport 390×844 antes e depois da correção."
+    ]
+  },
+  {
     "versao": "2.10.0",
     "data": "2026-08-14",
     "mudancas": [

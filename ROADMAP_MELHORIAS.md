@@ -272,61 +272,86 @@ CFM, que segue bloqueada por exigir credenciamento pago).
   4.01.00) que já passaram nos testes reais sugerem boa compatibilidade
   retroativa, mas isso não é uma garantia formal da ANS.
 
-## Achados rápidos (ago/2026) — corrigir antes de somar features novas
+## Achados rápidos (ago/2026)
 
 Encontrados numa revisão completa do portal (estrutura, links, teste
-funcional de cada aba com Playwright, screenshots mobile e desktop):
+funcional de cada aba com Playwright, screenshots mobile e desktop).
 
-1. **Topbar quebra no mobile (< 400px)** — testado em 390×844 (iPhone): o
-   botão de alternar tema (🌙) fica cortado na borda direita da tela, o menu
-   de abas empilha sem hierarquia clara. `.topbar-actions`/`.tabs` não
-   encolhem/quebram direito abaixo de ~400px.
-2. **Home desatualizada** — o card "9 ferramentas num só portal" e a lista
-   "Nove formas de conferir" (`public/home.html`) não contam o Validador SUS
-   (BPA/AIH/APAC), a maior novidade da v2.0.0. Está subvendendo o produto.
+1. ~~Topbar quebra no mobile (< 400px)~~ — **✅ corrigido (v2.10.1,
+   14/08/2026)**: testado em 390×844 (iPhone) com Playwright, antes e
+   depois. O botão de alternar tema (🌙) ficava cortado na borda direita —
+   `.topbar-inner` não tinha `flex-wrap` nem encolhia abaixo de ~420px.
+   Adicionada media query (`max-width: 480px`) que reduz padding/gap/fonte
+   do logo e do link "Página inicial" e permite quebrar em 2 linhas como
+   último recurso. `scrollWidth` bateu com `clientWidth` (sem overflow) na
+   reverificação. As abas (`.tabs`) já quebravam linha corretamente (tinham
+   `flex-wrap: wrap`) — não precisaram de ajuste.
+2. ~~Home desatualizada~~ — **✅ já corrigido antes desta revisão**: o card
+   de contagem e a copy da home (`public/home.html`) já puxam
+   `funcionalidades.json` dinamicamente em vez de um número fixo; hoje
+   mostra as 16 ferramentas atuais, Validador SUS incluído.
 
-## Fase 7 — Próximas melhorias (🔲 Proposto, ago/2026)
+## Fase 7 — Próximas melhorias (🔲 Em priorização, ago/2026)
 
-Levantamento a partir da revisão completa acima — nenhuma decisão de escopo
-tomada ainda, é a lista para priorizar e complementar juntos daqui pra
-frente. Mesma linha de sempre: nada de login, persistência de
-paciente/guia no servidor, ou geração/envio de guia oficial.
+Levantamento a partir da revisão completa acima, **revalidado em
+14/08/2026** contra o estado real do código (dois itens já saíram da lista
+por terem sido implementados enquanto o roadmap não era atualizado —
+Checklist pré-envio unificado e CNES standalone, ver Fase 7 anterior /
+CHANGELOG v2.5.0 e v2.6.0–2.9.0). Nenhuma decisão de escopo tomada ainda
+sobre os itens restantes — lista para priorizar juntos. Mesma linha de
+sempre: nada de login, persistência de paciente/guia no servidor, ou
+geração/envio de guia oficial.
 
 ### Aprofundar pilares existentes
 - Comparador de edições CBHPM lado a lado — hoje dá pra escolher "todas as
   21 edições", mas não existe uma visão de como um procedimento específico
   evoluiu de 2004 a 2022, útil pra entender se uma glosa é por edição
-  desatualizada do convênio.
+  desatualizada do convênio. *(ainda não iniciado)*
 - Formalizar relatório de conferência do Validador SUS (BPA/AIH/APAC) no
   mesmo padrão de PDF por paciente que o Validador XML TISS já tem.
-- Checklist pré-envio unificado na aba Verificadores: hoje são 3 consultas
-  isoladas (compatibilidade, habilitação, conversor) — unificar num fluxo
-  só (cola o código uma vez, roda os 3 + CID, resumo visual verde/
-  amarelo/vermelho).
+  *(ainda não iniciado — confirmado: não existe exportação PDF própria do
+  Validador SUS)*
 
 ### Novas conferências (mesma linha de "apoio", sem dado persistido)
-- Consulta de CNES standalone — o Validador AIH já resolve nome de
-  instituição via CNESNet internamente, só falta expor como consulta
-  própria.
 - Simulador reverso de glosa: a partir do sintoma relatado pelo faturista
   ("operadora rejeitou por incompatibilidade"), aponta qual verificador
-  rodar.
+  rodar. *(ainda não iniciado)*
 - Alerta ativo de versão TISS vencida — hoje o modal "Versões TISS" é só
   informativo; dá pra virar uma checagem ativa (usuário informa a versão do
   XML, portal avisa se está prestes a sair de uso, como aconteceu com a
-  4.02.00 → 4.03.00).
+  4.02.00 → 4.03.00). *(ainda não iniciado)*
 
 ### Transparência de dados
 - Selo "atualizado em" por base estática (CBO, operadoras ANS, dicionário
-  de glosas) — hoje só o SIGTAP mostra a competência carregada.
+  de glosas) — hoje só o SIGTAP mostra a competência carregada. *(ainda não
+  iniciado)*
 - Página `/fontes` consolidando as fontes oficiais já citadas espalhadas
-  pela home, com link direto e data do último import de cada uma.
+  pela home, com link direto e data do último import de cada uma. *(ainda
+  não iniciado)*
 
 ### Polish técnico
-- Corrigir o overflow mobile do topbar (achado #1 acima).
-- Atualizar a copy da home pro Validador SUS (achado #2 acima).
+- ~~Corrigir o overflow mobile do topbar~~ ✅ já corrigido (achado #1
+  acima).
+- ~~Atualizar a copy da home pro Validador SUS~~ ✅ já corrigido (achado #2
+  acima).
 - PWA leve (app shell estático em cache, sem cache de dado de paciente) —
-  pensado pra conexão instável dentro de hospital.
+  pensado pra conexão instável dentro de hospital. *(ainda não iniciado)*
+
+## Fase 8 — Compatibilidade procedimento×CID ✅ Implementado
+
+Fecha a lacuna que o Checklist pré-envio deixava explicitamente de fora
+(ver Fase 5d/6a) por falta da tabela oficial (v2.10.0, ago/2026):
+
+- Tabela `sigtap_procedimento_cid` (82 mil pares), importada de
+  `rl_procedimento_cid` da Tabela Unificada DATASUS, reimportada junto com
+  o resto a cada atualização da SIGTAP.
+- Checklist pré-envio: campo opcional de CID da guia, checado contra cada
+  código SIGTAP informado.
+- Consulta SIGTAP: cada card de procedimento mostra os CIDs permitidos
+  (só o código, principal em negrito, expansível acima de 8 itens;
+  descrição continua na aba CID-10 dedicada). Ausência de CID vinculado
+  (42% dos procedimentos, sobretudo consultas gerais) é mostrada
+  explicitamente como "sem restrição registrada", não omitida.
 
 ## Resumo executivo
 
@@ -342,4 +367,6 @@ paciente/guia no servidor, ou geração/envio de guia oficial.
 | 5d. Detalhe por guia (abas) e busca por número | ✅ Feito | Baixo–médio | Alto | Não |
 | 6a. Histórico local, múltiplos arquivos (Unimed 0/2/5) e comparação | ✅ Feito | Médio | Alto | Não |
 | 6c. Validação estrutural contra o XSD oficial | ✅ Feito | Alto | Alto | Não |
-| 7. Comparador de edições, checklist pré-envio, CNES standalone, glosa reversa, alerta de versão, transparência de dados, PWA, mobile | 🔲 Proposto | — | — | Não |
+| 7. Comparador de edições, PDF do Validador SUS, glosa reversa, alerta de versão, transparência de dados, PWA | 🔲 Em priorização | — | — | Não |
+| 8. Compatibilidade procedimento×CID (Checklist + consulta SIGTAP) | ✅ Feito | Médio | Alto | Não |
+| 9. Overflow mobile do topbar (achado #1) | ✅ Feito | Baixo | Médio | Não |

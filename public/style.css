@@ -174,6 +174,17 @@ body > * {
 }
 .topbar-home-link:hover { color: #fff; border-color: var(--teal); background: rgba(36, 83, 235, 0.15); }
 
+/* Abaixo de ~420px (ex: iPhone SE/mini em 390px) o topbar-inner não cabia
+   numa linha só — o botão de tema (🌙) ficava cortado na borda direita.
+   Encolhe logo/pill e permite quebrar em 2 linhas como último recurso. */
+@media (max-width: 480px) {
+  .topbar-inner { padding: 12px 16px; gap: 8px; flex-wrap: wrap; }
+  .logo-mark { font-size: 0.92rem; gap: 6px; }
+  .logo-mark-icon { height: 20px; }
+  .topbar-actions { gap: 6px; }
+  .topbar-home-link { padding: 6px 11px; font-size: 0.72rem; }
+}
+
 /* ---------- Layout com sidebar do ecossistema Argus ---------- */
 /* Grid de 3 colunas. A coluna central (a ferramenta) tem um piso alto
    (1092px, com folga — a barra de 8 abas precisa de ~1050px pra nunca
