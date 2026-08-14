@@ -555,62 +555,87 @@ implementação sem mais definição de escopo:
     saúde) e o Módulo Transmissor (envia ao Ministério da Saúde). Envio é
     **mensal**; ausência de movimento também precisa ser comunicada (
     remessa "sem movimento").
-  - **Achado importante durante a pesquisa**: existem **dois layouts
-    diferentes** de arquivo CIHA, achado que só ficou claro comparando os
-    dois PDFs — inicialmente peguei o errado:
-    1. `Layout_Arquivos_CIHA.pdf` (salvo na raiz) — layout de
-       **disseminação pública** (dbf, 29 campos: ANO_CMPT, MES_CMPT,
-       CGC_HOSP, MUNIC_RES, NASC, SEXO, PROC_REA, DIAG_PRINC, DIAG_SECUN,
-       CNES, FONTE, MODALIDADE etc.) — é o formato de microdados
-       processados/consolidados (mesma família dos dados do TabNet), não
-       o que o hospital gera pra enviar.
-    2. `LayoutCIHA01_v1.0.4.2.docx` (salvo na raiz, baixado via
-       `ftp://ftp.datasus.gov.br/CIHA/downloads/Documentacao/LayOutCIHA01V1.0.4.2.zip`,
-       link encontrado pelo usuário) — este sim é o **layout de
-       transmissão/importação real**, usado pelo hospital pra gerar o
-       arquivo TXT que o CIHA01 importa. Bem mais rico:
-       - Linha de header (TIPO_REG=1, CNES, VERSAO="1.0.4.2").
-       - Linha de dados com `TIPO_REG` indicando o tipo de registro (2 =
-         movimento individualizado hospitalar, 3 = sem movimento, 4 =
-         movimento individualizado ambulatorial, 5 = movimento consolidado
-         ambulatorial) — cada tipo tem seu próprio conjunto de campos
-         obrigatórios.
-       - Campos de largura fixa com posição/tamanho exatos: NOME_PAC,
-         endereço (logradouro/número/complemento/CEP/UF/`COD_MUNIC` IBGE),
-         `DT_NASC`, `SEXO` (M/F/I), `CNS`, `PROC_REA` (procedimento SIH/
-         SUS), `DIAG_PRIN`/`DIAG_SEC` (CID-10), `DT_ATENDIMENTO`,
-         `DT_ALTA`, `TP_ALTA`, `TP_FREMU` (fonte de remuneração),
-         `REG_ANS`/`CNPJ_OPER`/`CO_BENEF` (dados da operadora quando fonte
-         = convênio), `NU_OBITO`, campos de declaração de nascido (parto),
-         `QT_UTI`, `NU_PRONT`, `DT_CMPT` (competência), `CO_MODALIDADE`
-         (01-Ambulatorial/02-Internação), `NU_TISS` (nº da guia TISS
-         quando fonte = convênio — ponte direta com o Validador de XML
-         TISS que o portal já tem).
-    - Lição pro processo: ao pesquisar layout de arquivo governamental,
-      **confirmar se é o formato de envio/importação ou de disseminação/
-      exportação** antes de assumir que serve pra validação — são
-      propósitos diferentes e o nome do arquivo nem sempre deixa claro.
+  - **Achado importante durante a pesquisa**: existem (pelo menos) **três
+    documentos de layout diferentes** pra CIHA, e os dois primeiros que
+    encontrei estavam errados/desatualizados — só ficou claro depois que o
+    usuário forneceu 2 arquivos reais gerados pelo módulo CIHA do Totvs
+    GSH (`2085569202505.txt`, `2221772202607.txt`, ambos na raiz,
+    **contêm dado real de paciente — não versionados, não commitar**) pra
+    comparar:
+    1. `Layout_Arquivos_CIHA.pdf` — layout de **disseminação pública**
+       (dbf, 29 campos) — formato de microdados processados (família do
+       TabNet), não o que o hospital gera pra enviar. Descartado.
+    2. `LayoutCIHA01_v1.0.4.2.docx` (via FTP, zip de 2014) — já era o
+       layout de transmissão real, mas **desatualizado**: 390 caracteres
+       por linha, não bateu com os arquivos reais do Totvs (609
+       caracteres).
+    3. `Layout_CIHA01_2024-06.pdf` (baixado de
+       `ciha.saude.gov.br/documentos/documentos_ciha1.php` → "Layout da
+       interface texto do CIHA01 - 06/2024", achado pelo usuário navegando
+       no portal) — **este é o correto e vigente**. 609 caracteres,
+       batendo exatamente com os dois arquivos reais do Totvs GSH,
+       campo a campo (CNES confere com o nome do arquivo, datas válidas,
+       fonte de remuneração/modalidade/motivo de saída batendo com os
+       enums documentados, CID principal preenchido com secundário
+       zerado conforme a regra).
+    - Lição pro processo (a mesma de antes, reforçada): **arquivo real e
+      validado do sistema que efetivamente gera o dado vale mais que
+      qualquer PDF pra confirmar layout** — foi comparando linha real
+      contra o PDF, byte a byte, que os dois layouts errados ficaram
+      óbvios. Documento sozinho, sem dado real pra conferir, teria me
+      deixado validando contra o layout errado.
+  - **Layout confirmado (`Layout_CIHA01_2024-06.pdf`, 38 campos, 609
+    caracteres, largura fixa)** — tabela completa (posição, tamanho,
+    obrigatoriedade condicional) já extraída e documentada na conversa;
+    resumo dos pontos centrais:
+    - `DT_CMPT`(1-6) `CO_CNES`(7-13) `TP_ATENDIMENTO`(14, C/I)
+      `CO_PROCEDIMENTO`(15-24) `QT_ATENDIMENTO`(25-30)
+      `CO_FONTE_REMUNERACAO`(31-32, 12 valores possíveis)
+      `CO_OPERADORA`(33-38, registro ANS) `DT_ADMISSAO`(39-46)
+      `DT_SAIDA`(47-54) `CO_MODALIDADE`(55-56, 01-Ambulatorial/
+      02-Hospitalar) `CO_MOTIVO_SAIDA`(57-58, ~30 códigos de alta/óbito)
+      `CO_CID_PRINCIPAL`(61-64) `CO_CID_SECUNDARIO`(65-68) `NU_CNPJ`
+      `NU_CNPJ_FONTE_REMUNERACAO` `CO_BENEFICIARIO` `NU_DOCUMENTO_OBITO`
+      `NU_TISS`(159-178 — ponte direta com o Validador de XML TISS que o
+      portal já tem) `NU_PRONTUARIO` `NU_CNS`(191-205) `NO_PACIENTE`
+      (206-275) `DT_NASCIMENTO` `TP_SEXO` endereço completo (logradouro/
+      número/complemento/CEP/`CO_MUNICIPIO`/`SG_UF`) `NU_DNV1..5`
+      (declaração de nascido vivo, até 5) `QT_DIAS`(UTI)
+      `DS_PROCEDIMENTO_GENERICO`(510-609, obrig. só se não-SUS).
+    - Obrigatoriedade é condicional em cascata: por `TP_ATENDIMENTO`
+      (individualizado exige nome/nascimento/sexo/endereço/etc.), por
+      `CO_FONTE_REMUNERACAO` (convênio=01 exige operadora/CNPJ/
+      beneficiário/TISS/prontuário; consórcio=13 exige outro CNPJ), por
+      `CO_MODALIDADE` (hospitalar exige motivo de saída), por desfecho
+      (óbito exige documento de óbito), e por atributo do procedimento na
+      Tabela SUS ("Exige CID").
+    - Pendência pequena a resolver na implementação: o PDF declara
+      `NU_CNPJ` com tamanho 14 mas as posições impressas (069-081) somam
+      só 13 — provável erro de digitação do próprio DATASUS (o campo
+      seguinte só começa em 083, sobrando a posição 82 sem dono
+      declarado). Resolver testando contra mais linhas reais antes de
+      fixar a regra.
   - **Por que dá pra validar bem**: é o mesmo tipo de arquivo plano de
     largura fixa que o portal já processa (mesmo padrão dos arquivos
     SIGTAP), e os campos mais sujeitos a erro batem com dados que o
-    portal **já indexa**: `DIAG_PRIN`/`DIAG_SEC` (tabelas de CID-10 já
-    usadas no Checklist e na busca SIGTAP), `PROC_REA` (procedimentos
-    SIGTAP já indexados), `REG_ANS` (Operadoras ANS já indexado),
-    possivelmente `CNES` (dado que o `cnes-atualizador.js` já trata).
-    Validação viável em duas camadas: (1) estrutural — posição/tamanho/
-    tipo de cada campo, preenchimento obrigatório conforme `TIPO_REG` e
-    `TP_FREMU`; (2) semântica — CID, procedimento, ANS e CNES existem e
-    são válidos nas tabelas já carregadas.
-  - **Escopo ainda em aberto antes de implementar**: confirmar se a v1.0.4.2
-    (do zip, sem data de revisão clara no documento) ainda é a versão
-    vigente do CIHA01 — o campo `VERSAO` do header sugere que o próprio
-    arquivo declara a versão, então dá pra validar isso também, mas vale
-    checar `https://ciha.saude.gov.br/versao/versao.php` numa rodada
-    futura antes de fixar as regras. Não é candidato de "prioridade
-    máxima" ainda — é maior que os itens de FAQ acima (é uma feature nova
-    de validação, não só texto), então fica registrado pra avaliar prazo
-    com calma, sem compromisso pra 21/08/2026.
-  - Fontes: [Manual Técnico-Operacional CIHA01 (wiki DATASUS)](https://wiki.saude.gov.br/ciha/index.php/Manual_T%C3%A9cnico-Operacional_CIHA01), [Página principal da wiki CIHA](https://wiki.saude.gov.br/ciha/index.php/Página_principal), [Portal CIHA](https://ciha.saude.gov.br/principal/index.php) (sugerido pelo usuário como fonte pro FAQ), layout de disseminação e layout de transmissão salvos localmente (ambos na raiz do projeto, arquivos não versionados).
+    portal **já indexa**: `CO_CID_PRINCIPAL`/`CO_CID_SECUNDARIO` (tabelas
+    de CID-10 já usadas no Checklist e na busca SIGTAP),
+    `CO_PROCEDIMENTO` (procedimentos SIGTAP já indexados), `CO_OPERADORA`
+    (Operadoras ANS já indexado), possivelmente `CO_CNES` (dado que o
+    `cnes-atualizador.js` já trata). Validação viável em duas camadas:
+    (1) estrutural — posição/tamanho/tipo de cada campo, preenchimento
+    obrigatório conforme a cascata de condições acima; (2) semântica —
+    CID, procedimento, operadora e CNES existem e são válidos nas
+    tabelas já carregadas.
+  - **Escopo pra implementar**: não é candidato de "prioridade máxima"
+    ainda — é maior que os itens de FAQ acima (é uma feature nova de
+    validação, com regras condicionais em cascata, não só texto), então
+    fica registrado pra avaliar prazo com calma, sem compromisso pra
+    21/08/2026. Já está desbloqueado pra entrar em implementação quando
+    o usuário decidir — layout confirmado, fonte de dado real de teste
+    disponível (os dois arquivos do Totvs), e mapeamento de quais campos
+    cruzam com dado já indexado no portal está feito.
+  - Fontes: [Manual Técnico-Operacional CIHA01 (wiki DATASUS)](https://wiki.saude.gov.br/ciha/index.php/Manual_T%C3%A9cnico-Operacional_CIHA01), [Documentos do CIHA01 (portal oficial)](https://ciha.saude.gov.br/documentos/documentos_ciha1.php) (achado pelo usuário — tem o layout vigente), [Página principal da wiki CIHA](https://wiki.saude.gov.br/ciha/index.php/Página_principal), [Portal CIHA](https://ciha.saude.gov.br/principal/index.php) (sugerido pelo usuário como fonte pro FAQ). Os três PDFs/docx de layout estão salvos na raiz do projeto (não versionados) — `Layout_Arquivos_CIHA.pdf` (descartado), `LayoutCIHA01_v1.0.4.2.docx` (desatualizado), `Layout_CIHA01_2024-06.pdf` (**vigente, usar este**).
 
 Demais candidatos (sem prioridade definida, a rodada de revisão de hoje
 não achou mais nada quebrado):

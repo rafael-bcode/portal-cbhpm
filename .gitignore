@@ -10,3 +10,8 @@ server.log
 *.pdf
 *_dados.json
 resultado-teste.json
+
+# Amostras reais de arquivo CIHA (Totvs GSH) usadas pra mapear o layout —
+# contêm dado real de paciente (nome, nascimento, endereço, CNS). Nunca commitar.
+2085569202505.txt
+2221772202607.txt
