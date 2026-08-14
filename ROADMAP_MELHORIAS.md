@@ -446,33 +446,81 @@ implementação sem mais definição de escopo:
   sobre OCI (nem FAQ, nem explicação), mas os **códigos de procedimento OCI
   já estão indexados** na busca SIGTAP (ex.: "OCI AVALIAÇÃO DIAGNÓSTICA
   INICIAL DE CÂNCER DE MAMA", achado em `sigtap_procedimentos.json`).
-  Rascunho de resposta pra subaba de Dúvidas frequentes (SUS):
-  - **O que é**: conjunto padronizado de procedimentos (consultas, exames e
-    tecnologias) organizado pra concluir uma etapa de cuidado dentro de uma
-    linha de cuidado específica — em vez do paciente agendar cada exame
-    separadamente, o encaminhamento é pra um pacote completo, com prazo
-    máximo de conclusão (geralmente 60 dias, 30 pra casos oncológicos).
-  - **Onde se encaixa**: parte do Programa Mais Acesso a Especialistas
-    (PMAE), instituído pela Portaria GM/MS nº 7.273/2025 (base legal:
-    Portaria 1.604/2023, que criou a Política Nacional de Atenção
-    Especializada — PNAES).
-  - **Como fatura**: procedimento OCI é do tipo ambulatorial, financiamento
-    FAEC, registrado em **APAC única** (sem APAC de continuação, prazo
-    máximo de 2 competências) no SIA/SUS. Cada OCI principal tem
-    procedimentos secundários compatíveis/obrigatórios pré-definidos pela
-    própria tabela SIGTAP.
-  - Áreas já cobertas: oncologia (mama, próstata, colo do útero, gástrico,
-    colorretal), oftalmologia, cardiologia, ortopedia, otorrino, entre
-    outras.
-  - Sem decisão de escopo pendente — é só redigir o item e publicar na
-    subaba SUS do FAQ.
+  Pesquisa complementada (14/08/2026) lendo o manual oficial completo —
+  [Manual PMAE: Registro da Produção, Controle e Avaliação](https://www.gov.br/saude/pt-br/centrais-de-conteudo/publicacoes/guias-e-manuais/2024/manual-pmae-registro-da-producao-controle-e-avaliacao.pdf)
+  (atualizado em março/2025; o PDF é baseado em imagem — texto extraído
+  localmente com `pdftotext -layout` via poppler/Git; cópia local em
+  `manual-pmae-registro-da-producao-controle-e-avaliacao.pdf` na raiz do
+  projeto, arquivo não versionado). Rascunho de resposta
+  bem mais rico pra subaba SUS do FAQ, já com as regras que mais geram
+  dúvida/erro de faturamento:
+
+  - **O que é**: conjuntos de procedimentos (consultas, exames e/ou outros
+    procedimentos diagnósticos/terapêuticos) e tecnologias de cuidado
+    necessários pra concluir uma etapa da linha de cuidado — ou conduzir um
+    agravo específico de resolução rápida — de forma integrada, no âmbito
+    do Programa Mais Acesso a Especialistas (PMAE).
+  - **Onde estão na Tabela SUS**: Grupo 09 — "Procedimentos para Ofertas
+    de Cuidados Integrados". Todo procedimento principal de OCI é
+    ambulatorial, tem o Atributo Complementar "Programa Mais Acesso a
+    Especialistas (PMAE)" e exige a habilitação **38.01 - Programa Mais
+    Acesso a Especialistas** no CNES do estabelecimento.
+  - **Como registrar na APAC** (regras que mais pegam quem fatura):
+    - 5º dígito do número da APAC tem que ser **"7"** (identifica o tipo de
+      autorização do PMAE).
+    - Campo "Tipo de APAC" = **"3"** — é sempre APAC única, **não existe
+      APAC de continuidade**.
+    - Identificação do paciente é **obrigatoriamente por CPF**.
+    - Data de início da validade = data do primeiro procedimento realizado
+      do conjunto da OCI. Se o procedimento principal tiver o atributo
+      "APAC com validade fixa de 2 competências", o intervalo início→fim
+      tem que caber em até 2 competências.
+    - Caráter de atendimento é sempre **"01 - Eletivo"**.
+  - **Procedimentos secundários — a parte que mais gera glosa**:
+    - Mínimo de **2 procedimentos secundários** por APAC, e um deles tem
+      que ser obrigatoriamente a consulta médica em atenção especializada
+      (**0301010072**) ou a teleconsulta (**0301010307**) — o outro
+      secundário precisa ser diferente desses dois.
+    - Só é possível registrar um secundário se ele for **compatível** com
+      o principal no SIGTAP (Relatórios → Compatibilidades). Sem
+      compatibilidade cadastrada, o SIA **bloqueia o registro**.
+    - Compatibilidade "Obrigatória" (não só "Compatível") força o registro
+      desse secundário junto do principal na mesma APAC.
+    - A quantidade máxima do secundário é a que está definida na própria
+      compatibilidade — não o atributo de quantidade máxima do
+      procedimento isoladamente.
+  - **Valor e financiamento**: o valor total da APAC é só o valor do
+    procedimento principal — os secundários entram com **valor zerado**
+    (regra condicionada "0009"). Ainda assim, desde a competência
+    março/2025 (Portaria SAES/MS nº 2.630/2025), todo procedimento de OCI
+    — principal ou secundário — é financiado por **FAEC** e programado na
+    aba FAEC da FPO (mesmo o secundário com valor zero).
+  - **Oncologia (Subgrupo 09.01)**: quando o secundário tem o atributo
+    "Exige data do resultado diagnóstico de Neoplasia", é obrigatório
+    preencher "Data diagnóstico cito/histopatológico" e **CID Principal**
+    (CID Secundário é opcional).
+  - **Se a OCI não for concluída** dentro do prazo/regras do programa
+    (nem todos os procedimentos obrigatórios realizados, ou prazo
+    estourado), os procedimentos já feitos podem ser registrados em
+    BPA-I normalmente — não ficam perdidos, só saem do fluxo de OCI.
+  - **Curiosidade que conecta com outra pesquisa já registrada no
+    roadmap**: a exigência de identificação do paciente **por CPF** na
+    APAC de OCI é mais um caso do movimento de CPF como identificador
+    único do usuário do SUS — ver
+    [Observação: Carteira de Identidade Nacional (CIN)](#observação-não-é-candidato-ainda-carteira-de-identidade-nacional-cin)
+    logo abaixo, mesma tendência, contexto diferente (lá é sobre
+    identificação de beneficiário no TISS/ANS, aqui é registro SUS).
+  - Sem decisão de escopo pendente — é só redigir o item (o rascunho acima
+    já dá o conteúdo quase pronto) e publicar na subaba SUS do FAQ.
 
 - **Achado relacionado (a partir da pesquisa de OCI): tabela de
-  compatibilidade entre procedimentos já disponível localmente**: o usuário
-  mostrou o portal oficial de "Compatibilidades" do SIGTAP
-  (`sigtap.datasus.gov.br`), que lista pra cada OCI principal os
-  procedimentos secundários compatíveis/obrigatórios (com tipo e
-  quantidade permitida). O arquivo bruto equivalente,
+  compatibilidade entre procedimentos já disponível localmente**: o manual
+  do PMAE confirma que o registro de secundário em APAC de OCI **depende
+  inteiramente** da tabela de compatibilidades do SIGTAP (Relatórios →
+  Compatibilidades) — é regra de bloqueio do SIA, não sugestão. O usuário
+  mostrou esse portal oficial (`sigtap.datasus.gov.br`), que lista pra cada
+  OCI principal os procedimentos secundários compatíveis/obrigatórios (com
+  tipo e quantidade permitida). O arquivo bruto equivalente,
   `rl_procedimento_compativel.txt`, **já está no zip da Tabela Unificada
   baixado** (`TabelaUnificada_202607_v2607101010.zip`, 452 KB, formato de
   colunas fixas: procedimento principal + registro, procedimento
@@ -484,9 +532,10 @@ implementação sem mais definição de escopo:
   `sigtap_procedimento_compativel`, importador em `sigtap-atualizador.js`,
   endpoint novo ou extensão do `/api/sigtap/buscar`. Não é sobre OCI
   especificamente (a tabela cobre compatibilidade entre procedimentos SUS
-  em geral), mas é o dado que mais importa pra quem fatura OCI — vale
-  avaliar como candidato de feature (não só FAQ) numa rodada futura, sem
-  compromisso de data ainda.
+  em geral, tipo "Compatível"/"Obrigatória" como descrito acima), mas é o
+  dado que mais importa pra quem fatura OCI — vale avaliar como candidato
+  de feature (não só FAQ) numa rodada futura, sem compromisso de data
+  ainda.
 
 Demais candidatos (sem prioridade definida, a rodada de revisão de hoje
 não achou mais nada quebrado):
