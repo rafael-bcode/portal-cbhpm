@@ -1,5 +1,12 @@
 [
   {
+    "versao": "2.11.2",
+    "data": "2026-08-14",
+    "mudancas": [
+      "Modal de versão (rodapé) ganha a seção 'Em breve', com o que está sendo avaliado pro portal — linguagem deliberadamente vaga, sem data nem prazo, pra mostrar desenvolvimento ativo sem criar expectativa de entrega."
+    ]
+  },
+  {
     "versao": "2.11.1",
     "data": "2026-08-14",
     "mudancas": [

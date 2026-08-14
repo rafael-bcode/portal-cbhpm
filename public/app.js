@@ -1395,13 +1395,28 @@ document.addEventListener('keydown', (e) => {
 const btnVersaoEl = document.getElementById('btn-versao');
 const modalVersaoEl = document.getElementById('modal-versao');
 const listaVersoesEl = document.getElementById('lista-versoes');
+const proximosPassosAreaEl = document.getElementById('proximos-passos-area');
 
 async function carregarVersao() {
   try {
     const resp = await fetch('/api/versao');
-    const { versaoAtual, changelog } = await resp.json();
+    const { versaoAtual, changelog, proximosPassos } = await resp.json();
 
     btnVersaoEl.textContent = `v${versaoAtual}`;
+
+    // Lista curta e sem data do que está sendo avaliado — linguagem
+    // deliberadamente vaga (ver comentário em server.js) pra não criar
+    // expectativa de prazo. Some da tela se não houver nada nessa lista.
+    if (Array.isArray(proximosPassos) && proximosPassos.length > 0) {
+      proximosPassosAreaEl.innerHTML = `
+        <div class="proximos-passos">
+          <div class="proximos-passos-titulo">Em breve</div>
+          <p class="ajustes-nota" style="margin:0 0 6px;">O que está sendo avaliado pro portal, sem prazo definido:</p>
+          <ul>${proximosPassos.map((p) => `<li>${escaparHtml(p)}</li>`).join('')}</ul>
+        </div>`;
+    } else {
+      proximosPassosAreaEl.innerHTML = '';
+    }
 
     listaVersoesEl.innerHTML = '';
     changelog.forEach((item) => {

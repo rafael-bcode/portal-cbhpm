@@ -26,9 +26,21 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
-// Versão atual do portal e histórico de mudanças (exibidos no rodapé da tela)
+// "Próximos passos" — lista curta e sem datas do que está sendo avaliado,
+// mantida à mão junto do ROADMAP_MELHORIAS.md. Deliberadamente vaga (sem
+// prazo, sem promessa de que vai sair numa sexta específica): o objetivo é
+// mostrar que o portal está em desenvolvimento ativo, não criar expectativa
+// de entrega que pode não se confirmar. Atualizar aqui só quando algo
+// realmente estiver em avaliação — lista vazia é melhor que item furado.
+const proximosPassos = [
+  'Ajustes de exibição em telas menores (celular/tablet)',
+  'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
+];
+
+// Versão atual do portal, histórico de mudanças e o que está sendo avaliado
+// pra frente (exibidos no rodapé da tela)
 app.get('/api/versao', (req, res) => {
-  res.json({ versaoAtual: packageJson.version, changelog });
+  res.json({ versaoAtual: packageJson.version, changelog, proximosPassos });
 });
 
 // Lista todas as edições disponíveis (usado para montar os checkboxes na tela)

@@ -364,6 +364,22 @@ do que foi construído/corrigido na semana, seguida de deploy. Esta é a
 primeira: fecha o roadmap até a Fase 9 inteira (incluindo o hotfix crítico
 acima) numa tacada só.
 
+**Sem cota fixa de itens por semana** (decisão de 14/08/2026, ao discutir
+o formato com o usuário): a sexta libera o que estiver **pronto e
+testado** naquela semana — não um número mínimo nem máximo. Forçar uma
+contagem fixa pressiona a cortar teste pra bater a meta; o jeito seguro de
+"sempre ter algo novo" é manter o backlog (seção "Candidatos" abaixo)
+sempre abastecido, não empurrar item sem verificação pra caber numa cota.
+
+**"Em breve" no portal**: o modal de versão (ícone de versão no rodapé)
+agora tem uma seção "Em breve" com o que está sendo avaliado, deliberada­
+mente vaga — sem data, sem prazo, sem promessa de que vai sair numa sexta
+específica (ver `proximosPassos` em `server.js`). Objetivo é mostrar que o
+portal está em desenvolvimento ativo sem criar expectativa de entrega que
+pode não se confirmar. Atualizar essa lista só com itens realmente em
+avaliação — lista vazia é melhor que item furado (o array já suporta
+ficar vazio, a seção some da tela nesse caso).
+
 ### Mapeamento pra próxima sexta (21/08/2026) — feito em 14/08/2026
 
 Os dois itens da pauta inicial já foram resolvidos na própria sessão de
