@@ -464,3 +464,43 @@ não achou mais nada quebrado):
   aba Fontes.
 
 Sem item de peso maior definido — para decidir com o usuário na sexta.
+
+## Observação (não é candidato ainda): Carteira de Identidade Nacional (CIN)
+
+Pesquisa feita a pedido do usuário (14/08/2026) — **não é item de "Em
+breve"**, é só monitoramento, porque ainda não há nada concreto pra
+construir.
+
+**O que é**: novo documento nacional que substitui o RG, ancorado no CPF
+como identificador único (com biometria — digital + foto facial). Meta do
+governo: 150 milhões de carteiras emitidas até o fim do mandato atual
+(hoje ~15 milhões emitidas). RG antigo continua válido até **28/02/2032**;
+obrigatoriedade biométrica plena do INSS só em jan/2028 — transição longa,
+não uma virada abrupta.
+
+**Na saúde**:
+- CPF está virando identificador único do SUS, substituindo o número do
+  CNS como chave principal (Lei nº 14.534/2023, mesmo movimento que atinge
+  CadÚnico e eSocial).
+- Desde mai/2026, acesso a prontuário eletrônico em capitais passou a
+  exigir validação por QR Code da CIN.
+- ANS (RN 295, art. 26) já exige envio do número do CNS junto aos dados de
+  beneficiários pelas operadoras.
+- **Não encontrado**: nenhum campo de CIN ou CPF-como-identificador-de-
+  beneficiário no Padrão TISS até a versão vigente (4.03.00, jul/2026) —
+  essa versão trouxe CNPJ alfanumérico e nome social, nada de CIN/CPF novo
+  pro beneficiário.
+
+**Por que não vira candidato agora**: não há base pública de CIN pra
+consultar (diferente de CNPJ via BrasilAPI, já usado no portal), e é dado
+de identificação de paciente — foge do princípio que o portal já segue
+(nada de dado de paciente persistido/consultado). Não tem o que construir
+ainda.
+
+**O que observar pra virar candidato de verdade**: se uma versão futura do
+Padrão TISS adicionar um campo de CPF/CIN como identificador de
+beneficiário na guia — aí sim o Validador de XML TISS precisa reconhecer/
+validar esse campo. Vale checar o changelog do Padrão TISS (ANS) nas
+próximas rodadas de revisão.
+
+Fontes: [Gazeta do Povo — Nova Carteira de Identidade (CIN)](https://www.gazetadopovo.com.br/brasil/cin-obrigatoria-saiba-como-emitir-e-o-que-muda-na-sua-identificacao/), [Alerta Gov — cronograma de transição CIN até 2032](https://alertagov.com.br/2026/04/ate-2032-todos-os-brasileiros-deverao-possuir-a-cin-veja-o-cronograma-de-transicao/), [Correio do Pantanal — CPF substitui número do Cartão SUS](https://correiodopantanal.com.br/cpf-substitui-numero-do-cartao-sus-e-passa-a-ser-identificador-unico-dos-usuarios-da-saude-publica/), [ANS — Cartão Nacional de Saúde](https://www.ans.gov.br/index.php/a-ans/sala-de-noticias-ans/consumidor/1819-cartao-nacional-de-saude-uma-realidade-para-todos-os-brasileiros), [M3BS Advogados — ANS divulga nova versão do Padrão TISS (jan/2026)](https://m3bs.com.br/ans-divulga-nova-versao-do-padrao-tiss-janeiro-2026/), [Padrão TISS — Julho/2026 (gov.br/ans)](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-julho-2026)
