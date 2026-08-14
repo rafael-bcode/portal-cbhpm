@@ -1,5 +1,12 @@
 [
   {
+    "versao": "2.11.1",
+    "data": "2026-08-14",
+    "mudancas": [
+      "Move o simulador reverso de glosa ('Não sabe por onde começar?') do topo da aba Verificadores para Dúvidas frequentes, como a subaba padrão 'Rejeição / Validação de arquivos' — lugar mais natural pra essa pergunta, sem competir por espaço com as ferramentas na aba Verificadores. Os itens continuam apontando direto pra ferramenta certa."
+    ]
+  },
+  {
     "versao": "2.11.0",
     "data": "2026-08-14",
     "mudancas": [

@@ -4,66 +4,25 @@ Baseado em pesquisa sobre CBHPM, TISS e sistemas de faturamento médico
 (julho/2026). Compara o que existe no mercado/na norma oficial com o que o
 portal já faz, e organiza o que falta em fases.
 
-## Achados críticos (corrigir primeiro)
+## Fase 1 — Correções e completude de dados ✅ Implementado
 
-### 1. Percentuais padrão da equipe estão desatualizados (pré-2018)
+Achados originais da pesquisa de jul/2026 (percentuais de auxiliar
+desatualizados pré/pós-2018, faltava a edição 2022 + reajuste de Out/2025,
+instrumentador sem nota explicativa) — **confirmado resolvido em
+14/08/2026**, na limpeza de higiene do roadmap:
 
-A CBHPM mudou os percentuais de auxiliar **a partir da edição 2018**:
+1. Defaults de auxiliar já são dinâmicos por era da edição — a Consulta por
+   procedimento sugere 30/20/20/20 até a edição 2017 e 60/40/30/30 a partir
+   da CBHPM 2018, com nota explicativa e botão "restaurar a sugestão" caso o
+   usuário ajuste manualmente.
+2. **CBHPM 2022** (11ª Edição) está carregada, junto com os reajustes
+   2020-2021, 2022-2023, 2023-2024 e **2025-2026** — este último já reflete
+   a correção de Out/2025 (UCO = R$ 29,80, confirmado direto no banco).
+3. Nota already on-screen: "Instrumentador e Auxiliar de Anestesista não são
+   papéis definidos pela AMB/CBHPM — são taxas de convênio/hospital".
 
-| Papel | Antes de 2018 | A partir de 2018 |
-|---|---|---|
-| 1º Auxiliar | 30% | **60%** |
-| 2º Auxiliar | 20% | **40%** |
-| 3º/4º Auxiliar | 20% | **30%** |
-
-Confirmamos empiricamente no banco que as edições 2004-2017 usam 30/20/20 —
-portanto **nossos valores estão corretos para essas edições**. Mas o portal
-usa os mesmos defaults (30/20/20/20/10/30) na tela para **qualquer** edição,
-inclusive a 10ª Edição/2020, que já deveria seguir 60/40/30/30. Isso
-subestima o valor do 1º e 2º auxiliar por padrão quando o usuário consulta
-2018 em diante e não percebe que precisa trocar o percentual manualmente.
-
-**Ação sugerida:** valores-padrão dinâmicos conforme a edição mais recente
-selecionada (ou pelo menos um aviso na tela quando a edição for 2018+).
-
-Fontes: [ACM — Aumento para auxiliares na CBHPM](https://www.acm.org.br/aprovado-o-aumento-para-os-auxiliares-cirurgicos-na-cbhpm/), [Auxiliares de Cirurgia — Portal do Faturamento Hospitalar](https://www.portaldofaturamentohospitalar.com/2023/05/auxiliares-de-cirurgia-e-o-percentual.html), [Honorários dos Auxiliares — Validador TISS](https://www.validadortiss.com.br/honorarios-auxiliares-cirurgia-regras-cobranca/)
-
-### 2. Faltam edições recentes: 2022 (atual) e a correção de Out/2025
-
-- A **edição 2022** é a atual/vigente da CBHPM — o portal vai só até 2020.
-- Em **18/10/2025** a AMB publicou uma correção de Porte e UCO pelo INPC/IBGE
-  (+5,10%), com a **UCO passando a valer R$ 29,80** (vigente até set/2026).
-  Isso não é uma edição nova — é um reajuste sobre a 2022 aplicado por
-  percentual, sem tabela nova completa.
-
-**Ação sugerida:** importar a 2022 (comprada/adquirida na AMB — não é de
-graça, ver abaixo) e criar um mecanismo de "reajuste anual" que aplica um
-percentual sobre porte/UCO de uma edição-base em vez de exigir uma
-planilha nova inteira toda vez que a AMB corrige por INPC.
-
-Fontes: [SBPC/ML — CBHPM atualiza valores de portes e UCO](https://sbpc.org.br/pt/component/content/article/234-cbhpm-atualiza-valores-de-portes-e-da-uco), [Chegou a CBHPM 2022 — AMB](https://amb.org.br/chegou-a-cbhpm-2022/), [Adquirir CBHPM — AMB](https://amb.org.br/adquirir-cbhpm/)
-
-### 3. Instrumentador não é um papel oficial da AMB/CBHPM
-
-A CBHPM define oficialmente só 3 honorários médicos: cirurgião, auxiliar(es)
-e anestesista. **Instrumentador é uma taxa de enfermagem/serviço**, não um
-honorário médico — quando pago, é por convenção de operadora/hospital (ex.:
-10% do porte, "porte anestésico 16 + 30%"), nunca por regra AMB. Nossa
-arquitetura (percentual livre e configurável) já está certa — só falta
-deixar isso explícito na tela, para o usuário não achar que é uma regra
-CBHPM fixa.
-
-Fonte: [Honorários dos Auxiliares — Validador TISS](https://www.validadortiss.com.br/honorarios-auxiliares-cirurgia-regras-cobranca/)
-
-## Fase 1 — Correções e completude de dados (curto prazo)
-
-1. Ajustar defaults de auxiliar por era da edição (30/20/20/20 pré-2018 vs
-   60/40/30/30 pós-2018), ou pelo menos um aviso visível.
-2. Adicionar nota na tela: "Instrumentador não é definido pela AMB/CBHPM —
-   percentual livre por convênio."
-3. Importar a **edição 2022** (adquirir na AMB) e o reajuste de Out/2025.
-4. Mecanismo de "correção anual" (percentual sobre porte/UCO de uma edição
-   base, sem precisar reimportar tudo).
+Não ficou registrado em qual commit cada item foi resolvido — o
+importante é que a lacuna original não existe mais.
 
 ## Fase 2 — Via de acesso / múltiplos procedimentos ✅ Implementado
 
@@ -405,23 +364,50 @@ do que foi construído/corrigido na semana, seguida de deploy. Esta é a
 primeira: fecha o roadmap até a Fase 9 inteira (incluindo o hotfix crítico
 acima) numa tacada só.
 
-### Para a próxima sexta (21/08/2026) — pauta inicial
+### Mapeamento pra próxima sexta (21/08/2026) — feito em 14/08/2026
 
-Como o roadmap ficou zerado nesta rodada, os candidatos pra semana que
-vem vêm de dois lugares:
+Os dois itens da pauta inicial já foram resolvidos na própria sessão de
+mapeamento:
 
-1. **Higiene do próprio roadmap**: os "Achados críticos" e a Fase 1 no
-   topo deste documento estão desatualizados — confirmado em 14/08/2026
-   que os defaults de auxiliar já são dinâmicos por era da edição
-   (30/20/20/20 até 2017, 60/40/30/30 a partir de 2018 — ver o campo
-   "Ajustes de simulação" na Consulta por procedimento) e que a **CBHPM
-   2022 já está carregada** (11ª Edição, com reajustes até 2025-2026).
-   Falta só reescrever essa seção pra não confundir quem ler depois.
-2. **Nova rodada de revisão completa**: repetir o mesmo processo de
-   14/08/2026 (testar cada aba de ponta a ponta com dado real, não só ler
-   o código) pra ver o que mais pode estar quebrado silenciosamente ou
-   desatualizado — foi assim que o bug crítico da Consulta por
-   procedimento e os 2 itens "fantasmas" da Fase 7 (comparador de edições
-   e PDF do Validador SUS) foram achados desta vez.
+1. ~~Higiene do roadmap~~ — ✅ feito: a seção "Achados críticos" e a Fase 1
+   antiga foram reescritas (ver Fase 1 no topo deste documento).
+2. ~~Nova rodada de revisão completa~~ — ✅ feita: testado de ponta a ponta
+   com dado real (Playwright) — Validador de XML TISS (arquivo real),
+   Múltiplos procedimentos (cálculo completo), Checklist pré-envio com CID,
+   busca em CMED/Operadoras ANS/CNES/OPME/SIGTAP/CID-10, Indicadores ANAHP
+   (confirma que a correção do bug crítico não quebrou o comparador de
+   indicadores, que usa a função renomeada). **Nada mais quebrado
+   encontrado** — o portal está estável depois do hotfix de hoje.
+   - Melhoria de organização feita no caminho (pedido do usuário ao ver o
+     resultado): a seção "Não sabe por onde começar?" (simulador reverso de
+     glosa) saiu do topo da aba Verificadores — onde competia por espaço
+     com as ferramentas de verdade — e virou a subaba padrão "Rejeição /
+     Validação de arquivos" em Dúvidas frequentes, que é o lugar natural
+     pra "não sei o que fazer". Os itens que apontavam "mais abaixo nesta
+     aba" viraram links reais pra aba Verificadores.
 
-Sem item de peso maior definido ainda — para decidir na sexta.
+### Candidatos levantados pra 21/08/2026 (sem prioridade definida ainda)
+
+Como a rodada de hoje não achou mais nada quebrado, os candidatos pra
+semana que vem são de melhoria, não correção:
+
+- **Passada mobile completa**: só o overflow do topbar foi corrigido até
+  agora (achado #1). Não foi testado em viewport estreito se a grade de
+  edições da Consulta por procedimento, os cards do SUS/SIGTAP, as tabelas
+  do Validador de XML TISS e o gráfico comparativo continuam legíveis/
+  utilizáveis abaixo de ~480px.
+- **Verificar se existe edição da CBHPM mais recente que 2025-2026**: a
+  AMB publica reajustes por INPC periodicamente (foi assim que a
+  2025-2026 apareceu) — vale checar se já saiu uma correção mais nova
+  antes da próxima competência trocar.
+- **Passada de acessibilidade**: não avaliado ainda — navegação por
+  teclado, leitor de tela, contraste, `aria-live` nas áreas de resultado
+  que atualizam via fetch (relevante pra quem usa o portal com o modo
+  escuro/leitor de tela dentro do hospital).
+- Os itens que já estavam na "Transparência de dados" original mas não
+  entraram no escopo desta semana continuam válidos como ideia menor: por
+  exemplo, expor a data de "última revisão" do dicionário de glosas
+  diretamente na aba onde ele é usado (Validador de XML TISS), não só na
+  aba Fontes.
+
+Sem item de peso maior definido — para decidir com o usuário na sexta.

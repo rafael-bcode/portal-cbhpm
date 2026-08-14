@@ -762,103 +762,6 @@
 
   <div id="tab-verificadores" class="tab-panel hidden">
 
-  <section class="search-panel">
-    <div class="mp-header">
-      <h2>Não sabe por onde começar?</h2>
-    </div>
-    <p class="ajustes-nota">
-      Diga o que a operadora reclamou (ou o que você desconfia que vai gerar glosa) e veja qual verificador do
-      portal resolve isso.
-    </p>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Rejeitado por incompatibilidade entre procedimentos"</summary>
-      <div class="faq-resposta">
-        <p>Confira no Verificador de compatibilidade logo abaixo nesta mesma aba, ou rode o Checklist pré-envio
-        com os códigos da guia — ele já checa isso junto com o resto.</p>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Rejeitado por falta de habilitação do prestador"</summary>
-      <div class="faq-resposta">
-        <p>Confira no Verificador de habilitação exigida, mais abaixo nesta aba, ou no Checklist pré-envio (que
-        já roda essa checagem junto com equivalência e compatibilidade).</p>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Rejeitado por incompatibilidade entre procedimento e CID"</summary>
-      <div class="faq-resposta">
-        <p>Rode o Checklist pré-envio informando o CID da guia — ele confere cada código contra a lista oficial
-        de diagnósticos aceitos. Ou veja o card do procedimento na aba SUS/SIGTAP, que já lista os CIDs
-        permitidos.</p>
-        <button type="button" class="faq-portal-link" data-goto-tab="sigtap">🔎 Consultar a SIGTAP aqui no portal →</button>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Código não é reconhecido, ou não sei o equivalente em outra tabela"</summary>
-      <div class="faq-resposta">
-        <p>Use o Conversor CBHPM ↔ TUSS ↔ SIGTAP, mais abaixo nesta aba — informe qualquer código de qualquer
-        uma das 3 tabelas e ele acha os equivalentes nas outras duas.</p>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"XML rejeitado por hash/MD5 ou por estrutura inválida"</summary>
-      <div class="faq-resposta">
-        <p>O Validador de XML TISS confere o hash MD5 do epílogo e, opcionalmente, valida a estrutura completa
-        contra o XSD oficial da ANS (v4.03.00) — mostra exatamente qual elemento está errado.</p>
-        <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"XML rejeitado por versão do Padrão TISS"</summary>
-      <div class="faq-resposta">
-        <p>Veja o histórico de versões e verifique se a sua ainda é aceita — hoje só a 4.03.00 é.</p>
-        <button type="button" class="faq-portal-link" data-goto-acao="versoes-tiss">📋 Ver versões do Padrão TISS →</button>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Recebi um Demonstrativo de Glosa (DAC) e quero conferir item a item"</summary>
-      <div class="faq-resposta">
-        <p>O Leitor de DAC, dentro do Validador de XML TISS, lê o XML de retorno da operadora e traduz cada
-        motivo de glosa pelo dicionário de causas do portal, com resumo por motivo e por operadora.</p>
-        <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Arquivo BPA, AIH ou APAC (SUS) foi rejeitado"</summary>
-      <div class="faq-resposta">
-        <p>O Validador SUS confere o layout oficial do DATASUS, cruza com SIGTAP e CID-10, e gera um PDF de
-        conferência por arquivo.</p>
-        <button type="button" class="faq-portal-link" data-goto-tab="validador-sus">✅ Validador SUS →</button>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Preciso confirmar se o material/OPME tem registro válido na ANVISA"</summary>
-      <div class="faq-resposta">
-        <p>Consulte pelo nome comercial, categoria, detentor ou número de registro — a base só lista registros
-        vigentes, então não encontrar já é o sinal de alerta.</p>
-        <button type="button" class="faq-portal-link" data-goto-tab="opme">🦴 Consultar OPME aqui no portal →</button>
-      </div>
-    </details>
-
-    <details class="faq-item">
-      <summary class="faq-pergunta">"Preciso confirmar dados da operadora ou do prestador (CNPJ, endereço, registro ANS)"</summary>
-      <div class="faq-resposta">
-        <p>Busque a operadora pelo registro ANS, nome ou CNPJ na aba Operadoras ANS. Pra confirmar um
-        estabelecimento de saúde, use a aba CNES (nome, código CNES ou CNPJ).</p>
-        <button type="button" class="faq-portal-link" data-goto-tab="operadoras">🏥 Consultar Operadoras ANS →</button>
-      </div>
-    </details>
-  </section>
-
   <section class="search-panel" id="checklist-secao">
     <div class="mp-header">
       <h2>Checklist pré-envio</h2>
@@ -961,7 +864,8 @@
     </p>
 
     <div class="tabs subtabs faq-subtabs">
-      <button type="button" class="faq-subtab-btn active" data-faqtab="sus">SUS / SIGTAP</button>
+      <button type="button" class="faq-subtab-btn active" data-faqtab="rejeicao">Rejeição / Validação de arquivos</button>
+      <button type="button" class="faq-subtab-btn" data-faqtab="sus">SUS / SIGTAP</button>
       <button type="button" class="faq-subtab-btn" data-faqtab="cbhpm">CBHPM</button>
       <button type="button" class="faq-subtab-btn" data-faqtab="simpro">Simpro</button>
       <button type="button" class="faq-subtab-btn" data-faqtab="brasindice">Brasíndice</button>
@@ -979,7 +883,104 @@
       <button type="button" class="faq-subtab-btn" data-faqtab="institutos">Institutos de Previdência</button>
     </div>
 
-    <div id="faqtab-sus" class="faq-subtab-panel">
+    <div id="faqtab-rejeicao" class="faq-subtab-panel">
+      <p class="ajustes-nota">
+        Diga o que a operadora reclamou (ou o que você desconfia que vai gerar glosa) e veja qual verificador do
+        portal resolve isso.
+      </p>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Rejeitado por incompatibilidade entre procedimentos"</summary>
+        <div class="faq-resposta">
+          <p>Rode o Checklist pré-envio com os códigos da guia (checa isso junto com o resto), ou use o
+          Verificador de compatibilidade isolado — os dois ficam na aba Verificadores.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🧩 Abrir Verificadores →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Rejeitado por falta de habilitação do prestador"</summary>
+        <div class="faq-resposta">
+          <p>O Checklist pré-envio já roda essa checagem junto com equivalência e compatibilidade, ou use o
+          Verificador de habilitação exigida isolado — ambos na aba Verificadores.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🧩 Abrir Verificadores →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Rejeitado por incompatibilidade entre procedimento e CID"</summary>
+        <div class="faq-resposta">
+          <p>Rode o Checklist pré-envio informando o CID da guia — ele confere cada código contra a lista oficial
+          de diagnósticos aceitos. Ou veja o card do procedimento na aba SUS/SIGTAP, que já lista os CIDs
+          permitidos.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="sigtap">🔎 Consultar a SIGTAP aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Código não é reconhecido, ou não sei o equivalente em outra tabela"</summary>
+        <div class="faq-resposta">
+          <p>Use o Conversor CBHPM ↔ TUSS ↔ SIGTAP, na aba Verificadores — informe qualquer código de qualquer
+          uma das 3 tabelas e ele acha os equivalentes nas outras duas.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🧩 Abrir Verificadores →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"XML rejeitado por hash/MD5 ou por estrutura inválida"</summary>
+        <div class="faq-resposta">
+          <p>O Validador de XML TISS confere o hash MD5 do epílogo e, opcionalmente, valida a estrutura completa
+          contra o XSD oficial da ANS (v4.03.00) — mostra exatamente qual elemento está errado.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"XML rejeitado por versão do Padrão TISS"</summary>
+        <div class="faq-resposta">
+          <p>Veja o histórico de versões e verifique se a sua ainda é aceita — hoje só a 4.03.00 é.</p>
+          <button type="button" class="faq-portal-link" data-goto-acao="versoes-tiss">📋 Ver versões do Padrão TISS →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Recebi um Demonstrativo de Glosa (DAC) e quero conferir item a item"</summary>
+        <div class="faq-resposta">
+          <p>O Leitor de DAC, dentro do Validador de XML TISS, lê o XML de retorno da operadora e traduz cada
+          motivo de glosa pelo dicionário de causas do portal, com resumo por motivo e por operadora.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Arquivo BPA, AIH ou APAC (SUS) foi rejeitado"</summary>
+        <div class="faq-resposta">
+          <p>O Validador SUS confere o layout oficial do DATASUS, cruza com SIGTAP e CID-10, e gera um PDF de
+          conferência por arquivo.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validador-sus">✅ Validador SUS →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Preciso confirmar se o material/OPME tem registro válido na ANVISA"</summary>
+        <div class="faq-resposta">
+          <p>Consulte pelo nome comercial, categoria, detentor ou número de registro — a base só lista registros
+          vigentes, então não encontrar já é o sinal de alerta.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="opme">🦴 Consultar OPME aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">"Preciso confirmar dados da operadora ou do prestador (CNPJ, endereço, registro ANS)"</summary>
+        <div class="faq-resposta">
+          <p>Busque a operadora pelo registro ANS, nome ou CNPJ na aba Operadoras ANS. Pra confirmar um
+          estabelecimento de saúde, use a aba CNES (nome, código CNES ou CNPJ).</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="operadoras">🏥 Consultar Operadoras ANS →</button>
+        </div>
+      </details>
+    </div>
+
+    <div id="faqtab-sus" class="faq-subtab-panel hidden">
 
       <details class="faq-item">
         <summary class="faq-pergunta">O que é a SIGTAP e para que ela serve?</summary>
