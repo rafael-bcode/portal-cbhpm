@@ -466,6 +466,28 @@ implementação sem mais definição de escopo:
     XML/TISS e SUS já existem e estão prontos, dá pra fazer essa parte
     independente do CIHA.
 
+- **Padronizar "Validador de XML TISS" com o mesmo padrão de sub-abas do
+  Validador SUS**: pedido do usuário (14/08/2026, com prints comparando os
+  dois), direto ligado ao item anterior — "temos que padronizar o todo
+  portal pra ficar todas as telas no mesmo layout". Confirmado
+  (`public/index.html`, painel `#tab-validador`): hoje o Validador de XML
+  TISS empilha 2 cards na mesma tela — "Validador de XML TISS" (o
+  validador em si) e, logo abaixo, "Leitor de Demonstrativo de Glosa
+  (DAC)" (ferramenta separada, lê o retorno da operadora). O Validador
+  SUS já resolve isso com sub-abas (`Validador BPA` / `Validador AIH` /
+  `Validador APAC`). Proposta: aplicar o mesmo padrão aqui — sub-aba
+  "XML" (o validador de guia) e sub-aba "DAC" (o leitor de glosa) dentro
+  de "Validador de XML TISS", em vez de empilhados na mesma tela.
+  - É reaproveitamento direto do mecanismo já existente
+    (`.subtab-btn`/`data-subtab`), sem decisão de design nova — mais
+    simples que o item anterior (aqui não tem aninhamento de 2 níveis,
+    é só extrair os 2 cards que já existem lado a lado em sub-abas).
+  - Faz sentido implementar junto com o agrupador "Validadores" acima —
+    os dois nascem do mesmo pedido (padronizar layout) e deixam a
+    hierarquia final simétrica: `Validadores` → `Validador de XML TISS`
+    → (`XML` / `DAC`) e `Validadores` → `Validador SUS` →
+    (`BPA` / `AIH` / `APAC`).
+
 - **Novo item de FAQ: "O que é OCI (Oferta de Cuidado Integrado)?"**: pedido
   do usuário (14/08/2026) — confirmado que o portal **ainda não tem nada**
   sobre OCI (nem FAQ, nem explicação), mas os **códigos de procedimento OCI
