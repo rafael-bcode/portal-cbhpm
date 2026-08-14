@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Argus Fatura — Confira CBHPM, SIGTAP e TISS antes de faturar</title>
 <link rel="icon" type="image/webp" href="logo.webp">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0B1220">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -31,6 +33,21 @@
         não substitui a documentação completa. Para o detalhe oficial, veja o
         <a href="https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-historico-das-versoes-dos-componentes-do-padrao-tiss" target="_blank" rel="noopener">histórico oficial de versões (ANS)</a>.
       </p>
+      <div class="field field-busca" style="margin-bottom:14px;">
+        <label for="tiss-versao-checar">Qual versão o seu sistema gera hoje?</label>
+        <div class="busca-wrapper" style="max-width:320px;display:flex;gap:8px;">
+          <select id="tiss-versao-checar" style="flex:1;">
+            <option value="">Selecione…</option>
+            <option value="3.05.00">3.05.00</option>
+            <option value="4.00.00">4.00.00 / 4.00.01</option>
+            <option value="4.01.00">4.01.00</option>
+            <option value="4.02.00">4.02.00</option>
+            <option value="4.03.00">4.03.00</option>
+          </select>
+          <button type="button" id="btn-tiss-versao-checar" class="btn-consultar" style="padding:8px 16px;">Verificar</button>
+        </div>
+      </div>
+      <div id="tiss-versao-checar-resultado"></div>
       <div class="versoes-tiss-lista">
         <div class="versao-tiss-item versao-tiss-item-desatualizada">
           <div class="versao-tiss-nome">3.05.00 <span class="versao-tiss-data">publicada em mai/2020 — desde jan/2026 não é mais aceita pela ANS</span></div>
@@ -208,6 +225,7 @@
     <button type="button" class="tab-btn" data-tab="operadoras" id="tab-btn-operadoras" style="display:none" aria-hidden="true" tabindex="-1">Operadoras ANS</button>
     <button type="button" class="tab-btn" data-tab="cnes" id="tab-btn-cnes" style="display:none" aria-hidden="true" tabindex="-1">CNES</button>
     <button type="button" class="tab-btn" data-tab="opme" id="tab-btn-opme" style="display:none" aria-hidden="true" tabindex="-1">OPME</button>
+    <button type="button" class="tab-btn" data-tab="fontes" id="tab-btn-fontes" style="display:none" aria-hidden="true" tabindex="-1">Fontes</button>
   </div>
 
   <div id="tab-consulta" class="tab-panel">
@@ -743,6 +761,103 @@
   </div>
 
   <div id="tab-verificadores" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Não sabe por onde começar?</h2>
+    </div>
+    <p class="ajustes-nota">
+      Diga o que a operadora reclamou (ou o que você desconfia que vai gerar glosa) e veja qual verificador do
+      portal resolve isso.
+    </p>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Rejeitado por incompatibilidade entre procedimentos"</summary>
+      <div class="faq-resposta">
+        <p>Confira no Verificador de compatibilidade logo abaixo nesta mesma aba, ou rode o Checklist pré-envio
+        com os códigos da guia — ele já checa isso junto com o resto.</p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Rejeitado por falta de habilitação do prestador"</summary>
+      <div class="faq-resposta">
+        <p>Confira no Verificador de habilitação exigida, mais abaixo nesta aba, ou no Checklist pré-envio (que
+        já roda essa checagem junto com equivalência e compatibilidade).</p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Rejeitado por incompatibilidade entre procedimento e CID"</summary>
+      <div class="faq-resposta">
+        <p>Rode o Checklist pré-envio informando o CID da guia — ele confere cada código contra a lista oficial
+        de diagnósticos aceitos. Ou veja o card do procedimento na aba SUS/SIGTAP, que já lista os CIDs
+        permitidos.</p>
+        <button type="button" class="faq-portal-link" data-goto-tab="sigtap">🔎 Consultar a SIGTAP aqui no portal →</button>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Código não é reconhecido, ou não sei o equivalente em outra tabela"</summary>
+      <div class="faq-resposta">
+        <p>Use o Conversor CBHPM ↔ TUSS ↔ SIGTAP, mais abaixo nesta aba — informe qualquer código de qualquer
+        uma das 3 tabelas e ele acha os equivalentes nas outras duas.</p>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"XML rejeitado por hash/MD5 ou por estrutura inválida"</summary>
+      <div class="faq-resposta">
+        <p>O Validador de XML TISS confere o hash MD5 do epílogo e, opcionalmente, valida a estrutura completa
+        contra o XSD oficial da ANS (v4.03.00) — mostra exatamente qual elemento está errado.</p>
+        <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"XML rejeitado por versão do Padrão TISS"</summary>
+      <div class="faq-resposta">
+        <p>Veja o histórico de versões e verifique se a sua ainda é aceita — hoje só a 4.03.00 é.</p>
+        <button type="button" class="faq-portal-link" data-goto-acao="versoes-tiss">📋 Ver versões do Padrão TISS →</button>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Recebi um Demonstrativo de Glosa (DAC) e quero conferir item a item"</summary>
+      <div class="faq-resposta">
+        <p>O Leitor de DAC, dentro do Validador de XML TISS, lê o XML de retorno da operadora e traduz cada
+        motivo de glosa pelo dicionário de causas do portal, com resumo por motivo e por operadora.</p>
+        <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Arquivo BPA, AIH ou APAC (SUS) foi rejeitado"</summary>
+      <div class="faq-resposta">
+        <p>O Validador SUS confere o layout oficial do DATASUS, cruza com SIGTAP e CID-10, e gera um PDF de
+        conferência por arquivo.</p>
+        <button type="button" class="faq-portal-link" data-goto-tab="validador-sus">✅ Validador SUS →</button>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Preciso confirmar se o material/OPME tem registro válido na ANVISA"</summary>
+      <div class="faq-resposta">
+        <p>Consulte pelo nome comercial, categoria, detentor ou número de registro — a base só lista registros
+        vigentes, então não encontrar já é o sinal de alerta.</p>
+        <button type="button" class="faq-portal-link" data-goto-tab="opme">🦴 Consultar OPME aqui no portal →</button>
+      </div>
+    </details>
+
+    <details class="faq-item">
+      <summary class="faq-pergunta">"Preciso confirmar dados da operadora ou do prestador (CNPJ, endereço, registro ANS)"</summary>
+      <div class="faq-resposta">
+        <p>Busque a operadora pelo registro ANS, nome ou CNPJ na aba Operadoras ANS. Pra confirmar um
+        estabelecimento de saúde, use a aba CNES (nome, código CNES ou CNPJ).</p>
+        <button type="button" class="faq-portal-link" data-goto-tab="operadoras">🏥 Consultar Operadoras ANS →</button>
+      </div>
+    </details>
+  </section>
 
   <section class="search-panel" id="checklist-secao">
     <div class="mp-header">
@@ -1885,6 +2000,64 @@
   </section>
 
   <section id="opme-resultado-area"></section>
+
+  </div>
+
+  <div id="tab-fontes" class="tab-panel hidden">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Fontes de dados</h2>
+    </div>
+    <p class="ajustes-nota">
+      Todas as bases usadas no portal, direto da fonte oficial — nenhum dado é digitado ou estimado à mão. As
+      cinco primeiras se atualizam sozinhas (checagem automática a cada 24h, com badge de competência/data
+      dentro da própria aba); as demais são importadas manualmente quando a fonte publica uma versão nova, sem
+      um ciclo automático — a data abaixo é a do último import confirmado.
+    </p>
+
+    <h3 style="margin:24px 0 8px;font-size:0.95rem;">Atualização automática (24h)</h3>
+    <div id="fontes-dinamicas-area" class="fontes-lista"></div>
+
+    <h3 style="margin:24px 0 8px;font-size:0.95rem;">Importação manual</h3>
+    <div class="fontes-lista">
+      <div class="fontes-item">
+        <div class="fontes-item-head"><strong>CBHPM</strong> — 21 edições/reajustes, 2004 a 2025-2026 (11ª Edição)</div>
+        <div class="fontes-item-fonte">Fonte: AMB (adquirida) — <a href="https://amb.org.br/adquirir-cbhpm/" target="_blank" rel="noopener">amb.org.br/adquirir-cbhpm</a></div>
+        <div class="fontes-item-data">Último import: 12/08/2026</div>
+      </div>
+      <div class="fontes-item">
+        <div class="fontes-item-head"><strong>CID-10</strong> — capítulos, categorias e subcategorias</div>
+        <div class="fontes-item-fonte">Fonte: DATASUS — <a href="http://www2.datasus.gov.br/cid10/V2008/download.htm" target="_blank" rel="noopener">datasus.gov.br/cid10</a></div>
+        <div class="fontes-item-data">Último import: 04/08/2026</div>
+      </div>
+      <div class="fontes-item">
+        <div class="fontes-item-head"><strong>Mapeamento TUSS ↔ CBHPM/SIGTAP</strong></div>
+        <div class="fontes-item-fonte">Fonte: AMB / ANS</div>
+        <div class="fontes-item-data">Último import: 04/08/2026</div>
+      </div>
+      <div class="fontes-item">
+        <div class="fontes-item-head"><strong>CBO</strong> — ocupações válidas no campo CBOS das guias TISS</div>
+        <div class="fontes-item-fonte">Fonte: Tabela de Domínio 24 do Padrão TISS — ANS</div>
+        <div class="fontes-item-data">Último import: 04/08/2026</div>
+      </div>
+      <div class="fontes-item">
+        <div class="fontes-item-head"><strong>Tabelas de Domínio do Padrão TISS</strong> (conselho profissional, grau de participação, tipo de despesa etc.)</div>
+        <div class="fontes-item-fonte">Fonte: ANS — Componente de Comunicação</div>
+        <div class="fontes-item-data">Último import: 04/08/2026</div>
+      </div>
+      <div class="fontes-item">
+        <div class="fontes-item-head"><strong>XSD oficial do Padrão TISS</strong> (v4.03.00) — validação estrutural</div>
+        <div class="fontes-item-fonte">Fonte: gov.br/ans — Componente de Comunicação</div>
+        <div class="fontes-item-data">Último import: 03/08/2026</div>
+      </div>
+      <div class="fontes-item">
+        <div class="fontes-item-head"><strong>Dicionário de causas de glosa</strong></div>
+        <div class="fontes-item-fonte">Fonte: curadoria própria a partir de mensagens de glosa reais e documentação TISS</div>
+        <div class="fontes-item-data">Última revisão: 04/08/2026</div>
+      </div>
+    </div>
+  </section>
 
   </div>
 

@@ -291,51 +291,77 @@ funcional de cada aba com Playwright, screenshots mobile e desktop).
    `funcionalidades.json` dinamicamente em vez de um número fixo; hoje
    mostra as 16 ferramentas atuais, Validador SUS incluído.
 
-## Fase 7 — Próximas melhorias (🔲 Em priorização, ago/2026)
+## Fase 7 — Próximas melhorias ✅ Implementado (14/08/2026)
 
-Levantamento a partir da revisão completa acima, **revalidado em
-14/08/2026** contra o estado real do código (dois itens já saíram da lista
-por terem sido implementados enquanto o roadmap não era atualizado —
-Checklist pré-envio unificado e CNES standalone, ver Fase 7 anterior /
-CHANGELOG v2.5.0 e v2.6.0–2.9.0). Nenhuma decisão de escopo tomada ainda
-sobre os itens restantes — lista para priorizar juntos. Mesma linha de
-sempre: nada de login, persistência de paciente/guia no servidor, ou
-geração/envio de guia oficial.
+Levantamento feito na revisão completa de 14/08/2026 (dois itens já tinham
+saído da lista antes mesmo de começar — Checklist pré-envio unificado e
+CNES standalone, implementados sem o roadmap ser atualizado; ver Fase 7
+anterior / CHANGELOG v2.5.0 e v2.6.0–2.9.0). Dos 6 itens restantes, **1 já
+estava pronto** (achado ao testar) e os outros 5 foram implementados nesta
+mesma sessão, todos verificados com Playwright antes de subir. Mesma linha
+de sempre mantida: nada de login, persistência de paciente/guia no
+servidor, ou geração/envio de guia oficial.
 
-### Aprofundar pilares existentes
-- Comparador de edições CBHPM lado a lado — hoje dá pra escolher "todas as
-  21 edições", mas não existe uma visão de como um procedimento específico
-  evoluiu de 2004 a 2022, útil pra entender se uma glosa é por edição
-  desatualizada do convênio. *(ainda não iniciado)*
-- Formalizar relatório de conferência do Validador SUS (BPA/AIH/APAC) no
-  mesmo padrão de PDF por paciente que o Validador XML TISS já tem.
-  *(ainda não iniciado — confirmado: não existe exportação PDF própria do
-  Validador SUS)*
+- ~~Comparador de edições CBHPM lado a lado~~ — **✅ já existia**
+  (grade de cards por edição + gráfico de barras "Comparativo entre
+  edições selecionadas"), mas estava **completamente quebrado** por um bug
+  achado durante esta revisão — ver "Achado crítico" abaixo. Nenhum código
+  novo necessário além do bug fix.
+- ~~PDF do Validador SUS~~ — **✅ já existia**: botão "🖨 Gerar PDF de
+  conferência" funcionando nas três abas (BPA, AIH, APAC), testado de
+  ponta a ponta com arquivos reais (`PA513088.JUL.txt`, `SUS.TXT`,
+  `AP513088.JAN`).
+- ~~Simulador reverso de glosa~~ — **✅ implementado**: seção "Não sabe por
+  onde começar?" no topo da aba Verificadores, 10 sintomas comuns ("rejeitado
+  por incompatibilidade", "CID incompatível", "hash MD5 não confere" etc.)
+  cada um apontando pro verificador certo com um clique.
+- ~~Alerta ativo de versão TISS vencida~~ — **✅ implementado**: o modal
+  "Versões TISS" ganhou um seletor + botão "Verificar" — informa a versão
+  do seu sistema e recebe o veredito na hora (hoje só a 4.03.00 é aceita).
+- ~~Selo "atualizado em" + página `/fontes`~~ — **✅ implementado** como uma
+  coisa só: nova aba "Fontes" (`index.html?tab=fontes`, linkada no rodapé
+  da home) lista as 5 bases com atualização automática (com badge ao vivo,
+  reaproveitando os endpoints `/status` que já existiam) e as 7 bases de
+  importação manual (CBHPM, CID-10, TUSS, CBO, Tabelas de Domínio TISS,
+  XSD oficial, dicionário de glosas), cada uma com fonte oficial linkada e
+  data do último import.
+- ~~PWA leve~~ — **✅ implementado**: `manifest.json` + `sw.js` (service
+  worker) cacheando só o app shell estático (HTML/CSS/JS/logo) — nunca
+  `/api/*` nem requisições não-GET. Testado com Playwright simulando
+  offline total: o shell continua abrindo (título e HTML completos); os
+  widgets que dependem de dado ao vivo falham graciosamente, como
+  esperado.
 
-### Novas conferências (mesma linha de "apoio", sem dado persistido)
-- Simulador reverso de glosa: a partir do sintoma relatado pelo faturista
-  ("operadora rejeitou por incompatibilidade"), aponta qual verificador
-  rodar. *(ainda não iniciado)*
-- Alerta ativo de versão TISS vencida — hoje o modal "Versões TISS" é só
-  informativo; dá pra virar uma checagem ativa (usuário informa a versão do
-  XML, portal avisa se está prestes a sair de uso, como aconteceu com a
-  4.02.00 → 4.03.00). *(ainda não iniciado)*
+### ⚠️ Achado crítico (não estava no roadmap): Consulta por procedimento quebrada em produção há 2 dias
 
-### Transparência de dados
-- Selo "atualizado em" por base estática (CBO, operadoras ANS, dicionário
-  de glosas) — hoje só o SIGTAP mostra a competência carregada. *(ainda não
-  iniciado)*
-- Página `/fontes` consolidando as fontes oficiais já citadas espalhadas
-  pela home, com link direto e data do último import de cada uma. *(ainda
-  não iniciado)*
+Ao testar o comparador de edições, a consulta principal (`/index.html`,
+aba "Consulta por procedimento" — a funcionalidade mais usada do portal)
+não retornava nenhum resultado: ficava travada em "Consultando…" para
+sempre, sem nenhum erro visível no console. Investigação (Playwright +
+interceptação de `fetch`) revelou a causa: **duas funções JavaScript com o
+mesmo nome**, `renderizarResultado` — uma para a Consulta por procedimento
+(`public/app.js`, escopo global) e outra, sem relação, para o comparador
+de Indicadores ANAHP (declarada dentro de um bloco `if`, adicionada em
+12/08/2026 pelo commit `dd3ebb9`). Em modo non-strict, navegadores aplicam
+a semântica legada "Annex B" — uma function declaration dentro de um bloco
+também vaza pro escopo da função/global — e como o bloco dos Indicadores
+ANAHP executa antes da declaração de topo (mais adiante no arquivo) rodar
+sua vez, `window.renderizarResultado` ficava permanentemente sobrescrita
+pela versão errada (4 parâmetros em vez de 2). O fetch respondia
+normalmente (200, JSON válido) mas o resultado ia parar em variáveis
+`undefined`/`NaN` sem lançar exceção — daí não aparecer nenhum erro.
 
-### Polish técnico
-- ~~Corrigir o overflow mobile do topbar~~ ✅ já corrigido (achado #1
-  acima).
-- ~~Atualizar a copy da home pro Validador SUS~~ ✅ já corrigido (achado #2
-  acima).
-- PWA leve (app shell estático em cache, sem cache de dado de paciente) —
-  pensado pra conexão instável dentro de hospital. *(ainda não iniciado)*
+**Corrigido**: a função dos Indicadores ANAHP foi renomeada pra
+`renderizarComparacaoIndicador` (não colide mais). Confirmado com
+Playwright: `window.renderizarResultado.length` volta a ser `2` (a função
+certa) e a consulta de um procedimento em todas as 21 edições renderiza
+normalmente — grade de cards + gráfico comparativo.
+
+**Impacto**: qualquer usuário que tentou consultar um procedimento entre
+12/08/2026 (quando o bug foi introduzido) e 14/08/2026 (quando foi
+corrigido) não recebeu nenhum resultado, sem mensagem de erro clara —
+provavelmente pareceu que o portal "não funcionava". Prioridade de deploy
+imediato assim que essa versão for publicada.
 
 ## Fase 8 — Compatibilidade procedimento×CID ✅ Implementado
 
@@ -367,6 +393,35 @@ Fecha a lacuna que o Checklist pré-envio deixava explicitamente de fora
 | 5d. Detalhe por guia (abas) e busca por número | ✅ Feito | Baixo–médio | Alto | Não |
 | 6a. Histórico local, múltiplos arquivos (Unimed 0/2/5) e comparação | ✅ Feito | Médio | Alto | Não |
 | 6c. Validação estrutural contra o XSD oficial | ✅ Feito | Alto | Alto | Não |
-| 7. Comparador de edições, PDF do Validador SUS, glosa reversa, alerta de versão, transparência de dados, PWA | 🔲 Em priorização | — | — | Não |
+| 7. Comparador de edições, PDF do Validador SUS, glosa reversa, alerta de versão, transparência de dados, PWA | ✅ Feito | Médio | Alto | Não |
 | 8. Compatibilidade procedimento×CID (Checklist + consulta SIGTAP) | ✅ Feito | Médio | Alto | Não |
 | 9. Overflow mobile do topbar (achado #1) | ✅ Feito | Baixo | Médio | Não |
+| — Hotfix: Consulta por procedimento quebrada (bug de 2 dias em produção) | ✅ Corrigido | Baixo | Crítico | Não |
+
+## Cadência de release
+
+**A partir de 14/08/2026, toda sexta-feira sai uma atualização** — revisão
+do que foi construído/corrigido na semana, seguida de deploy. Esta é a
+primeira: fecha o roadmap até a Fase 9 inteira (incluindo o hotfix crítico
+acima) numa tacada só.
+
+### Para a próxima sexta (21/08/2026) — pauta inicial
+
+Como o roadmap ficou zerado nesta rodada, os candidatos pra semana que
+vem vêm de dois lugares:
+
+1. **Higiene do próprio roadmap**: os "Achados críticos" e a Fase 1 no
+   topo deste documento estão desatualizados — confirmado em 14/08/2026
+   que os defaults de auxiliar já são dinâmicos por era da edição
+   (30/20/20/20 até 2017, 60/40/30/30 a partir de 2018 — ver o campo
+   "Ajustes de simulação" na Consulta por procedimento) e que a **CBHPM
+   2022 já está carregada** (11ª Edição, com reajustes até 2025-2026).
+   Falta só reescrever essa seção pra não confundir quem ler depois.
+2. **Nova rodada de revisão completa**: repetir o mesmo processo de
+   14/08/2026 (testar cada aba de ponta a ponta com dado real, não só ler
+   o código) pra ver o que mais pode estar quebrado silenciosamente ou
+   desatualizado — foi assim que o bug crítico da Consulta por
+   procedimento e os 2 itens "fantasmas" da Fase 7 (comparador de edições
+   e PDF do Validador SUS) foram achados desta vez.
+
+Sem item de peso maior definido ainda — para decidir na sexta.

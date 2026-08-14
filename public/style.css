@@ -1689,6 +1689,19 @@ a.faq-portal-link:hover { background: var(--teal-dark); color: #fff; }
   margin-top: 10px !important;
 }
 
+/* ---------- Fontes de dados ---------- */
+.fontes-lista { display: flex; flex-direction: column; gap: 10px; }
+.fontes-item {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: var(--panel);
+}
+.fontes-item-head { font-size: 0.86rem; }
+.fontes-item-fonte { font-size: 0.78rem; margin-top: 4px; }
+.fontes-item-fonte a { color: var(--teal-dark); }
+.fontes-item-data { font-size: 0.72rem; color: var(--ink-soft); opacity: 0.85; margin-top: 4px; }
+
 /* ---------- Indicadores ANAHP ---------- */
 .stat-card {
   background: var(--panel);

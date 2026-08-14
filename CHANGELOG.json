@@ -1,5 +1,18 @@
 [
   {
+    "versao": "2.11.0",
+    "data": "2026-08-14",
+    "mudancas": [
+      "CORREÇÃO CRÍTICA: a Consulta por procedimento (aba principal do portal) estava completamente sem resposta desde 12/08/2026 — travava em 'Consultando…' pra sempre, sem erro visível. Causa: duas funções JavaScript com o mesmo nome (renderizarResultado) colidindo por uma peculiaridade do navegador (function declaration dentro de bloco 'vazando' pro escopo global) — a função errada, dos Indicadores ANAHP, sobrescrevia a da consulta principal. Corrigido renomeando a função dos Indicadores; consulta voltou a funcionar normalmente, testado ponta a ponta.",
+      "Comparador de edições CBHPM lado a lado: já existia (grade de cards por edição + gráfico de barras comparativo ao selecionar múltiplas edições), mas estava inacessível por causa do bug acima — nenhum código novo precisou ser escrito além do fix.",
+      "Nova aba 'Fontes': lista as bases com atualização automática (SIGTAP, CMED, Operadoras ANS, CNES, OPME — com status ao vivo) e as de importação manual (CBHPM, CID-10, TUSS, CBO, Tabelas de Domínio TISS, XSD oficial, dicionário de glosas), cada uma com link pra fonte oficial e data do último import. Acessível pelo rodapé da home.",
+      "Modal 'Versões TISS' ganha checagem ativa: selecione a versão que seu sistema gera e receba na hora se ela ainda é aceita pela ANS (hoje só a 4.03.00 é).",
+      "Nova seção 'Não sabe por onde começar?' no topo da aba Verificadores: 10 sintomas comuns de glosa/rejeição, cada um apontando direto pro verificador certo do portal.",
+      "PWA leve: o portal agora funciona como app instalável e o shell estático (HTML/CSS/JS) fica em cache para abrir mesmo com conexão instável ou caída dentro do hospital — nenhum dado de paciente ou consulta é cacheado, só os arquivos da interface.",
+      "Validador SUS (BPA/AIH/APAC): confirmado que o botão 'Gerar PDF de conferência' já existia e funciona nas três abas — testado ponta a ponta com arquivos reais nesta revisão."
+    ]
+  },
+  {
     "versao": "2.10.1",
     "data": "2026-08-14",
     "mudancas": [

@@ -73,6 +73,21 @@ document.querySelectorAll('.subtab-btn').forEach((btn) => {
   });
 });
 
+// ---------- PWA leve: cache do app shell pra funcionar com wifi instável ----------
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => console.error('Falha ao registrar service worker:', err));
+  });
+}
+
+// ---------- Deep-link por ?tab=X na URL (ex: index.html?tab=fontes) ----------
+// Único jeito de abrir de fora uma aba "escondida" (sem entry na barra
+// principal) sem precisar clicar em um card específico dentro do portal.
+const tabDaUrl = new URLSearchParams(window.location.search).get('tab');
+if (tabDaUrl) {
+  document.querySelector(`.tab-btn[data-tab="${tabDaUrl}"]`)?.click();
+}
+
 // ---------- Acesso à aba de Dúvidas frequentes (link no card da barra lateral) ----------
 document.getElementById('link-faq-duvidas')?.addEventListener('click', (e) => {
   e.preventDefault();
@@ -416,7 +431,16 @@ if (indicadorSelectEl) {
     localStorage.setItem(INDICADORES_STORAGE_KEY, JSON.stringify(todas));
   }
 
-  function renderizarResultado(indicador, periodo, meuValor, benchmark) {
+  // Nome específico (não "renderizarResultado" genérico) por design: esse nome
+  // colide com a função de mesmo nome da Consulta por procedimento (linha
+  // ~2024). Como está dentro de um bloco `if`, em modo non-strict o
+  // navegador aplica o "Annex B" (function declarations em bloco vazam pro
+  // escopo da função/global) — isso sobrescrevia window.renderizarResultado
+  // com ESTA função, quebrando silenciosamente a Consulta por procedimento
+  // (o fetch respondia OK, mas o resultado ia parar nos campos de
+  // indicador em vez do #resultado-area). Bug real encontrado e corrigido em
+  // 14/08/2026 ao testar o comparador de edições.
+  function renderizarComparacaoIndicador(indicador, periodo, meuValor, benchmark) {
     const diferenca = meuValor - benchmark;
     const diferencaPct = benchmark !== 0 ? (diferenca / Math.abs(benchmark)) * 100 : null;
     let veredito = '';
@@ -498,7 +522,7 @@ if (indicadorSelectEl) {
       return;
     }
     salvarComparacao(indicador.id, { periodo, meuValor, benchmark });
-    renderizarResultado(indicador, periodo, meuValor, benchmark);
+    renderizarComparacaoIndicador(indicador, periodo, meuValor, benchmark);
   });
 }
 
@@ -1101,6 +1125,56 @@ function renderizarStatusOpme(status) {
   }
 }
 
+// ---------- Fontes de dados (aba "Fontes") ----------
+// Reaproveita os mesmos endpoints /status já usados nos badges de cada aba
+// (SIGTAP, CMED, Operadoras, CNES, OPME) pra montar uma lista única —
+// evita manter uma segunda cópia da lógica de "quando foi a última
+// atualização" espalhada.
+const fontesDinamicasAreaEl = document.getElementById('fontes-dinamicas-area');
+
+const FONTES_DINAMICAS = [
+  { nome: 'SUS / SIGTAP', endpoint: '/api/sigtap/status', fonteNome: 'Tabela Unificada — DATASUS', fonteUrl: 'https://github.com/RenatoKR/SIGTAP', unidade: 'procedimentos' },
+  { nome: 'Preço-teto CMED', endpoint: '/api/cmed/status', fonteNome: 'ANVISA — Câmara de Regulação do Mercado de Medicamentos', fonteUrl: 'https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/cmed/precos', unidade: 'apresentações' },
+  { nome: 'Operadoras ANS', endpoint: '/api/operadoras/status', fonteNome: 'Cadastro de Operadoras Ativas — ANS', fonteUrl: 'https://dadosabertos.ans.gov.br', unidade: 'operadoras' },
+  { nome: 'CNES', endpoint: '/api/cnes/status', fonteNome: 'Cadastro Nacional de Estabelecimentos de Saúde — DATASUS', fonteUrl: 'https://cnes.datasus.gov.br', unidade: 'estabelecimentos' },
+  { nome: 'OPME / Produtos para Saúde', endpoint: '/api/produto-saude/status', fonteNome: 'Registro de Produtos para Saúde — ANVISA', fonteUrl: 'https://dados.anvisa.gov.br/dados/TA_PRODUTO_SAUDE_SITE.csv', unidade: 'registros' },
+];
+
+function renderizarFontesDinamicasItem(fonte, status) {
+  const dataRef = status?.competenciaLegivel
+    ? `Competência: ${escaparHtml(status.competenciaLegivel)}`
+    : status?.publicadoEm
+      ? `Publicado em ${new Date(status.publicadoEm).toLocaleDateString('pt-BR')}`
+      : 'Ainda não carregada';
+  const checadoEm = status?.atualizadoEm ? new Date(status.atualizadoEm).toLocaleDateString('pt-BR') : null;
+  const total = status?.totalRegistros ? `${status.totalRegistros.toLocaleString('pt-BR')} ${fonte.unidade}` : null;
+  return `
+    <div class="fontes-item">
+      <div class="fontes-item-head"><strong>${escaparHtml(fonte.nome)}</strong> — ${dataRef}${total ? ` · ${total}` : ''}</div>
+      <div class="fontes-item-fonte">Fonte: <a href="${fonte.fonteUrl}" target="_blank" rel="noopener">${escaparHtml(fonte.fonteNome)}</a></div>
+      <div class="fontes-item-data">Checagem automática (24h)${checadoEm ? ` · última checagem: ${checadoEm}` : ''}</div>
+    </div>`;
+}
+
+async function carregarFontesDinamicas() {
+  if (!fontesDinamicasAreaEl) return;
+  fontesDinamicasAreaEl.innerHTML = '<div class="msg vazio">Carregando…</div>';
+  const resultados = await Promise.all(
+    FONTES_DINAMICAS.map(async (fonte) => {
+      try {
+        const resp = await fetch(fonte.endpoint);
+        return await resp.json();
+      } catch (err) {
+        console.error(err);
+        return null;
+      }
+    })
+  );
+  fontesDinamicasAreaEl.innerHTML = FONTES_DINAMICAS.map((fonte, i) => renderizarFontesDinamicasItem(fonte, resultados[i])).join('');
+}
+
+carregarFontesDinamicas();
+
 carregarStatusOpme();
 
 // ---------- Favoritos (localStorage, sem login) ----------
@@ -1606,6 +1680,33 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ---------- Modal de versões do Padrão TISS ----------
+// Checagem ativa: a ANS historicamente bloqueia a versão anterior assim que
+// uma nova se torna obrigatória (foi assim com 3.05.00 em jan/2026 e de novo
+// com 4.02.00 em jul/2026) — então hoje só a 4.03.00 é aceita. Data-fonte
+// única com o texto que já existe na lista abaixo, pra não duplicar quando
+// uma versão nova for lançada.
+const VERSOES_TISS_STATUS = {
+  '3.05.00': { aceita: false, motivo: 'Não é mais aceita pela ANS desde jan/2026 (substituída pela 4.02.00, depois pela 4.03.00).' },
+  '4.00.00': { aceita: false, motivo: 'Superada pelas versões seguintes da série 4.x — hoje só a 4.03.00 é aceita.' },
+  '4.01.00': { aceita: false, motivo: 'Superada pela 4.02.00 (jan/2026) e depois pela 4.03.00 (jul/2026) — hoje só a 4.03.00 é aceita.' },
+  '4.02.00': { aceita: false, motivo: 'Foi obrigatória até jun/2026, mas desde a fatura de jul/2026 a ANS passou a exigir a 4.03.00.' },
+  '4.03.00': { aceita: true, motivo: 'Versão vigente — obrigatória desde a fatura de jul/2026, nenhuma ação necessária.' },
+};
+
+document.getElementById('btn-tiss-versao-checar')?.addEventListener('click', () => {
+  const select = document.getElementById('tiss-versao-checar');
+  const resultadoEl = document.getElementById('tiss-versao-checar-resultado');
+  const versao = select.value;
+  if (!versao) {
+    resultadoEl.innerHTML = '<div class="msg erro">Selecione uma versão pra verificar.</div>';
+    return;
+  }
+  const status = VERSOES_TISS_STATUS[versao];
+  resultadoEl.innerHTML = status.aceita
+    ? `<div class="msg" style="color:var(--teal-dark);font-weight:600;">✔ ${escaparHtml(status.motivo)}</div>`
+    : `<div class="msg erro" style="font-weight:600;">✘ ${escaparHtml(status.motivo)} Atualize seu sistema/prestador de serviço para gerar XML na 4.03.00.</div>`;
+});
+
 const modalVersoesTissEl = document.getElementById('modal-versoes-tiss');
 function abrirModalVersoesTiss() {
   modalVersoesTissEl.classList.remove('hidden');
