@@ -37,6 +37,8 @@ const proximosPassos = [
   'Organização por tipo de faturamento (SUS x operadoras) nas perguntas de rejeição/validação',
   'Ajustes de exibição em telas menores (celular/tablet)',
   'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
+  'Conteúdo novo nas Dúvidas frequentes sobre OCI (Oferta de Cuidado Integrado)',
+  'Reorganização das telas de validador pra ficarem mais parecidas entre si',
 ];
 
 // Versão atual do portal, histórico de mudanças e o que está sendo avaliado

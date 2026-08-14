@@ -1,5 +1,12 @@
 [
   {
+    "versao": "2.11.5",
+    "data": "2026-08-14",
+    "mudancas": [
+      "Adiciona 'Conteúdo novo nas Dúvidas frequentes sobre OCI (Oferta de Cuidado Integrado)' e 'Reorganização das telas de validador pra ficarem mais parecidas entre si' à seção 'Em breve' do modal de versão."
+    ]
+  },
+  {
     "versao": "2.11.4",
     "data": "2026-08-14",
     "mudancas": [
