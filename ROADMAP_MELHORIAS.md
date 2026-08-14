@@ -441,6 +441,31 @@ implementação sem mais definição de escopo:
   cabeçalho de seção sem criar clique extra — avaliar as duas antes de
   implementar.
 
+- **Agrupar os validadores num menu "Validadores"**: pedido do usuário
+  (14/08/2026, com print do topbar) — hoje "Validador de XML TISS" e
+  "Validador SUS" são duas abas de topo separadas (junto com Consulta,
+  Múltiplos, SUS/SIGTAP, Tabelas TISS, CID-10, Verificadores), e o CIHA
+  (candidato registrado acima) seria uma nona aba de topo se entrasse do
+  jeito atual. Proposta: criar uma aba de topo "Validadores" e mover
+  XML/TISS, SUS e (quando existir) CIHA pra dentro dela como sub-abas,
+  mantendo cada validador com sua estrutura interna intacta — inclusive o
+  Validador SUS, que já tem suas próprias sub-abas BPA/AIH/APAC
+  (`.subtab-btn`/`data-subtab` em `#tab-validador-sus`), então essa
+  seria a primeira aba-de-abas com 2 níveis de aninhamento no portal
+  (`Validadores` → `Validador SUS` → `BPA/AIH/APAC`). O padrão de subaba
+  em si já existe e funciona bem (mesmo mecanismo usado no FAQ,
+  `.faq-subtab-btn`/`data-faqtab`), então é extensão de um padrão
+  existente, não invenção de um novo.
+  - Reduz de 8 pra 7 abas de topo visíveis hoje, e evita que o CIHA vire
+    a nona — ajuda direto o achado de overflow mobile do topbar (já
+    corrigido uma vez nesta sexta, mas cada aba nova aumenta a pressão de
+    novo).
+  - Decisão em aberto: implementar a reorganização já com XML/TISS+SUS
+    (CIHA entra depois, quando o validador existir) ou esperar o
+    validador de CIHA ficar pronto pra fazer tudo de uma vez. Como
+    XML/TISS e SUS já existem e estão prontos, dá pra fazer essa parte
+    independente do CIHA.
+
 - **Novo item de FAQ: "O que é OCI (Oferta de Cuidado Integrado)?"**: pedido
   do usuário (14/08/2026) — confirmado que o portal **ainda não tem nada**
   sobre OCI (nem FAQ, nem explicação), mas os **códigos de procedimento OCI
