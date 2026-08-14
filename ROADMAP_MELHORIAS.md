@@ -404,11 +404,28 @@ mapeamento:
 
 ### Candidatos levantados pra 21/08/2026
 
+Cada item abaixo leva uma tag de prioridade — **[Alta]** (bom valor,
+baixo/médio esforço, sem decisão de escopo pendente — candidato natural
+pra sexta que vem), **[Média]** (valor real, mas exige mais esforço ou
+ainda tem decisão de design/escopo em aberto) ou **[Baixa]** (nice-to-have,
+sem pedido direto ou precisa de investigação antes de virar candidato de
+verdade). É julgamento meu, não do usuário — sirva de ponto de partida
+pra decisão final na sexta, não de decisão fechada. **Prática
+padrão a partir de agora**: todo novo item que entrar aqui já sai com
+essa tag.
+
+**Na sexta (21/08/2026)**: antes de começar a implementar, apresento um
+resumo de tudo que foi pedido/registrado nesta semana — cada item com sua
+tag de prioridade, esforço estimado e decisões de escopo ainda em aberto
+— pra decidirmos juntos o que entra nessa liberação. Esta seção é a fonte
+dessa apresentação; ela vai sendo atualizada em tempo real conforme
+surgem novos pedidos ao longo da semana, não só na sexta.
+
 Item pedido diretamente pelo usuário (14/08/2026) — **prioridade máxima
 pra próxima sexta**, já bem especificado, pronto pra entrar direto na
 implementação sem mais definição de escopo:
 
-- **Tópicos em lista nas Dúvidas frequentes, quando a resposta troca de
+- **[Alta]** **Tópicos em lista nas Dúvidas frequentes, quando a resposta troca de
   assunto no meio**: hoje várias respostas do FAQ misturam 2+ sub-temas
   no mesmo parágrafo corrido (ex: a pergunta "Qual a diferença entre
   pacote fechado e conta aberta?" define os dois termos em prosa
@@ -427,7 +444,7 @@ implementação sem mais definição de escopo:
   exemplo da pergunta acima. Precisa de um levantamento primeiro (quais
   respostas têm esse padrão, em quais subabas) antes de reformatar.
 
-- **Sub-abas dentro de "Rejeição / Validação de arquivos" (Dúvidas
+- **[Média]** **Sub-abas dentro de "Rejeição / Validação de arquivos" (Dúvidas
   frequentes), separando SUS de ANS/TISS**: pedido do usuário (14/08/2026)
   ao ver a subaba já implementada — hoje os 10 itens ficam numa lista só,
   misturando sintomas de faturamento SUS (BPA/AIH/APAC) com os de
@@ -441,7 +458,7 @@ implementação sem mais definição de escopo:
   cabeçalho de seção sem criar clique extra — avaliar as duas antes de
   implementar.
 
-- **Agrupar os validadores num menu "Validadores"**: pedido do usuário
+- **[Alta]** **Agrupar os validadores num menu "Validadores"**: pedido do usuário
   (14/08/2026, com print do topbar) — hoje "Validador de XML TISS" e
   "Validador SUS" são duas abas de topo separadas (junto com Consulta,
   Múltiplos, SUS/SIGTAP, Tabelas TISS, CID-10, Verificadores), e o CIHA
@@ -466,7 +483,7 @@ implementação sem mais definição de escopo:
     XML/TISS e SUS já existem e estão prontos, dá pra fazer essa parte
     independente do CIHA.
 
-- **Padronizar "Validador de XML TISS" com o mesmo padrão de sub-abas do
+- **[Alta]** **Padronizar "Validador de XML TISS" com o mesmo padrão de sub-abas do
   Validador SUS**: pedido do usuário (14/08/2026, com prints comparando os
   dois), direto ligado ao item anterior — "temos que padronizar o todo
   portal pra ficar todas as telas no mesmo layout". Confirmado
@@ -488,7 +505,7 @@ implementação sem mais definição de escopo:
     → (`XML` / `DAC`) e `Validadores` → `Validador SUS` →
     (`BPA` / `AIH` / `APAC`).
 
-- **Novo item de FAQ: "O que é OCI (Oferta de Cuidado Integrado)?"**: pedido
+- **[Alta]** **Novo item de FAQ: "O que é OCI (Oferta de Cuidado Integrado)?"**: pedido
   do usuário (14/08/2026) — confirmado que o portal **ainda não tem nada**
   sobre OCI (nem FAQ, nem explicação), mas os **códigos de procedimento OCI
   já estão indexados** na busca SIGTAP (ex.: "OCI AVALIAÇÃO DIAGNÓSTICA
@@ -560,7 +577,7 @@ implementação sem mais definição de escopo:
   - Sem decisão de escopo pendente — é só redigir o item (o rascunho acima
     já dá o conteúdo quase pronto) e publicar na subaba SUS do FAQ.
 
-- **Achado relacionado (a partir da pesquisa de OCI): tabela de
+- **[Média]** **Achado relacionado (a partir da pesquisa de OCI): tabela de
   compatibilidade entre procedimentos já disponível localmente**: o manual
   do PMAE confirma que o registro de secundário em APAC de OCI **depende
   inteiramente** da tabela de compatibilidades do SIGTAP (Relatórios →
@@ -584,7 +601,8 @@ implementação sem mais definição de escopo:
   de feature (não só FAQ) numa rodada futura, sem compromisso de data
   ainda.
 
-- **Novo item de FAQ + candidato de feature: CIHA (Comunicação de
+- **[Alta pro texto de FAQ / Baixa pro validador]** **Novo item de FAQ +
+  candidato de feature: CIHA (Comunicação de
   Informação Hospitalar e Ambulatorial)**: pergunta do usuário (14/08/2026,
   "o que acha?") sobre abordar CIHA no FAQ — pesquisa feita e endossada
   ("sim, conseguimos montar um validador de arquivo CIHA?"). Confirmado
@@ -684,27 +702,30 @@ implementação sem mais definição de escopo:
     cruzam com dado já indexado no portal está feito.
   - Fontes: [Manual Técnico-Operacional CIHA01 (wiki DATASUS)](https://wiki.saude.gov.br/ciha/index.php/Manual_T%C3%A9cnico-Operacional_CIHA01), [Documentos do CIHA01 (portal oficial)](https://ciha.saude.gov.br/documentos/documentos_ciha1.php) (achado pelo usuário — tem o layout vigente), [Página principal da wiki CIHA](https://wiki.saude.gov.br/ciha/index.php/Página_principal), [Portal CIHA](https://ciha.saude.gov.br/principal/index.php) (sugerido pelo usuário como fonte pro FAQ). Os três PDFs/docx de layout estão salvos na raiz do projeto (não versionados) — `Layout_Arquivos_CIHA.pdf` (descartado), `LayoutCIHA01_v1.0.4.2.docx` (desatualizado), `Layout_CIHA01_2024-06.pdf` (**vigente, usar este**).
 
-Demais candidatos (sem prioridade definida, a rodada de revisão de hoje
-não achou mais nada quebrado):
+Demais candidatos (levantados em rodadas de revisão anteriores, sem
+pedido direto do usuário — prioridade abaixo dos itens acima):
 
-- **Passada mobile completa**: só o overflow do topbar foi corrigido até
+- **[Média]** **Passada mobile completa**: só o overflow do topbar foi corrigido até
   agora (achado #1). Não foi testado em viewport estreito se a grade de
   edições da Consulta por procedimento, os cards do SUS/SIGTAP, as tabelas
   do Validador de XML TISS e o gráfico comparativo continuam legíveis/
   utilizáveis abaixo de ~480px.
-- **Verificar se existe edição da CBHPM mais recente que 2025-2026**: a
+- **[Média]** **Verificar se existe edição da CBHPM mais recente que 2025-2026**: a
   AMB publica reajustes por INPC periodicamente (foi assim que a
   2025-2026 apareceu) — vale checar se já saiu uma correção mais nova
-  antes da próxima competência trocar.
-- **Passada de acessibilidade**: não avaliado ainda — navegação por
+  antes da próxima competência trocar. Barato de checar, mas alto impacto
+  se a base estiver desatualizada (é dado central do portal) — vale
+  conferir cedo na sexta mesmo não sendo "trabalho de sexta" de verdade.
+- **[Baixa]** **Passada de acessibilidade**: não avaliado ainda — navegação por
   teclado, leitor de tela, contraste, `aria-live` nas áreas de resultado
   que atualizam via fetch (relevante pra quem usa o portal com o modo
-  escuro/leitor de tela dentro do hospital).
-- Os itens que já estavam na "Transparência de dados" original mas não
+  escuro/leitor de tela dentro do hospital). Precisa de investigação
+  antes de virar candidato de verdade — nenhum pedido direto ainda.
+- **[Média]** Os itens que já estavam na "Transparência de dados" original mas não
   entraram no escopo desta semana continuam válidos como ideia menor: por
   exemplo, expor a data de "última revisão" do dicionário de glosas
   diretamente na aba onde ele é usado (Validador de XML TISS), não só na
-  aba Fontes.
+  aba Fontes. Esforço baixo, valor pontual.
 
 Sem item de peso maior definido — para decidir com o usuário na sexta.
 
