@@ -481,7 +481,8 @@ app.get('/api/sigtap/buscar', async (req, res) => {
          fo.nome AS forma_organizacao_nome,
          COALESCE(reg.lista, '{}') AS instrumentos_registro,
          COALESCE(mod.lista, '{}') AS modalidades_atendimento,
-         COALESCE(det.lista, '{}') AS atributos_complementares
+         COALESCE(det.lista, '{}') AS atributos_complementares,
+         COALESCE(cid.lista, '[]') AS cids_permitidos
        FROM sigtap_procedimentos sp
        LEFT JOIN sigtap_financiamento fin     ON fin.codigo = sp.financiamento
        LEFT JOIN sigtap_rubrica rub           ON rub.codigo = sp.rubrica
@@ -503,6 +504,11 @@ app.get('/api/sigtap/buscar', async (req, res) => {
          FROM sigtap_procedimento_detalhe spd JOIN sigtap_detalhe d ON d.codigo = spd.codigo_detalhe
          WHERE spd.codigo_procedimento = sp.codigo
        ) det ON true
+       LEFT JOIN LATERAL (
+         SELECT json_agg(json_build_object('codigo', spc.codigo_cid, 'principal', spc.principal) ORDER BY spc.principal DESC, spc.codigo_cid) AS lista
+         FROM sigtap_procedimento_cid spc
+         WHERE spc.codigo_procedimento = sp.codigo
+       ) cid ON true
        WHERE sp.codigo = $1 OR sp.nome ILIKE $2
        ORDER BY (sp.codigo = $1) DESC, sp.nome
        LIMIT 50`,
@@ -989,6 +995,47 @@ app.get('/api/sigtap/habilitacao', async (req, res) => {
   } catch (err) {
     console.error('Erro ao consultar habilitação SIGTAP:', err);
     res.status(500).json({ erro: 'Erro ao consultar habilitação.' });
+  }
+});
+
+// Compatibilidade entre um procedimento SIGTAP e um diagnóstico (CID-10) —
+// tabela oficial rl_procedimento_cid da Tabela Unificada DATASUS. Essa base
+// só lista os CIDs efetivamente aceitos: não encontrar o par é o próprio
+// alerta de possível incompatibilidade (não confirma que é impossível, só
+// que não há registro oficial de aceitação).
+app.get('/api/sigtap/cid', async (req, res) => {
+  try {
+    const codigo = (req.query.codigo || '').trim();
+    const cid = (req.query.cid || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!codigo || !cid) {
+      return res.status(400).json({ erro: 'Informe o código do procedimento e o CID.' });
+    }
+    // Algumas categorias não têm subcategoria (ex: C73 não se subdivide) —
+    // nesse caso o CID de 3 chars já é o código final. Quando o usuário
+    // digita os 4 chars mesmo assim (ex: "C73.9"), cai pro código de
+    // categoria (3 chars) como alternativa, tanto pro nome quanto pro
+    // vínculo com o procedimento.
+    const cidBase = cid.length > 3 ? cid.slice(0, 3) : cid;
+    const [{ rows: vinculo }, { rows: nomeCid }] = await Promise.all([
+      pool.query(
+        'SELECT principal FROM sigtap_procedimento_cid WHERE codigo_procedimento = $1 AND codigo_cid = ANY($2) LIMIT 1',
+        [codigo, [cid, cidBase]]
+      ),
+      pool.query(
+        'SELECT nome FROM cid10_subcategoria WHERE codigo = $1 UNION ALL SELECT nome FROM cid10_categoria WHERE codigo = $2 LIMIT 1',
+        [cid, cidBase]
+      ),
+    ]);
+    res.json({
+      codigo,
+      cid,
+      cidNome: nomeCid[0]?.nome || null,
+      compativel: vinculo.length > 0,
+      principal: vinculo[0]?.principal ?? null,
+    });
+  } catch (err) {
+    console.error('Erro ao verificar compatibilidade CID SIGTAP:', err);
+    res.status(500).json({ erro: 'Erro ao verificar compatibilidade com o CID.' });
   }
 });
 

@@ -48,3 +48,15 @@ CREATE TABLE sigtap_procedimento_habilitacao (
     codigo_grupo_habilitacao VARCHAR(4),
     PRIMARY KEY (codigo_procedimento, codigo_habilitacao)
 );
+
+-- Diagnósticos (CID-10) aceitos oficialmente para cada procedimento
+-- (rl_procedimento_cid da Tabela Unificada). codigo_cid guarda o código sem
+-- ponto (3 chars = categoria, ex. "C73"; 4 chars = subcategoria, ex.
+-- "C739") pra casar direto com cid10_categoria/cid10_subcategoria.
+CREATE TABLE sigtap_procedimento_cid (
+    codigo_procedimento VARCHAR(12) NOT NULL REFERENCES sigtap_procedimentos(codigo),
+    codigo_cid VARCHAR(4) NOT NULL,
+    principal BOOLEAN NOT NULL,
+    PRIMARY KEY (codigo_procedimento, codigo_cid)
+);
+CREATE INDEX idx_sigtap_procedimento_cid_cid ON sigtap_procedimento_cid (codigo_cid);

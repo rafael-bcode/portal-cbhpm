@@ -5066,6 +5066,36 @@ function listaSigtap(arr) {
   return Array.isArray(arr) && arr.length ? arr.join(', ') : null;
 }
 
+// CO_CID vem sem ponto (3 chars = categoria, 4 = subcategoria); reinsere o
+// ponto padrão do CID-10 só pra exibição (ex: "C739" -> "C73.9").
+function formatarCidCodigo(codigo) {
+  return codigo && codigo.length === 4 ? `${codigo.slice(0, 3)}.${codigo.slice(3)}` : codigo;
+}
+
+// Só os códigos — a descrição de cada CID fica por conta da aba CID-10, que
+// já existe no portal como busca dedicada (evita duplicar a mesma consulta
+// aqui). Diagnóstico principal (ST_PRINCIPAL=S) em negrito; lista fica
+// dentro de um <details> quando passa de 8 itens, mesmo padrão das fábricas
+// do OPME.
+function renderizarCidsSigtap(cids) {
+  const lista = Array.isArray(cids) ? cids : [];
+  if (lista.length === 0) {
+    return '<div class="breakdown-row"><span class="label">CIDs permitidos</span><span class="value wrap">Sem restrição registrada — não vinculado a um CID específico na tabela oficial</span></div>';
+  }
+  const itemHtml = (c) => {
+    const texto = escaparHtml(formatarCidCodigo(c.codigo));
+    return c.principal ? `<strong>${texto}</strong>` : texto;
+  };
+  if (lista.length <= 8) {
+    return `<div class="breakdown-row"><span class="label">CIDs permitidos</span><span class="value wrap">${lista.map(itemHtml).join(', ')}</span></div>`;
+  }
+  return `
+    <details style="padding:7px 0;">
+      <summary style="cursor:pointer;"><strong>${lista.length} CIDs permitidos</strong> — ver todos</summary>
+      <div style="margin-top:6px;">${lista.map(itemHtml).join(', ')}</div>
+    </details>`;
+}
+
 function renderizarCardSigtap(item) {
   const classificacao = classificacaoSigtap(item);
   const instrumentos = listaSigtap(item.instrumentos_registro);
@@ -5078,6 +5108,7 @@ function renderizarCardSigtap(item) {
     instrumentos ? `<div class="breakdown-row"><span class="label">Instrumento de registro</span><span class="value wrap">${escaparHtml(instrumentos)}</span></div>` : '',
     modalidades ? `<div class="breakdown-row"><span class="label">Modalidade de atendimento</span><span class="value wrap">${escaparHtml(modalidades)}</span></div>` : '',
     atributos ? `<div class="breakdown-row"><span class="label">Atributos complementares</span><span class="value wrap">${escaparHtml(atributos)}</span></div>` : '',
+    renderizarCidsSigtap(item.cids_permitidos),
   ].join('');
 
   return `
@@ -5572,14 +5603,14 @@ if (conversorCodigoEl) {
 }
 
 // ---------- Checklist pré-envio unificado ----------
-// Cola-se o(s) código(s) SIGTAP uma vez e roda, de uma vez só, as 3
-// conferências que hoje existem soltas nesta aba (habilitação, conversor e,
-// com 2+ códigos, compatibilidade) — mesma lógica e mesmos endpoints de
-// cada verificador individual, só reorganizados num resumo único
-// verde/amarelo/vermelho. Não cobre compatibilidade com o diagnóstico
-// (CID): essa tabela oficial (procedimento×CID) ainda não está carregada
-// no portal — ver aba Dúvidas frequentes > Auditoria.
+// Cola-se o(s) código(s) SIGTAP uma vez e roda, de uma vez só, as
+// conferências que hoje existem soltas nesta aba (habilitação, conversor,
+// com 2+ códigos compatibilidade entre eles e, se um CID for informado,
+// compatibilidade procedimento×diagnóstico) — mesma lógica e mesmos
+// endpoints de cada verificador individual, só reorganizados num resumo
+// único verde/amarelo/vermelho.
 const checklistCodigosEl = document.getElementById('checklist-codigos');
+const checklistCidEl = document.getElementById('checklist-cid');
 const btnChecklistVerificarEl = document.getElementById('btn-checklist-verificar');
 const checklistResultadoAreaEl = document.getElementById('checklist-resultado-area');
 
@@ -5595,7 +5626,7 @@ function renderizarLinhaChecklist(status, texto) {
   return `<div class="validador-linha ${status}">${icone} ${texto}</div>`;
 }
 
-function renderizarCardChecklistCodigo(codigo, habilitacao, conversor) {
+function renderizarCardChecklistCodigo(codigo, habilitacao, conversor, cidResultado) {
   const linhas = [];
   let statusCodigo = 'ok';
 
@@ -5620,6 +5651,18 @@ function renderizarCardChecklistCodigo(codigo, habilitacao, conversor) {
     linhas.push(renderizarLinhaChecklist('ok', `Equivalência encontrada nas tabelas (${qtdEquivalencias}) — confira na aba Conversor abaixo se a tabela exigida pela operadora está entre elas.`));
   }
 
+  if (cidResultado) {
+    if (!cidResultado.cidNome) {
+      linhas.push(renderizarLinhaChecklist('aviso', `CID "${escaparHtml(cidResultado.cid)}" não reconhecido na tabela CID-10 do portal — confira a grafia.`));
+      if (statusCodigo === 'ok') statusCodigo = 'aviso';
+    } else if (cidResultado.compativel) {
+      linhas.push(renderizarLinhaChecklist('ok', `CID compatível com o procedimento: ${escaparHtml(cidResultado.cidNome)}${cidResultado.principal ? ' (diagnóstico principal)' : ''}.`));
+    } else {
+      linhas.push(renderizarLinhaChecklist('aviso', `CID informado (${escaparHtml(cidResultado.cidNome)}) não está na lista oficial de diagnósticos aceitos para este procedimento — confirme antes de enviar, pode gerar glosa por incompatibilidade procedimento×CID.`));
+      if (statusCodigo === 'ok') statusCodigo = 'aviso';
+    }
+  }
+
   return { statusCodigo, html: `
     <div class="edicao-card" style="margin-bottom:10px;">
       <div class="edicao-card-head">
@@ -5630,9 +5673,9 @@ function renderizarCardChecklistCodigo(codigo, habilitacao, conversor) {
     </div>` };
 }
 
-function renderizarChecklist(codigos, habilitacoes, conversores, compat) {
+function renderizarChecklist(codigos, habilitacoes, conversores, compat, cids) {
   const ordemStatusChecklist = { ok: 0, aviso: 1, erro: 2 };
-  const cards = codigos.map((c, i) => renderizarCardChecklistCodigo(c, habilitacoes[i], conversores[i]));
+  const cards = codigos.map((c, i) => renderizarCardChecklistCodigo(c, habilitacoes[i], conversores[i], cids ? cids[i] : null));
   let statusGeral = cards.reduce((pior, c) => (ordemStatusChecklist[c.statusCodigo] > ordemStatusChecklist[pior] ? c.statusCodigo : pior), 'ok');
 
   let compatHtml = '';
@@ -5668,18 +5711,20 @@ function renderizarChecklist(codigos, habilitacoes, conversores, compat) {
 
 async function rodarChecklist() {
   const codigos = checklistCodigosEl.value.split(',').map((c) => c.trim()).filter(Boolean);
+  const cid = checklistCidEl.value.trim();
   if (codigos.length === 0) {
     checklistResultadoAreaEl.innerHTML = '<div class="msg erro">Informe pelo menos 1 código SIGTAP.</div>';
     return;
   }
   checklistResultadoAreaEl.innerHTML = '<div class="msg vazio">Rodando checklist…</div>';
   try {
-    const [habilitacoes, conversores, compat] = await Promise.all([
+    const [habilitacoes, conversores, compat, cids] = await Promise.all([
       Promise.all(codigos.map((c) => buscarJson(`/api/sigtap/habilitacao?codigo=${encodeURIComponent(c)}`))),
       Promise.all(codigos.map((c) => buscarJson(`/api/conversor?codigo=${encodeURIComponent(c)}`))),
       codigos.length >= 2 ? buscarJson(`/api/sigtap/compatibilidade?codigos=${encodeURIComponent(codigos.join(','))}`) : Promise.resolve(null),
+      cid ? Promise.all(codigos.map((c) => buscarJson(`/api/sigtap/cid?codigo=${encodeURIComponent(c)}&cid=${encodeURIComponent(cid)}`))) : Promise.resolve(null),
     ]);
-    renderizarChecklist(codigos, habilitacoes, conversores, compat);
+    renderizarChecklist(codigos, habilitacoes, conversores, compat, cids);
   } catch (err) {
     console.error(err);
     checklistResultadoAreaEl.innerHTML = `<div class="msg erro">Erro ao rodar checklist: ${escaparHtml(err.message)}</div>`;
@@ -5689,6 +5734,9 @@ async function rodarChecklist() {
 if (btnChecklistVerificarEl) {
   btnChecklistVerificarEl.addEventListener('click', rodarChecklist);
   checklistCodigosEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') rodarChecklist();
+  });
+  checklistCidEl.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') rodarChecklist();
   });
 }

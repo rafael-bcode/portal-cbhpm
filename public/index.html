@@ -669,6 +669,14 @@
       Sistema Único de Saúde). Busque pelo <strong>código exato</strong> do procedimento ou por um
       <strong>trecho do nome</strong>.
     </p>
+    <p class="ajustes-nota">
+      Cada card mostra os <strong>CIDs permitidos</strong> pra aquele procedimento, direto da tabela oficial
+      DATASUS (rl_procedimento_cid) — o mesmo dado usado no Checklist pré-envio, na aba Verificadores. Em
+      diagnóstico principal fica em <strong>negrito</strong>. Quando aparece "sem restrição registrada", não é
+      falha de carga: boa parte dos procedimentos (consultas e acompanhamentos gerais, por exemplo) não tem
+      nenhum CID vinculado na base oficial — pode ser lançado com qualquer diagnóstico compatível com o quadro
+      clínico.
+    </p>
     <div class="field field-busca">
       <label for="sigtap-busca">Código ou nome do procedimento</label>
       <div class="busca-wrapper" style="max-width:520px;">
@@ -741,16 +749,22 @@
       <h2>Checklist pré-envio</h2>
     </div>
     <p class="ajustes-nota">
-      Cola o(s) código(s) SIGTAP de uma guia (1 ou mais, separados por vírgula) e roda de uma vez as 3
-      conferências abaixo — habilitação exigida, equivalência nas tabelas (TUSS/CBHPM) e, quando há 2 ou mais
-      códigos, compatibilidade entre eles — com um resumo visual único no lugar de 3 consultas separadas.
-      <strong>Não cobre</strong> a compatibilidade com o diagnóstico (CID) nem a documentação clínica: o portal
-      ainda não tem a tabela oficial de compatibilidade procedimento×CID carregada.
+      Cola o(s) código(s) SIGTAP de uma guia (1 ou mais, separados por vírgula) e roda de uma vez as
+      conferências abaixo — habilitação exigida, equivalência nas tabelas (TUSS/CBHPM), compatibilidade entre os
+      códigos (quando há 2 ou mais) e, se informar o CID da guia, compatibilidade procedimento×diagnóstico — com
+      um resumo visual único no lugar de várias consultas separadas. <strong>Não cobre</strong> a documentação
+      clínica exigida pela operadora, isso continua por conta de quem fatura.
     </p>
     <div class="field field-busca">
       <label for="checklist-codigos">Código(s) SIGTAP</label>
       <div class="busca-wrapper" style="max-width:620px;">
         <input type="text" id="checklist-codigos" placeholder="Ex: 0303170077, 0206010010" autocomplete="off">
+      </div>
+    </div>
+    <div class="field field-busca">
+      <label for="checklist-cid">CID da guia (opcional)</label>
+      <div class="busca-wrapper" style="max-width:220px;">
+        <input type="text" id="checklist-cid" placeholder="Ex: C73.9" autocomplete="off">
       </div>
     </div>
     <button type="button" id="btn-checklist-verificar" class="btn-consultar">Rodar checklist</button>

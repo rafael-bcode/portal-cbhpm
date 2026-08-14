@@ -1,5 +1,13 @@
 [
   {
+    "versao": "2.10.0",
+    "data": "2026-08-14",
+    "mudancas": [
+      "Checklist pré-envio (aba Verificadores) passa a cobrir compatibilidade procedimento×CID: campo opcional de CID da guia, checado contra cada código SIGTAP na tabela oficial rl_procedimento_cid da Tabela Unificada DATASUS (82 mil pares importados). Antes o checklist deixava esse ponto explicitamente de fora por falta da base.",
+      "Tela de consulta SIGTAP mostra os CIDs permitidos em cada card de procedimento (só o código, com o diagnóstico principal em negrito e lista expansível quando passa de 8 itens) — descrição de cada CID continua na aba CID-10 dedicada, sem duplicar consulta. Quando o procedimento não tem nenhum CID vinculado na base oficial (42% dos casos, sobretudo consultas e acompanhamentos gerais), mostra explicitamente 'sem restrição registrada' em vez de omitir a linha, pra não parecer falha de carga."
+    ]
+  },
+  {
     "versao": "2.9.1",
     "data": "2026-08-13",
     "mudancas": [

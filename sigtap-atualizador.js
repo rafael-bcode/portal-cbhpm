@@ -277,6 +277,28 @@ async function importarCompativel(pool, linhas) {
   return linhas.length;
 }
 
+// rl_procedimento_cid.txt: CO_PROCEDIMENTO(10) CO_CID(4) ST_PRINCIPAL(1) DT_COMPETENCIA(6)
+// CO_CID vem com espaço de preenchimento quando o CID é só de categoria (3
+// chars, ex. "C73 "); guardamos sempre sem esse espaço pra casar direto com
+// cid10_categoria (3 chars) ou cid10_subcategoria (4 chars).
+async function importarProcedimentoCid(pool, linhas) {
+  const codigosProcedimento = [];
+  const codigosCid = [];
+  const principais = [];
+  for (const l of linhas) {
+    codigosProcedimento.push(l.slice(0, 10));
+    codigosCid.push(l.slice(10, 14).trim());
+    principais.push(l.slice(14, 15) === 'S');
+  }
+  await pool.query(
+    `INSERT INTO sigtap_procedimento_cid (codigo_procedimento, codigo_cid, principal)
+     SELECT * FROM UNNEST($1::varchar[], $2::varchar[], $3::boolean[])
+     ON CONFLICT (codigo_procedimento, codigo_cid) DO UPDATE SET principal = EXCLUDED.principal`,
+    [codigosProcedimento, codigosCid, principais]
+  );
+  return linhas.length;
+}
+
 // rl_excecao_compatibilidade.txt: CO_PROCEDIMENTO_RESTRICAO(10) CO_PROCEDIMENTO_PRINCIPAL(10)
 // CO_REGISTRO_PRINCIPAL(2) CO_PROCEDIMENTO_COMPATIVEL(10) CO_REGISTRO_COMPATIVEL(2) TP_COMPATIBILIDADE(1) DT_COMPETENCIA(6)
 async function importarExcecaoCompatibilidade(pool, linhas) {
@@ -338,6 +360,7 @@ async function atualizarSigtap(pool) {
   resumo.sigtap_procedimento_habilitacao = await importarProcedimentoHabilitacao(pool, lerEntradaZip(zip, 'rl_procedimento_habilitacao.txt'));
   resumo.sigtap_procedimento_compativel = await importarCompativel(pool, lerEntradaZip(zip, 'rl_procedimento_compativel.txt'));
   resumo.sigtap_excecao_compatibilidade = await importarExcecaoCompatibilidade(pool, lerEntradaZip(zip, 'rl_excecao_compatibilidade.txt'));
+  resumo.sigtap_procedimento_cid = await importarProcedimentoCid(pool, lerEntradaZip(zip, 'rl_procedimento_cid.txt'));
 
   await pool.query(
     `INSERT INTO sigtap_metadata (id, competencia, atualizado_em) VALUES (1, $1, now())
@@ -352,4 +375,6 @@ module.exports = {
   competenciaLegivel,
   buscarUltimaDisponivelGitHub,
   atualizarSigtap,
+  lerEntradaZip,
+  importarProcedimentoCid,
 };
