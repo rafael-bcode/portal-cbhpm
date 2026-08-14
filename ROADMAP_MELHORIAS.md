@@ -537,6 +537,81 @@ implementação sem mais definição de escopo:
   de feature (não só FAQ) numa rodada futura, sem compromisso de data
   ainda.
 
+- **Novo item de FAQ + candidato de feature: CIHA (Comunicação de
+  Informação Hospitalar e Ambulatorial)**: pergunta do usuário (14/08/2026,
+  "o que acha?") sobre abordar CIHA no FAQ — pesquisa feita e endossada
+  ("sim, conseguimos montar um validador de arquivo CIHA?"). Confirmado
+  que o portal ainda não tem nada sobre CIHA.
+  - **O que é**: sistema (DATASUS) de reporte obrigatório de produção
+    hospitalar/ambulatorial pra estabelecimentos **com ou sem vínculo com
+    o SUS** — inclui atendimento por convênio/plano privado, particular,
+    programas federais (PRONON/PRONAS/PROADI) etc. Não é instrumento de
+    faturamento/repasse como BPA/AIH/APAC/TISS — é só informação, mas o
+    não envio pode gerar sanção (perda de benefícios públicos), o que o
+    torna uma dor real de compliance mesmo pra hospital 100% privado.
+    Base legal: Portaria GM/MS 1.171/2011 (criação, renomeando o antigo
+    CIH), reforçada pela Lei 12.653/2012. Estrutura em 3 partes: CIHA01
+    (coleta, no estabelecimento), CIHA02 (processamento, na secretaria de
+    saúde) e o Módulo Transmissor (envia ao Ministério da Saúde). Envio é
+    **mensal**; ausência de movimento também precisa ser comunicada (
+    remessa "sem movimento").
+  - **Achado importante durante a pesquisa**: existem **dois layouts
+    diferentes** de arquivo CIHA, achado que só ficou claro comparando os
+    dois PDFs — inicialmente peguei o errado:
+    1. `Layout_Arquivos_CIHA.pdf` (salvo na raiz) — layout de
+       **disseminação pública** (dbf, 29 campos: ANO_CMPT, MES_CMPT,
+       CGC_HOSP, MUNIC_RES, NASC, SEXO, PROC_REA, DIAG_PRINC, DIAG_SECUN,
+       CNES, FONTE, MODALIDADE etc.) — é o formato de microdados
+       processados/consolidados (mesma família dos dados do TabNet), não
+       o que o hospital gera pra enviar.
+    2. `LayoutCIHA01_v1.0.4.2.docx` (salvo na raiz, baixado via
+       `ftp://ftp.datasus.gov.br/CIHA/downloads/Documentacao/LayOutCIHA01V1.0.4.2.zip`,
+       link encontrado pelo usuário) — este sim é o **layout de
+       transmissão/importação real**, usado pelo hospital pra gerar o
+       arquivo TXT que o CIHA01 importa. Bem mais rico:
+       - Linha de header (TIPO_REG=1, CNES, VERSAO="1.0.4.2").
+       - Linha de dados com `TIPO_REG` indicando o tipo de registro (2 =
+         movimento individualizado hospitalar, 3 = sem movimento, 4 =
+         movimento individualizado ambulatorial, 5 = movimento consolidado
+         ambulatorial) — cada tipo tem seu próprio conjunto de campos
+         obrigatórios.
+       - Campos de largura fixa com posição/tamanho exatos: NOME_PAC,
+         endereço (logradouro/número/complemento/CEP/UF/`COD_MUNIC` IBGE),
+         `DT_NASC`, `SEXO` (M/F/I), `CNS`, `PROC_REA` (procedimento SIH/
+         SUS), `DIAG_PRIN`/`DIAG_SEC` (CID-10), `DT_ATENDIMENTO`,
+         `DT_ALTA`, `TP_ALTA`, `TP_FREMU` (fonte de remuneração),
+         `REG_ANS`/`CNPJ_OPER`/`CO_BENEF` (dados da operadora quando fonte
+         = convênio), `NU_OBITO`, campos de declaração de nascido (parto),
+         `QT_UTI`, `NU_PRONT`, `DT_CMPT` (competência), `CO_MODALIDADE`
+         (01-Ambulatorial/02-Internação), `NU_TISS` (nº da guia TISS
+         quando fonte = convênio — ponte direta com o Validador de XML
+         TISS que o portal já tem).
+    - Lição pro processo: ao pesquisar layout de arquivo governamental,
+      **confirmar se é o formato de envio/importação ou de disseminação/
+      exportação** antes de assumir que serve pra validação — são
+      propósitos diferentes e o nome do arquivo nem sempre deixa claro.
+  - **Por que dá pra validar bem**: é o mesmo tipo de arquivo plano de
+    largura fixa que o portal já processa (mesmo padrão dos arquivos
+    SIGTAP), e os campos mais sujeitos a erro batem com dados que o
+    portal **já indexa**: `DIAG_PRIN`/`DIAG_SEC` (tabelas de CID-10 já
+    usadas no Checklist e na busca SIGTAP), `PROC_REA` (procedimentos
+    SIGTAP já indexados), `REG_ANS` (Operadoras ANS já indexado),
+    possivelmente `CNES` (dado que o `cnes-atualizador.js` já trata).
+    Validação viável em duas camadas: (1) estrutural — posição/tamanho/
+    tipo de cada campo, preenchimento obrigatório conforme `TIPO_REG` e
+    `TP_FREMU`; (2) semântica — CID, procedimento, ANS e CNES existem e
+    são válidos nas tabelas já carregadas.
+  - **Escopo ainda em aberto antes de implementar**: confirmar se a v1.0.4.2
+    (do zip, sem data de revisão clara no documento) ainda é a versão
+    vigente do CIHA01 — o campo `VERSAO` do header sugere que o próprio
+    arquivo declara a versão, então dá pra validar isso também, mas vale
+    checar `https://ciha.saude.gov.br/versao/versao.php` numa rodada
+    futura antes de fixar as regras. Não é candidato de "prioridade
+    máxima" ainda — é maior que os itens de FAQ acima (é uma feature nova
+    de validação, não só texto), então fica registrado pra avaliar prazo
+    com calma, sem compromisso pra 21/08/2026.
+  - Fontes: [Manual Técnico-Operacional CIHA01 (wiki DATASUS)](https://wiki.saude.gov.br/ciha/index.php/Manual_T%C3%A9cnico-Operacional_CIHA01), [Página principal da wiki CIHA](https://wiki.saude.gov.br/ciha/index.php/Página_principal), [Portal CIHA](https://ciha.saude.gov.br/principal/index.php) (sugerido pelo usuário como fonte pro FAQ), layout de disseminação e layout de transmissão salvos localmente (ambos na raiz do projeto, arquivos não versionados).
+
 Demais candidatos (sem prioridade definida, a rodada de revisão de hoje
 não achou mais nada quebrado):
 
