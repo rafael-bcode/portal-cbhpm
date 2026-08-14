@@ -33,6 +33,7 @@ const pool = new Pool({
 // de entrega que pode não se confirmar. Atualizar aqui só quando algo
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
+  'Melhor identificação dos tópicos nas respostas do FAQ',
   'Ajustes de exibição em telas menores (celular/tablet)',
   'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
 ];
