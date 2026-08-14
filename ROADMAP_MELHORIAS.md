@@ -441,6 +441,53 @@ implementação sem mais definição de escopo:
   cabeçalho de seção sem criar clique extra — avaliar as duas antes de
   implementar.
 
+- **Novo item de FAQ: "O que é OCI (Oferta de Cuidado Integrado)?"**: pedido
+  do usuário (14/08/2026) — confirmado que o portal **ainda não tem nada**
+  sobre OCI (nem FAQ, nem explicação), mas os **códigos de procedimento OCI
+  já estão indexados** na busca SIGTAP (ex.: "OCI AVALIAÇÃO DIAGNÓSTICA
+  INICIAL DE CÂNCER DE MAMA", achado em `sigtap_procedimentos.json`).
+  Rascunho de resposta pra subaba de Dúvidas frequentes (SUS):
+  - **O que é**: conjunto padronizado de procedimentos (consultas, exames e
+    tecnologias) organizado pra concluir uma etapa de cuidado dentro de uma
+    linha de cuidado específica — em vez do paciente agendar cada exame
+    separadamente, o encaminhamento é pra um pacote completo, com prazo
+    máximo de conclusão (geralmente 60 dias, 30 pra casos oncológicos).
+  - **Onde se encaixa**: parte do Programa Mais Acesso a Especialistas
+    (PMAE), instituído pela Portaria GM/MS nº 7.273/2025 (base legal:
+    Portaria 1.604/2023, que criou a Política Nacional de Atenção
+    Especializada — PNAES).
+  - **Como fatura**: procedimento OCI é do tipo ambulatorial, financiamento
+    FAEC, registrado em **APAC única** (sem APAC de continuação, prazo
+    máximo de 2 competências) no SIA/SUS. Cada OCI principal tem
+    procedimentos secundários compatíveis/obrigatórios pré-definidos pela
+    própria tabela SIGTAP.
+  - Áreas já cobertas: oncologia (mama, próstata, colo do útero, gástrico,
+    colorretal), oftalmologia, cardiologia, ortopedia, otorrino, entre
+    outras.
+  - Sem decisão de escopo pendente — é só redigir o item e publicar na
+    subaba SUS do FAQ.
+
+- **Achado relacionado (a partir da pesquisa de OCI): tabela de
+  compatibilidade entre procedimentos já disponível localmente**: o usuário
+  mostrou o portal oficial de "Compatibilidades" do SIGTAP
+  (`sigtap.datasus.gov.br`), que lista pra cada OCI principal os
+  procedimentos secundários compatíveis/obrigatórios (com tipo e
+  quantidade permitida). O arquivo bruto equivalente,
+  `rl_procedimento_compativel.txt`, **já está no zip da Tabela Unificada
+  baixado** (`TabelaUnificada_202607_v2607101010.zip`, 452 KB, formato de
+  colunas fixas: procedimento principal + registro, procedimento
+  compatível + registro, tipo de compatibilidade, quantidade permitida,
+  competência — layout em `rl_procedimento_compativel_layout.txt`). É o
+  mesmo padrão de arquivo/importação já usado pro recurso de CID
+  (`rl_procedimento_cid.txt` → tabela `sigtap_procedimento_cid`), então dá
+  pra seguir o mesmo caminho: nova tabela
+  `sigtap_procedimento_compativel`, importador em `sigtap-atualizador.js`,
+  endpoint novo ou extensão do `/api/sigtap/buscar`. Não é sobre OCI
+  especificamente (a tabela cobre compatibilidade entre procedimentos SUS
+  em geral), mas é o dado que mais importa pra quem fatura OCI — vale
+  avaliar como candidato de feature (não só FAQ) numa rodada futura, sem
+  compromisso de data ainda.
+
 Demais candidatos (sem prioridade definida, a rodada de revisão de hoje
 não achou mais nada quebrado):
 
