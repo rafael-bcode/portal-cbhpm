@@ -1,5 +1,12 @@
 [
   {
+    "versao": "2.11.4",
+    "data": "2026-08-14",
+    "mudancas": [
+      "Adiciona 'Organização por tipo de faturamento (SUS x operadoras) nas perguntas de rejeição/validação' à seção 'Em breve' do modal de versão."
+    ]
+  },
+  {
     "versao": "2.11.3",
     "data": "2026-08-14",
     "mudancas": [

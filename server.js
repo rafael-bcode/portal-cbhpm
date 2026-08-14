@@ -34,6 +34,7 @@ const pool = new Pool({
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
   'Melhor identificação dos tópicos nas respostas do FAQ',
+  'Organização por tipo de faturamento (SUS x operadoras) nas perguntas de rejeição/validação',
   'Ajustes de exibição em telas menores (celular/tablet)',
   'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
 ];

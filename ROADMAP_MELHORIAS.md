@@ -427,6 +427,20 @@ implementação sem mais definição de escopo:
   exemplo da pergunta acima. Precisa de um levantamento primeiro (quais
   respostas têm esse padrão, em quais subabas) antes de reformatar.
 
+- **Sub-abas dentro de "Rejeição / Validação de arquivos" (Dúvidas
+  frequentes), separando SUS de ANS/TISS**: pedido do usuário (14/08/2026)
+  ao ver a subaba já implementada — hoje os 10 itens ficam numa lista só,
+  misturando sintomas de faturamento SUS (BPA/AIH/APAC) com os de
+  operadoras/TISS (hash MD5, versão do Padrão, habilitação, CID etc.).
+  Quem trabalha só com um dos dois lados vê itens irrelevantes junto dos
+  relevantes. Proposta: 2 sub-abas dentro da própria subaba (SUS de um
+  lado, ANS/TISS do outro) — quem usa as duas frentes continua vendo as
+  duas, só que separadas por tipo de faturamento em vez de misturadas.
+  Precisa decidir: nova sub-navegação aninhada (sub-aba dentro de subaba,
+  ainda sem precedente na UI atual) ou reagrupar os itens com um
+  cabeçalho de seção sem criar clique extra — avaliar as duas antes de
+  implementar.
+
 Demais candidatos (sem prioridade definida, a rodada de revisão de hoje
 não achou mais nada quebrado):
 
