@@ -402,10 +402,33 @@ mapeamento:
      pra "não sei o que fazer". Os itens que apontavam "mais abaixo nesta
      aba" viraram links reais pra aba Verificadores.
 
-### Candidatos levantados pra 21/08/2026 (sem prioridade definida ainda)
+### Candidatos levantados pra 21/08/2026
 
-Como a rodada de hoje não achou mais nada quebrado, os candidatos pra
-semana que vem são de melhoria, não correção:
+Item pedido diretamente pelo usuário (14/08/2026) — **prioridade máxima
+pra próxima sexta**, já bem especificado, pronto pra entrar direto na
+implementação sem mais definição de escopo:
+
+- **Tópicos em lista nas Dúvidas frequentes, quando a resposta troca de
+  assunto no meio**: hoje várias respostas do FAQ misturam 2+ sub-temas
+  no mesmo parágrafo corrido (ex: a pergunta "Qual a diferença entre
+  pacote fechado e conta aberta?" define os dois termos em prosa
+  contínua). Trocar por lista com marcador, cada item com o termo em
+  negrito seguido de ":", ex:
+  ```
+  - Pacote fechado: um valor fixo é negociado pra um procedimento
+    inteiro (...) — o prestador é quem gerencia o uso de materiais e
+    serviços dentro desse valor, sem detalhar item a item na cobrança
+    (exceto imprevistos/urgência, que costumam ficar de fora do pacote).
+  - Conta aberta: cada item usado — material, medicamento, taxa, diária
+    — é cobrado separadamente, conforme o combinado em contrato.
+  ```
+  Aplica-se a **todas** as perguntas do FAQ com esse padrão (troca de
+  assunto/termo no meio da resposta), em todas as subabas — não só o
+  exemplo da pergunta acima. Precisa de um levantamento primeiro (quais
+  respostas têm esse padrão, em quais subabas) antes de reformatar.
+
+Demais candidatos (sem prioridade definida, a rodada de revisão de hoje
+não achou mais nada quebrado):
 
 - **Passada mobile completa**: só o overflow do topbar foi corrigido até
   agora (achado #1). Não foi testado em viewport estreito se a grade de
