@@ -453,10 +453,10 @@ implementação sem mais definição de escopo:
   relevantes. Proposta: 2 sub-abas dentro da própria subaba (SUS de um
   lado, ANS/TISS do outro) — quem usa as duas frentes continua vendo as
   duas, só que separadas por tipo de faturamento em vez de misturadas.
-  Precisa decidir: nova sub-navegação aninhada (sub-aba dentro de subaba,
-  ainda sem precedente na UI atual) ou reagrupar os itens com um
-  cabeçalho de seção sem criar clique extra — avaliar as duas antes de
-  implementar.
+  **Decisão fechada em 20/08/2026**: cabeçalho de seção (sem sub-navegação
+  aninhada nova) — critério do usuário foi economizar espaço/não poluir a tela, e
+  isso não adiciona uma linha de sub-abas extra. **Agendado pra 28/08/2026** (ajuste
+  de funcionalidade existente, ver "Calendário planejado" mais abaixo).
 
 - **[Alta]** **Agrupar os validadores num menu "Validadores"**: pedido do usuário
   (14/08/2026, com print do topbar) — hoje "Validador de XML TISS" e
@@ -597,9 +597,10 @@ implementação sem mais definição de escopo:
   endpoint novo ou extensão do `/api/sigtap/buscar`. Não é sobre OCI
   especificamente (a tabela cobre compatibilidade entre procedimentos SUS
   em geral, tipo "Compatível"/"Obrigatória" como descrito acima), mas é o
-  dado que mais importa pra quem fatura OCI — vale avaliar como candidato
-  de feature (não só FAQ) numa rodada futura, sem compromisso de data
-  ainda.
+  dado que mais importa pra quem fatura OCI. **Agendado pra 04/09/2026** (1ª sexta
+  de setembro — é feature nova de verdade: tabela nova, importador novo, endpoint
+  novo, não extensão simples do que já existe; ver regra em "Calendário planejado"
+  mais abaixo).
 
 - **[Alta pro texto de FAQ / Baixa pro validador]** **Novo item de FAQ +
   candidato de feature: CIHA (Comunicação de
@@ -692,42 +693,713 @@ implementação sem mais definição de escopo:
     obrigatório conforme a cascata de condições acima; (2) semântica —
     CID, procedimento, operadora e CNES existem e são válidos nas
     tabelas já carregadas.
-  - **Escopo pra implementar**: não é candidato de "prioridade máxima"
-    ainda — é maior que os itens de FAQ acima (é uma feature nova de
-    validação, com regras condicionais em cascata, não só texto), então
-    fica registrado pra avaliar prazo com calma, sem compromisso pra
-    21/08/2026. Já está desbloqueado pra entrar em implementação quando
-    o usuário decidir — layout confirmado, fonte de dado real de teste
-    disponível (os dois arquivos do Totvs), e mapeamento de quais campos
+  - **Escopo pra implementar**: é maior que os itens de FAQ acima (é uma feature
+    nova de validação, com regras condicionais em cascata, não só texto).
+    **Agendado pra 04/09/2026** (1ª sexta de setembro, junto com o Validador DMED —
+    ver "Calendário planejado" mais abaixo), já desbloqueado pra entrar em
+    implementação quando a data chegar — layout confirmado, fonte de dado real de
+    teste disponível (os dois arquivos do Totvs), e mapeamento de quais campos
     cruzam com dado já indexado no portal está feito.
   - Fontes: [Manual Técnico-Operacional CIHA01 (wiki DATASUS)](https://wiki.saude.gov.br/ciha/index.php/Manual_T%C3%A9cnico-Operacional_CIHA01), [Documentos do CIHA01 (portal oficial)](https://ciha.saude.gov.br/documentos/documentos_ciha1.php) (achado pelo usuário — tem o layout vigente), [Página principal da wiki CIHA](https://wiki.saude.gov.br/ciha/index.php/Página_principal), [Portal CIHA](https://ciha.saude.gov.br/principal/index.php) (sugerido pelo usuário como fonte pro FAQ). Os três PDFs/docx de layout estão salvos na raiz do projeto (não versionados) — `Layout_Arquivos_CIHA.pdf` (descartado), `LayoutCIHA01_v1.0.4.2.docx` (desatualizado), `Layout_CIHA01_2024-06.pdf` (**vigente, usar este**).
+
+- **[Alta]** **Novo item de FAQ: tabela de classificação da Portaria SVS/MS 344/98
+  (A1 a F2)**: pedido do usuário (20/08/2026, com print da tabela de classificações).
+  Confirmado que o conteúdo hoje está **espalhado e incompleto** — a subaba
+  Medicamentos do FAQ já tem os itens "O que são as tarjas dos medicamentos" e "O que
+  são as notificações de receita (amarela, azul, branca)", que citam A1/A2/A3
+  (Notificação A), B1/B2 (Notificação B) e C1-C5 (Notificação C) soltos dentro da
+  prosa, e o item do livro de registro específico cita de novo A1, A2, A3, B1, B2,
+  C1, C2, C3, C4, C5 — mas nenhum lugar tem a tabela completa código → classificação
+  → o que exige, e faltam **D1/D2** (precursoras/insumos químicos), **E** (plantas
+  proscritas) e **F1/F2** (substâncias de uso proscrito) por inteiro, que hoje não
+  aparecem em lugar nenhum do FAQ. Baixo esforço — é consolidar/completar conteúdo já
+  parcialmente pesquisado num item novo e dedicado, não pesquisa do zero.
+
+- **[Baixa]** **Mostrar a classificação da Portaria 344/98 (A1-F2) na Consulta de
+  Medicamentos (CMED)**: mesmo pedido do usuário (20/08/2026) — verificado que a base
+  pública que o portal já usa (`TA_PRECO_MEDICAMENTO.csv`, arquivo oficial de preços
+  CMED/ANVISA, ver `cmed-atualizador.js`) **não tem essa informação**. As colunas
+  disponíveis nesse arquivo são só `TARJA` (vermelha/preta/amarela/sem tarja) e
+  `RESTRIÇÃO HOSPITALAR` — já exibidas no card de cada medicamento — que são conceitos
+  relacionados mas mais genéricos que a classificação A1-F2. A classificação da
+  Portaria 344/98 vem de listas específicas (atualizadas por RDCs da ANVISA), num
+  documento separado do preço, sem chave direta em comum com o GGREM/registro usado
+  hoje — precisaria de correspondência por nome de substância, o que traz risco de
+  descasamento (nome digitado diferente, mais de uma substância por apresentação) e
+  manutenção contínua (cada RDC pode mover uma substância de lista). Fica registrado
+  como candidato de feature, não pronto pra entrar direto — falta antes achar e
+  validar uma fonte oficial estruturada (não só PDF) das listas vigentes da Portaria
+  344/98 antes de estimar esforço de verdade.
 
 Demais candidatos (levantados em rodadas de revisão anteriores, sem
 pedido direto do usuário — prioridade abaixo dos itens acima):
 
-- **[Média]** **Passada mobile completa**: só o overflow do topbar foi corrigido até
+- **[Média]** **Passada mobile completa** — **agendada pra 28/08/2026**, ver
+  "Calendário planejado" mais abaixo. Só o overflow do topbar foi corrigido até
   agora (achado #1). Não foi testado em viewport estreito se a grade de
   edições da Consulta por procedimento, os cards do SUS/SIGTAP, as tabelas
   do Validador de XML TISS e o gráfico comparativo continuam legíveis/
   utilizáveis abaixo de ~480px.
-- **[Média]** **Verificar se existe edição da CBHPM mais recente que 2025-2026**: a
-  AMB publica reajustes por INPC periodicamente (foi assim que a
-  2025-2026 apareceu) — vale checar se já saiu uma correção mais nova
-  antes da próxima competência trocar. Barato de checar, mas alto impacto
-  se a base estiver desatualizada (é dado central do portal) — vale
-  conferir cedo na sexta mesmo não sendo "trabalho de sexta" de verdade.
-- **[Baixa]** **Passada de acessibilidade**: não avaliado ainda — navegação por
-  teclado, leitor de tela, contraste, `aria-live` nas áreas de resultado
-  que atualizam via fetch (relevante pra quem usa o portal com o modo
-  escuro/leitor de tela dentro do hospital). Precisa de investigação
-  antes de virar candidato de verdade — nenhum pedido direto ainda.
+- ~~Verificar se existe edição da CBHPM mais recente que 2025-2026~~ — **checado em
+  20/08/2026**: existe, mas **ainda não é hora de importar**. Uma nova edição da
+  CBHPM foi **lançada/anunciada em 12/06/2026 no 4º Congresso Brasileiro de Medicina**
+  (CBMG 2026) — inclui cirurgia robótica, saúde digital, terapias avançadas,
+  diagnóstico de alta complexidade e revisão de portes/classificação de auxiliares,
+  atualizando o que mudou na medicina nos últimos 4 anos desde a 11ª edição (2022).
+  Só que a própria página oficial da AMB (amb.org.br/cbhpm/) **ainda lista 2022 como
+  "a última edição"** — nenhuma tabela de valores publicada lá ainda — e a fala do
+  próprio dirigente da AMB no lançamento ("o grande desafio é implementar o que está
+  sendo lançado hoje... é só o pontapé inicial de uma jornada longa de implementação")
+  indica que a negociação com as operadoras pra essa edição valer na prática ainda
+  nem começou. Ou seja: existe uma edição nova no horizonte, mas comprar/importar
+  agora seria prematuro — não há tabela oficial de valores disponível pra adquirir.
+  **Fica como item de observação** (mesmo padrão da observação sobre CIN/CPF mais
+  abaixo neste documento) — vale conferir de novo a página oficial da AMB daqui
+  algumas semanas/meses, quando a implementação avançar.
+  Fontes: [AMB lança nova edição da CBHPM](https://amb.org.br/amb-lanca-nova-edicao-da-cbhpm/), [Nova edição da CBHPM é lançada no CBMG 2026 — APM](https://www.apm.org.br/nova-edicao-da-cbhpm-e-lancada-no-cbmg-2026-inclusao-da-cirurgia-robotica-e-um-dos-destaques/), [CBHPM — AMB (página oficial, ainda lista 2022)](https://amb.org.br/cbhpm/)
+- ~~Passada de acessibilidade~~ — **investigada em 20/08/2026, escopo baixo
+  confirmado, agendada pra 28/08/2026** — ver "Calendário planejado" mais abaixo
+  pro resultado completo da investigação (20 áreas sem `aria-live`, 4 inputs sem
+  label, resto já ok).
 - **[Média]** Os itens que já estavam na "Transparência de dados" original mas não
-  entraram no escopo desta semana continuam válidos como ideia menor: por
-  exemplo, expor a data de "última revisão" do dicionário de glosas
-  diretamente na aba onde ele é usado (Validador de XML TISS), não só na
-  aba Fontes. Esforço baixo, valor pontual.
+  entraram no escopo desta semana continuam válidos como ideia menor — expor a data
+  de "última revisão" do dicionário de glosas diretamente na aba onde ele é usado
+  (Validador de XML TISS), não só na aba Fontes. Esforço baixo, valor pontual —
+  **agendado pra 28/08/2026**, ver "Calendário planejado" mais abaixo.
 
-Sem item de peso maior definido — para decidir com o usuário na sexta.
+Sem item de peso maior definido além do que já está no "Calendário planejado" logo
+abaixo.
+
+### Itens de Alta prioridade implementados em 20/08/2026 (pra liberação de 21/08)
+
+Antecipado pelo usuário (20/08/2026) — os itens [Alta] acima foram implementados nesta
+sessão, testados localmente com Playwright, e sobem pro Git amanhã (21/08) depois de
+um dia de teste no servidor local, seguindo a decisão de sempre ter algo testado antes
+de liberar (ver "Cadência de release" acima).
+
+- ~~Tópicos em lista no FAQ~~ — **✅ implementado**: levantamento feito em todas as 17
+  subabas do FAQ; reformatadas ~13 respostas que misturavam 2+ termos em prosa corrida
+  (tarjas, notificações de receita, BPA/AIH/APAC, CBHPM/TUSS/SIGTAP, acreditações,
+  liquidação/direção fiscal, tipos de auditoria, pacote fechado/conta aberta — o
+  exemplo original —, tipos de diária, hospital-dia/paciente-dia, genérico/similar/
+  referência/biológico, institutos de previdência) pro formato de lista com marcador,
+  termo em negrito. Nova classe `.faq-lista` no CSS.
+- ~~Agrupar validadores num menu "Validadores"~~ — **✅ implementado**: nova aba de topo
+  "Validadores" (reduz de 8 pra 7 abas visíveis) com "Validador de XML TISS" e
+  "Validador SUS" como subabas de primeiro nível; XML/TISS ganhou subabas internas
+  "XML"/"DAC" (item seguinte), e SUS manteve BPA/AIH/APAC intactos — primeira
+  aba-de-abas com 2 níveis de aninhamento no portal, como o roadmap antecipava.
+  **Achado técnico não previsto no roadmap original**: o mecanismo de subaba
+  (`.subtab-btn`/`.subtab-panel`) era global (`document.querySelectorAll` sem escopo)
+  — funcionava porque só existia um grupo de subabas na página (BPA/AIH/APAC). Com 3
+  grupos simultâneos (Validadores → XML-TISS-vs-SUS, XML-TISS → XML-vs-DAC, SUS →
+  BPA/AIH/APAC), o clique num grupo escondia os painéis dos outros grupos por engano.
+  Corrigido com um atributo `data-subtab-group` em botões e painéis, escopando a
+  consulta no clique — mecanismo genérico, funciona pra qualquer profundidade futura de
+  aninhamento. Todos os ~12 links de FAQ que apontavam pras abas antigas
+  (`data-goto-tab="validador"`/`"validador-sus"`) foram atualizados; um novo atributo
+  `data-goto-subtab2` foi adicionado ao mecanismo de deep-link do FAQ pra alcançar o
+  segundo nível (ex: FAQ do CNES → Validadores → SUS → AIH, direto).
+- ~~Padronizar "Validador XML TISS" com sub-abas~~ — **✅ implementado** junto com o item
+  acima: os dois cards que ficavam empilhados (Validador de XML TISS + Leitor de DAC)
+  agora são as subabas "XML" e "DAC" dentro de "Validador de XML TISS".
+- ~~FAQ: OCI~~ — **✅ implementado**: item novo na subaba SUS/SIGTAP do FAQ, com o
+  conteúdo já pesquisado (regras de APAC, procedimentos secundários, financiamento
+  FAEC), em formato de lista.
+- ~~FAQ: classificação Portaria 344/98 (A1-F2)~~ — **✅ implementado**: item novo na
+  subaba Medicamentos do FAQ, consolidando A1-F2 completo (antes só A1-C5 apareciam
+  espalhados em 2 itens diferentes); os itens de tarja e notificação de receita citam
+  cruzado pra esse item novo.
+- ~~CIHA — texto de FAQ~~ — **✅ implementado**: item novo na subaba SUS/SIGTAP do FAQ,
+  com o resumo do que é, quem precisa enviar e o layout confirmado. O **validador de
+  arquivo CIHA em si continua fora de escopo** (Alto esforço, sem data), conforme
+  confirmado com o usuário — só entrou pro "Em breve" do rodapé como item sendo
+  avaliado, sem compromisso.
+- **Achado extra, fora da lista original**: a Consulta de Medicamentos (CMED) foi
+  conferida contra a classificação 344/98 (candidato [Baixa] registrado acima) — nada
+  mudou aí ainda, é só a decisão de manter fora do escopo desta sexta confirmada.
+
+### Item extra do dia, fora da lista original: DMED (pedido do usuário, 20/08/2026)
+
+- ~~FAQ: o que é a DMED, quem entrega, prazo e penalidade~~ — **✅ implementado**: item
+  novo na subaba Particular do FAQ, encaixado ao lado do item de nota fiscal/Receita
+  Saúde/NFS-e que já existia. Testado com Playwright, sem erro de console.
+- **[Média] Validador de arquivo DMED — pesquisa de viabilidade feita, aguardando
+  arquivo de exemplo do usuário pra prosseguir**: a Receita Federal publica um leiaute
+  **oficial e documentado** do arquivo de importação da DMED (Anexo Único, atualizado
+  anualmente por Ato Declaratório Executivo Cofis — o vigente pra DMED 2026 é o ADE
+  Cofis nº 27, de 15/12/2025) — não é um formato proprietário/criptografado do
+  Programa Gerador (PGD): é um texto plano com campos delimitados por `|` (pipe), um
+  registro por linha, pensado justamente pra sistemas de terceiros (contábil/ERP)
+  gerarem e o declarante importar no PGD antes de transmitir. Estrutura confirmada
+  (lida da versão do Anexo Único referente a 2012-2018 — a estrutura de registros é
+  estável há anos, mas o **leiaute vigente de 2026 precisa ser conferido** antes de
+  codificar, porque coisas como o código "identificador de estrutura do leiaute"
+  mudam a cada ano):
+  - Registros, em ordem hierárquica: `Dmed` (cabeçalho, 1º registro) → `RESPO`
+    (responsável pelo preenchimento) → `DECPJ` (declarante PJ, com "Tipo do
+    declarante": 1-prestador, 2-operadora, 3-ambos) → ramo de operadora (`OPPAS` →
+    `TOP` → `RTOP`/`DTOP` → `RDTOP`) e/ou ramo de prestador (`PSS` → `RPPSS` →
+    `BRPPSS`) → `FIMDmed` (rodapé, último registro).
+  - Regras de validação já documentadas oficialmente e prontas pra virar checagem:
+    ordem exata dos registros, cardinalidade (alguns só uma vez, outros repetem),
+    ordenação crescente por CPF/CNPJ dentro de cada bloco, obrigatoriedade
+    condicional em cascata (ex: "valor pago no ano com o titular" só é obrigatório se
+    não existirem os registros de detalhe RTOP/DTOP associados) — o mesmo padrão de
+    cascata que o Validador CIHA (candidato registrado acima) já usa.
+  - **Sinergia direta com dado que o portal já tem**: os campos CNES e Registro ANS
+    dentro do DECPJ/OPPAS já são exatamente os que a aba CNES e a aba Operadoras ANS
+    validam hoje — dá pra cruzar automaticamente, sem base de dados nova.
+  - **Layout confirmado por arquivo real (20/08/2026)**: o PDF do ADE Cofis nº
+    27/2025 (o vigente) não foi encontrado em texto extraível — nem direto em
+    normas.receita.fazenda.gov.br/normasinternet2 (site client-side, sem conteúdo
+    fora do navegador), nem no LegisWeb (só a publicação em imagem escaneada do
+    Diário Oficial, sem o anexo técnico). Em vez de insistir no PDF, o usuário gerou
+    um arquivo de exemplo real (`DMED_1_Unidade de Faturamento.txt`, git-ignored —
+    contém CPF, nome completo e valores reais, mesmo tratamento dos arquivos CIHA)
+    pelo PGD do sistema dele — e ele bate **campo a campo** com a estrutura já
+    documentada aqui, inclusive o código "identificador de estrutura do leiaute"
+    (`S5830B`) idêntico ao de uma versão anterior do leiaute, confirmando que a
+    estrutura não mudou. Mesmo padrão de sucesso do CIHA: arquivo real de produção
+    valeu mais que qualquer PDF pra confirmar layout.
+  - **Status (20/08/2026)**: implementação **não entra em 21/08** — agendada pra
+    **04/09/2026 (1ª sexta de setembro)**, junto com o Validador CIHA (candidato
+    acima) — ver "Calendário planejado" abaixo pro raciocínio completo. Layout
+    confirmado e arquivo de teste real disponível — só falta a data chegar.
+  Fontes: [Leiaute do Arquivo da Dmed — Anexo Único (normas.receita.fazenda.gov.br)](http://normas.receita.fazenda.gov.br/sijut2consulta/anexoOutros.action?idArquivoBinario=46204), [Receita Federal aprova novo leiaute do programa da DMED 2026](https://www.contabilex.com.br/noticias/tecnicas/2025/12/17/receita-federal-aprova-novo-leiaute-do-programa-da-dmed-2026.html)
+
+Testado com Playwright antes de considerar pronto: navegação entre os 2 níveis de
+subaba preserva estado (ex: volta pra XML/TISS depois de estar na SUS e o DAC
+continua selecionado, sem reaparecer o BPA por engano), os ~12 deep-links do FAQ
+levam pro lugar certo (inclusive os de 2 níveis), os 3 itens de FAQ novos aparecem e
+renderizam a lista corretamente, sem overflow horizontal em mobile (390px) e sem
+nenhum erro de console.
+
+## Calendário planejado (definido em 20/08/2026)
+
+Regra nova, definida com o usuário ao organizar o calendário depois da primeira sexta
+cheia (21/08): dentro do mês, **toda sexta libera ajuste/melhoria de funcionalidade
+que já existe**; **feature nova só libera na 1ª sexta do mês**, mesmo que já esteja
+com escopo/layout confirmado e pronta pra codificar. É uma camada a mais em cima da
+cadência semanal (ver "Cadência de release" acima) — feature nova espera a virada do
+mês por definição, não por falta de prontidão.
+
+**21/08/2026 (sexta) — já fechado, ver "Itens de Alta prioridade implementados"
+acima**: menu Validadores, reformatação de listas do FAQ, FAQ de OCI/CIHA(texto)/
+Portaria 344-98, FAQ de DMED.
+
+**28/08/2026 (sexta) — ajustes/melhorias de funcionalidade existente**:
+- Sub-abas separando SUS de ANS/TISS em "Rejeição/Validação de arquivos" — **decisão
+  de design fechada em 20/08/2026**: reagrupar com cabeçalho de seção dentro da
+  própria subaba (SUS de um lado, ANS/TISS do outro), **sem criar sub-aba aninhada
+  nova** — critério do usuário foi "o que puder economizar espaço pra não poluir a
+  tela", e cabeçalho de seção não consome espaço horizontal de navegação extra como
+  uma nova linha de sub-abas consumiria.
+- Passada mobile completa (grade de edições, cards SUS/SIGTAP, tabelas do Validador
+  de XML TISS, gráfico comparativo abaixo de ~480px).
+- Data de "última revisão" do dicionário de glosas, exposta direto na aba do
+  Validador de XML TISS (não só na aba Fontes).
+- Passada de acessibilidade — **investigação feita em 20/08/2026, escopo baixo
+  confirmado**: checagem automatizada (Playwright) encontrou 20 áreas de resultado
+  sem `aria-live` (`#...-resultado-area`/`#...-resultado`, atualizam via fetch sem
+  avisar leitor de tela) e 4 inputs sem label associado (os campos de busca/relação
+  da aba Múltiplos procedimentos, que usam só `placeholder`) — ambos mecânicos e
+  baratos de corrigir. Navegação por teclado nas abas de topo já funciona nativamente
+  (são `<button>`) e nenhuma imagem está sem `alt`. Contraste de cor **não foi
+  conferido** nessa passada rápida (precisaria de uma ferramenta dedicada tipo
+  axe-core) — se entrar no escopo de 28/08, avaliar contraste como item à parte.
+- ~~Classificação 344/98 na CMED~~ — **investigado em 20/08/2026, resultado: não
+  cabe em 28/08**. Conferido diretamente o site oficial da ANVISA
+  (gov.br/anvisa/.../controlados/lista-substancias): a página **não tem** a lista de
+  substâncias em formato estruturado — só um changelog de RDCs/Portarias que
+  alteraram a norma ao longo do tempo, cada uma linkando pro PDF próprio, sem tabela
+  consolidada em HTML/CSV/JSON. Pra ter essa classificação no portal seria preciso
+  compilar manualmente a partir de múltiplos PDFs (trabalho de coleta de dados, não
+  só codificação) e manter atualizado a cada RDC nova — fica sem data, precisa virar
+  uma sessão de pesquisa/estruturação de dados própria antes de entrar em qualquer
+  sexta.
+
+**04/09/2026 (1ª sexta de setembro) — features novas**:
+- Validador de arquivo CIHA (layout confirmado, arquivo real de teste disponível).
+- Validador de arquivo DMED (layout confirmado por arquivo real, ver acima).
+- Tabela de Compatibilidade entre Procedimentos SIGTAP (nova tabela no banco,
+  importador e endpoint — feature de verdade, não é extensão do que já existe).
+
+  ⚠️ **Sinal de atenção, não decisão fechada**: são 3 features de porte real no
+  mesmo dia (CIHA é esforço Alto, DMED é um validador completo novo, Compatibilidade
+  exige nova tabela+importador+endpoint) — pode não caber tudo com o mesmo padrão de
+  qualidade/teste que as liberações anteriores tiveram. Seguindo o princípio já
+  estabelecido ("libera o que estiver pronto e testado, não força item sem
+  verificação pra caber numa cota"), o esperado é que pelo menos uma dessas três
+  escorregue pra 02/10/2026 (a sexta seguinte do padrão mensal) se não estiver
+  madura a tempo — decisão de qual, se for o caso, fica pra mais perto da data.
+
+**02/10/2026 (1ª sexta de outubro) — Fase 10: Farmácia (segurança do paciente e do
+trabalhador)**: **decisão do usuário em 20/08/2026** — data fechada pra essa entrega
+específica (não é só uma sinalização de overflow como o resto de setembro). Entre
+hoje e 02/10, o trabalho é **levantar e guardar os documentos-fonte** (as 3 listas
+MPP/MAV do ISMP Brasil, o Protocolo de Segurança na Prescrição/Uso/Administração de
+Medicamentos, o texto da NR-32) pra depois estruturar o conteúdo — mesmo método que
+funcionou bem pro CIHA (arquivo/documento fonte primeiro, estrutura de dado depois).
+Se sobrar algum item de 04/09 sem terminar a tempo, entra também nessa data.
+
+## Fase 10 — Nova direção estratégica: Farmácia (segurança do paciente e do
+trabalhador) — pesquisa feita em 20/08/2026, sem data de implementação ainda
+
+**Contexto**: o usuário levantou (20/08/2026) se vale o esforço, num horizonte não
+tão longo, de o portal deixar de ser só suporte a faturamento (CBHPM/SUS/TISS/glosas/
+validações) e passar a apoiar outros profissionais — começando por farmácia clínica,
+depois enfermagem, um módulo de cada vez pra ficar robusto. Concordamos numa linha
+segura: **o portal só reproduz conteúdo de referência oficial (lista/protocolo tal
+como publicado), sem gerar interpretação ou orientação clínica própria** — o mesmo
+princípio que já rege CID-10/SIGTAP/CBHPM/OPME hoje, aplicado a um domínio novo.
+Confirmado com o usuário que essa é a abordagem (não interpretação/geração própria),
+o que reduz bastante o risco de responsabilidade — mas o domínio ainda é
+categoricamente diferente do resto do portal: errar em dado administrativo custa
+glosa (prejuízo financeiro); errar em segurança do paciente pode causar dano real.
+
+**Decisão de escopo (20/08/2026)**: diferente dos outros validadores do portal, essa
+frente **não vai ter upload/validação de arquivo** — o usuário confirmou que é conteúdo
+de FAQ, e opcionalmente uma **consulta** a algum portal oficial gratuito e confiável
+(ex: busca por NR, busca por norma da ANVISA), se eu achar um candidato bom o
+suficiente durante a pesquisa. Achei um: ver "Candidato de consulta" no fim desta
+seção.
+
+### Duas frentes confirmadas (complementares, não concorrentes)
+
+**1. Segurança do paciente — Medicamentos de Alta Vigilância (MAV) / Potencialmente
+Perigosos (MPP)**
+- **Base legal confirmada e refinada**: RDC nº 36/2013 (ANVISA, institui ações de
+  segurança do paciente em serviços de saúde) + Portaria MS nº 529/2013 (institui o
+  PNSP) dão o arcabouço geral; o ato específico que **aprova o próprio Protocolo de
+  Segurança na Prescrição, Uso e Administração de Medicamentos** é a **Portaria MS nº
+  2.095, de 24/09/2013 (Anexo 03)** — confirmado direto nas referências bibliográficas
+  dos dois boletins do ISMP Brasil lidos hoje (não é achado de terceiro, é a fonte
+  primária citando a norma). É esse protocolo que detalha a exigência de **dupla
+  checagem independente e simultânea** pra MAV.
+- **Listas oficiais — conteúdo já extraído por completo em 20/08/2026** (não é mais
+  só "fonte mapeada", é conteúdo em mãos): baixados e lidos na íntegra os 2 boletins
+  do ISMP Brasil (pasta `fontes-farmacia/`, não versionada — mesmo tratamento dos
+  arquivos CIHA/DMED):
+  - `ISMP_MPP_Hospitalar_2019.pdf` (9 págs.) — lista completa de uso hospitalar
+    (classes terapêuticas + medicamentos específicos) **e** as 10 recomendações de
+    segurança pra prevenção de erros (barreiras, protocolos, redução de alternativas
+    farmacêuticas, centralização, dupla checagem, alertas automáticos, acesso à
+    informação, minimizar consequência, monitoramento de indicadores).
+  - `ISMP_MPP_Ambulatorial_ILPI_2022.pdf` (9 págs.) — as duas listas 2022 (uso
+    ambulatorial **e** instituições de longa permanência) completas, mais o
+    detalhamento das mudanças em relação à versão anterior e o mesmo quadro de 10
+    recomendações adaptado a esses contextos.
+  - `Portaria_MS_2095_2013.pdf` também baixado (o Anexo 03/protocolo em si, fonte
+    primária da dupla checagem) — ainda não lido linha a linha, próximo passo.
+
+  **Listas completas, transcritas na íntegra em 20/08/2026 (não depende do PDF
+  local sobreviver — o conteúdo de verdade está aqui):**
+
+  ***Lista MPP — Uso Hospitalar (2019):***
+  *Classes terapêuticas:* agonistas adrenérgicos endovenosos (ex.: epinefrina,
+  fenilefrina, norepinefrina) · água estéril para injeção/inalação/irrigação em
+  embalagens ≥100 mL · analgésicos opioides endovenosos, transdérmicos e orais
+  (incl. líquidos concentrados e liberação prolongada) · anestésicos gerais,
+  inalatórios e endovenosos (ex.: propofol, cetamina) · antagonistas adrenérgicos
+  endovenosos (ex.: propranolol, metoprolol) · antiarrítmicos endovenosos (ex.:
+  lidocaína, amiodarona) · antineoplásicos de uso oral e parenteral ·
+  antitrombóticos (anticoagulantes: varfarina, heparinas; anticoagulantes orais
+  diretos/inibidores do fator Xa: dabigatrana, rivaroxabana, apixabana, edoxabana,
+  fondaparinux; inibidores diretos da trombina: bivalirrudina; inibidores da
+  glicoproteína IIb/IIIa: abciximabe, tirofibana; trombolíticos: alteplase,
+  tenecteplase, estreptoquinase) · bloqueadores neuromusculares (ex.: suxametônio,
+  rocurônio, pancurônio, vecurônio) · cloreto de sódio hipertônico injetável
+  >0,9% · glicose hipertônica ≥20% · inotrópicos endovenosos (ex.: milrinona,
+  deslanosídeo, levosimendana) · insulina subcutânea e endovenosa (todas
+  formas/vias) · medicamentos por via epidural ou intratecal · medicamentos
+  lipossomais e seus correspondentes convencionais (ex.: anfotericina B) ·
+  sedativos orais mínimo/moderado pra crianças (ex.: hidrato de cloral, midazolam,
+  cetamina parenteral) · sedativos endovenosos moderados (ex.: dexmedetomidina,
+  midazolam, lorazepam) · soluções cardioplégicas · soluções pra diálise
+  peritoneal/hemodiálise · soluções de nutrição parenteral · sulfonilureias orais
+  (ex.: clorpropamida, glimepirida, glibenclamida, glipizida).
+  *Medicamentos específicos:* cloreto de potássio concentrado injetável ·
+  epinefrina subcutânea · fosfato de potássio injetável · metotrexato oral (uso
+  não oncológico) · nitroprussiato de sódio injetável · ocitocina endovenosa ·
+  prometazina injetável · sulfato de magnésio injetável · vasopressina endovenosa
+  e intraóssea.
+
+  ***Lista MPP — Uso Ambulatorial (2022):***
+  *Classes terapêuticas:* analgésicos opioides endovenosos/transdérmicos/orais ·
+  antineoplásicos, exceto hormonais (oral/parenteral; terapia alvo/imunoterapia,
+  ex.: palbociclibe, imatinibe, nivolumabe) · antitrombóticos orais/parenterais
+  (varfarina, heparinas; anticoagulantes orais diretos: rivaroxabana, apixabana,
+  edoxabana; inibidores diretos da trombina: dabigatrana) · imunossupressores
+  orais/parenterais (ex.: azatioprina, ciclosporina, tacrolimo) · insulina
+  subcutânea/endovenosa · medicamentos contraindicados na gestação (ex.:
+  bosentana, isotretinoína, talidomida) · medicamentos pediátricos líquidos que
+  requerem medição · sedativos orais mínimo/moderado pra crianças (hidrato de
+  cloral, midazolam, cetamina) · sulfonilureias (ex.: glimepirida, glibenclamida).
+  *Medicamentos específicos:* ácido valpróico · carbamazepina · epinefrina
+  (intramuscular e subcutânea) · fenitoína · lamotrigina · metotrexato oral e
+  parenteral (uso não oncológico).
+
+  ***Lista MPP — Instituições de Longa Permanência (2022):***
+  *Classes terapêuticas:* analgésicos opioides endovenosos/transdérmicos/orais ·
+  análogos de GABA pra dor neuropática (ex.: gabapentina, pregabalina) ·
+  antineoplásicos, exceto hormonais (oral/parenteral; terapia alvo/imunoterapia,
+  ex.: palbociclibe, imatinibe, dasatinibe) · antiparkinsonianos (incl.
+  carbidopa, levodopa e combinações) · antitrombóticos (varfarina, heparinas;
+  anticoagulantes orais diretos: rivaroxabana, apixaban, edoxaban; inibidores
+  diretos da trombina: dabigatrana) · imunossupressores (ex.: azatioprina,
+  ciclosporina, ciclofosfamida, tacrolimo, adalimumabe) · insulina
+  subcutânea/endovenosa · soluções de nutrição parenteral · sulfonilureias (ex.:
+  glimepirida, glibenclamida).
+  *Medicamentos específicos:* digoxina · epinefrina (intramuscular e subcutânea) ·
+  fenitoína · metotrexato oral e parenteral (uso não oncológico) · sacubitril +
+  valsartana.
+
+  As 3 listas seguem a mesma lógica de organização: **classe terapêutica**
+  (todo integrante da classe é MPP) vs. **medicamento específico** (só aquele
+  item é MPP, mesmo sem o resto da classe ser). Fonte primária: ISMP Brasil,
+  adaptação da lista do ISMP EUA (ISMP MERP + revisão de literatura + consulta a
+  especialistas), financiado pela Anvisa via OPAS.
+
+  **10 recomendações de segurança (Quadro 2 do boletim 2019, adaptado no de
+  2022) — resumo aplicável a qualquer uma das 3 listas:**
+  1. Implantar barreiras que reduzam/dificultem/eliminem erro (seringas orais não
+     adaptáveis a sistema EV; etiqueta de alerta em KCl concentrado e alcaloides
+     da vinca).
+  2. Adotar protocolos claros e detalhados (múltiplas barreiras, padronização de
+     dose, protocolos pra antineoplásico/cirurgia/UTI/anticoagulação).
+  3. Revisar continuamente a padronização (evitar erro por nome/rótulo/embalagem
+     parecidos).
+  4. Reduzir o número de apresentações do mesmo medicamento disponíveis.
+  5. Centralizar o preparo de misturas EV com MPP na farmácia (reduz interrupção,
+     erro de cálculo, falta de padronização).
+  6. Dupla checagem independente nos pontos mais vulneráveis (cálculo de dose
+     pediátrica/idoso, bomba de infusão, quimioterápico).
+  7. Alertas automáticos em sistema informatizado (prescrição eletrônica com
+     suporte clínico, alerta de dose/diluição/alergia).
+  8. Melhorar acesso à informação (treinamento, lista de MPP divulgada, dose
+     máxima, orientação ao paciente/família/cuidador).
+  9. Protocolos pra minimizar consequência do erro (comunicação de evento adverso
+     — disclosure inicial e final).
+  10. Monitorar desempenho via indicadores do PNSP + indicadores complementares.
+- **Bulário Eletrônico da ANVISA (bula/interação) — descartado por ora**: existe um
+  portal de API (`api.anvisa.gov.br`) mas sem documentação pública aberta, e o
+  Bulário (`consultas.anvisa.gov.br/#/bulario`) está **ativamente protegido por
+  Cloudflare contra automação** (confirmado tecnicamente em 20/08/2026, inspecionando
+  as chamadas de rede reais do site com Playwright — a página só devolveu chamadas de
+  challenge anti-bot, nenhum endpoint de dado). É por isso que só existem serviços
+  pagos de terceiro (Infosimples e similares) oferecendo essa consulta. **Diluição,
+  interação medicamentosa e conteúdo de bula ficam fora de escopo** — não tem fonte
+  gratuita/estruturada acessível, e forçar contornar a proteção não é um caminho
+  aceitável nem alinhado com a decisão de escopo (sem validação/consulta complexa,
+  só FAQ + índice simples).
+
+**2. Segurança do trabalhador — NR-32** (ponto levantado pelo próprio usuário, ao
+notar que "nada impede que a gente fale da segurança dos profissionais também")
+- **Base legal**: Norma Regulamentadora nº 32 (NR-32), Ministério do Trabalho e
+  Emprego — diferente do PNSP/ANVISA (que protege o **paciente**), a NR-32 protege
+  **quem manuseia** o medicamento/material biológico no serviço de saúde.
+- **Conteúdo confirmado**: risco biológico/químico/físico; Plano de Prevenção de
+  Riscos de Acidentes com Materiais Perfurocortantes (obrigatório); imunização ativa
+  gratuita obrigatória (tétano, difteria, hepatite B + o que o PCMSO da instituição
+  exigir); capacitação em mecânica corporal na movimentação de pacientes/materiais;
+  diretrizes de higiene/limpeza/descontaminação pra controle de infecção.
+- `NR-32_atualizada_2022.pdf` baixado (texto integral oficial, gov.br/trabalho-e-
+  emprego) — sem barreira técnica (diferente do Bulário), ainda não lido linha a
+  linha.
+
+### Candidato de consulta: índice de Normas Regulamentadoras (NR-1 a NR-38)
+
+Pedido pelo usuário (20/08/2026): já que não vai ter validação de arquivo nessa
+frente, sugerir uma consulta a portal oficial gratuito se eu achar um bom candidato
+na pesquisa. Achei: o Ministério do Trabalho mantém, em
+gov.br/trabalho-e-emprego, a lista oficial das **38 Normas Regulamentadoras**
+(NR-1 a NR-38, com a NR-2 e a NR-27 revogadas — 36 ativas), cada uma com link
+próprio, página atualizada em 08/10/2024, **sem proteção anti-bot** (diferente do
+Bulário). É pequeno, estável e público — dá pra montar um índice simples (número +
+título + link oficial) no mesmo espírito das Tabelas TISS/CID-10 que o portal já
+tem, sem precisar de scraping pesado nem risco de quebrar. Pra esse portal, as mais
+relevantes seriam as ligadas a serviço de saúde: **NR-32** (segurança em serviços de
+saúde), **NR-6** (EPI), **NR-7** (PCMSO), **NR-9** (riscos ambientais/PGR), **NR-15**
+(insalubridade), **NR-17** (ergonomia) — mas o índice completo das 36 pode entrar
+igual, é barato de manter. Não pesquisei ainda um equivalente pra normas da ANVISA
+(a busca de legislação da ANVISA existe em gov.br/anvisa/.../legislacao, mas não
+testei se tem a mesma estabilidade/ausência de proteção que o portal do MTE tem —
+próximo passo de pesquisa, não confiar sem checar depois do que aconteceu com o
+Bulário).
+
+### Status: documentos-fonte levantados, aguardando 02/10/2026
+
+**Decisão do usuário em 20/08/2026**: essa frente entra especificamente em
+**02/10/2026** (1ª sexta de outubro) — não é mais só sinalização de overflow, é data
+fechada. Entre hoje e lá, o trabalho é justamente esse: levantar e guardar os
+documentos-fonte antes de estruturar o conteúdo — **parte considerável já feita**:
+4 documentos baixados (`fontes-farmacia/`), 2 deles já lidos e com conteúdo
+integralmente extraído (as 3 listas MPP completas + as recomendações de segurança).
+Falta: ler a Portaria 2.095/2013 e a NR-32 linha a linha, e confirmar se vale
+pesquisar a busca de legislação da ANVISA como consulta adicional. Enfermagem (fase
+seguinte, mencionada pelo usuário) fica só registrada como direção declarada — sem
+pesquisa ainda, só entra depois da farmácia estar robusta.
+
+Fontes: [RDC nº 36/2013 — ANVISA](https://www.gov.br/anvisa/pt-br/centraisdeconteudo/publicacoes/servicosdesaude/publicacoes/protocolo-de-seguranca-na-prescricao-uso-e-administracao-de-medicamentos), [Protocolo de Segurança na Prescrição, Uso e Administração de Medicamentos — Proqualis/Fiocruz](https://proqualis.fiocruz.br/protocolo/protocolo-de-seguranca-na-prescricao-uso-e-administracao-de-medicamentos), [Medicamentos Potencialmente Perigosos — ISMP Brasil](https://ismp-brasil.org/boletins/medicamentos-potencialmente-perigosos/), [Norma Regulamentadora nº 32 — Ministério do Trabalho e Emprego](https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-32-nr-32)
+
+## Fase 11 — Nova direção estratégica: Enfermagem — pesquisa feita em 20/08/2026,
+entrega prevista 06/11/2026
+
+**Contexto**: sequência natural da Fase 10 (Farmácia) — o usuário pediu (20/08/2026)
+pra já pesquisar tudo que for válido pro módulo de Enfermagem: cuidados, legislação,
+documentos, rotinas, e principalmente **o que faz parte das atribuições de cada
+categoria de enfermagem e o que não faz** (a linha que mais gera dúvida/risco
+jurídico na prática). Mesmo escopo e mesma régua de segurança da Farmácia: **sem
+validação de arquivo, conteúdo de referência oficial reproduzido, sem interpretação
+clínica própria**. Data pedida: 06/11/2026 — confirmado que é a 1ª sexta-feira de
+novembro, batendo certinho com a regra "feature nova só na 1ª sexta do mês" (sem
+conflito de calendário, diferente do que aconteceu com CIHA/DMED).
+
+### 1. Atribuições — o que é de cada categoria (o pedido central do usuário)
+
+**Base legal, já baixada e com os artigos-chave extraídos literalmente** (não é
+resumo de terceiro — é o texto exato da lei/decreto, `fontes-enfermagem/`, git-
+ignored por serem documentos grandes de referência):
+- **Lei nº 7.498/1986** (`Lei_7498_86.html`) — arts. 11 a 15 e 15-A.
+- **Decreto nº 94.406/1987** (`Decreto_94406_87.html`, regulamenta a Lei 7.498) —
+  arts. 8 a 15, com o detalhamento mais granular.
+
+Estrutura confirmada (a mesma lógica em ambos, o Decreto é mais detalhado):
+- **Enfermeiro — privativo** (art. 8º/I do Decreto, art. 11/I da Lei): direção do
+  órgão/serviço de enfermagem; planejamento, organização, coordenação, execução e
+  avaliação da assistência de enfermagem; consultoria, auditoria e parecer em
+  matéria de enfermagem; **consulta de enfermagem**; **prescrição da assistência de
+  enfermagem**; cuidados diretos a pacientes graves com risco de vida; cuidados de
+  maior complexidade técnica.
+- **Enfermeiro — como integrante da equipe de saúde** (art. 8º/II, art. 11/II): aqui
+  mora um limite importante — **prescrição de medicamentos** só é atribuição do
+  enfermeiro quando **previamente estabelecidos em programas de saúde pública e em
+  rotina aprovada pela instituição** (não é prescrição médica geral); participação
+  em vigilância epidemiológica, controle de infecção hospitalar, assistência
+  obstétrica (parto sem distocia), educação em saúde.
+- **Enfermeira Obstétrica/Obstetriz** (art. 9º do Decreto): assistência ao parto
+  normal, identificação de distocias, episiotomia/episiorrafia com anestesia local.
+- **Técnico de Enfermagem** (art. 10 do Decreto, art. 12 da Lei): nível médio,
+  **assiste o Enfermeiro** (planejamento, cuidados a pacientes graves, vigilância
+  epidemiológica, controle de infecção) e **executa o que não é privativo do
+  Enfermeiro**.
+- **Auxiliar de Enfermagem** (art. 11 do Decreto, art. 13 da Lei) — a lista mais
+  detalhada e mais prática de todas: preparar paciente pra consulta/exame; observar
+  e descrever sinais e sintomas; **ministrar medicamentos por via oral e
+  parenteral**; controle hídrico; curativos; oxigenoterapia, nebulização,
+  enteroclisma; conservação e aplicação de vacinas; controle de comunicantes em
+  doenças transmissíveis; colher material pra exame laboratorial; cuidados pré/pós-
+  operatórios; **circular em sala de cirurgia e, se necessário, instrumentar**
+  (conecta direto com o Protocolo de Cirurgia Segura, ver seção 3); desinfecção e
+  esterilização; higiene/conforto/segurança do paciente; participar de
+  procedimentos pós-morte.
+- **Parteiro** (art. 12 do Decreto): cuidados à gestante/parturiente, parto normal
+  (inclusive domiciliar), puérpera e recém-nascido — sob supervisão de Enfermeiro
+  Obstetra quando em instituição de saúde.
+- **Regra de supervisão** (art. 13 do Decreto, art. 15 da Lei): as atividades de
+  Técnico e Auxiliar **só podem ser exercidas sob supervisão, orientação e direção
+  de Enfermeiro** — é a linha jurídica mais citada em disputa de atribuição.
+- **Registro obrigatório** (art. 15 do Decreto): inscrição no Conselho Regional de
+  Enfermagem (COREN) da região é condição essencial pra provimento de cargo/
+  contratação, em qualquer grau.
+- **Achado extra, fora do pedido original mas relevante**: art. 15-A da Lei
+  (incluído pela Lei nº 14.434/2022) fixa o **piso salarial nacional do Enfermeiro
+  CLT em R$ 4.750,00**, com Técnico em 70% e Auxiliar em 50% desse valor — dado
+  prático que pode virar FAQ próprio (fora do escopo de "atribuições", mas do mesmo
+  domínio legal).
+
+**Texto literal do Decreto 94.406/87, transcrito em 20/08/2026 (fonte primária,
+não depende do arquivo local sobreviver):**
+
+> **Art. 8º** Ao Enfermeiro incumbe: **I - privativamente**: a) direção do órgão de
+> enfermagem integrante da estrutura básica da instituição de saúde, pública ou
+> privada, e chefia de serviço e de unidade de enfermagem; b) organização e
+> direção dos serviços de enfermagem e de suas atividades técnicas e auxiliares
+> nas empresas prestadoras desses serviços; c) planejamento, organização,
+> coordenação, execução e avaliação dos serviços da assistência de enfermagem;
+> d) consultoria, auditoria e emissão de parecer sobre matéria de enfermagem;
+> e) consulta de enfermagem; f) prescrição da assistência de enfermagem; g)
+> cuidados diretos de enfermagem a pacientes graves com risco de vida; h)
+> cuidados de enfermagem de maior complexidade técnica e que exijam conhecimentos
+> científicos adequados e capacidade de tomar decisões imediatas. **II - como
+> integrante de equipe de saúde**: a) participação no planejamento, execução e
+> avaliação da programação de saúde; b) participação na elaboração, execução e
+> avaliação dos planos assistenciais de saúde; c) **prescrição de medicamentos
+> previamente estabelecidos em programas de saúde pública e em rotina aprovada
+> pela instituição de saúde**; d) participação em projetos de construção ou
+> reforma de unidades de internação; e) prevenção e controle sistemático da
+> infecção hospitalar, inclusive como membro das respectivas comissões; f)
+> participação na elaboração de medidas de prevenção e controle sistemático de
+> danos que possam ser causados aos pacientes durante a assistência de
+> enfermagem; g) participação na prevenção e controle das doenças transmissíveis
+> em geral e nos programas de vigilância epidemiológica; h) prestação de
+> assistência de enfermagem à gestante, parturiente, puérpera e ao recém-nascido;
+> i) participação nos programas e nas atividades de assistência integral à saúde
+> individual e de grupos específicos, particularmente daqueles prioritários e de
+> alto risco; j) acompanhamento da evolução e do trabalho de parto; l) execução e
+> assistência obstétrica em situação de emergência e execução do parto sem
+> distocia; m) participação em programas e atividades de educação sanitária; n)
+> participação nos programas de treinamento e aprimoramento de pessoal de saúde;
+> o) participação nos programas de higiene e segurança do trabalho e de
+> prevenção de acidentes e de doenças profissionais e do trabalho; p)
+> participação na elaboração e na operacionalização do sistema de referência e
+> contra-referência do paciente; q) participação no desenvolvimento de
+> tecnologia apropriada à assistência de saúde; r) participação em bancas
+> examinadoras em matérias específicas de enfermagem.
+>
+> **Art. 9º** Às profissionais titulares de diploma ou certificados de Obstetriz
+> ou de Enfermeira Obstétrica, além das atividades de que trata o artigo
+> precedente, incumbe: I - prestação de assistência à parturiente e ao parto
+> normal; II - identificação das distocias obstétricas e tomada de providência
+> até a chegada do médico; III - realização de episiotomia e episiorrafia, com
+> aplicação de anestesia local, quando necessária.
+>
+> **Art. 10.** O Técnico de Enfermagem exerce as atividades auxiliares, de nível
+> médio técnico, atribuídas à equipe de enfermagem, cabendo-lhe: **I - assistir
+> ao Enfermeiro**: a) no planejamento, programação, orientação e supervisão das
+> atividades de assistência de enfermagem; b) na prestação de cuidados diretos de
+> enfermagem a pacientes em estado grave; c) na prevenção e controle das doenças
+> transmissíveis em geral em programas de vigilância epidemiológica; d) na
+> prevenção e no controle sistemático da infecção hospitalar; e) na prevenção e
+> controle sistemático de danos físicos que possam ser causados a pacientes
+> durante a assistência de saúde; f) na execução dos programas referidos nas
+> letras i e o do item II do art. 8º. **II** - executar atividades de assistência
+> de enfermagem, excetuadas as privativas do enfermeiro e as referidas no art. 9º.
+> **III** - integrar a equipe de saúde.
+>
+> **Art. 11.** O Auxiliar de Enfermagem executa as atividades auxiliares, de
+> nível médio, atribuídas à equipe de enfermagem, cabendo-lhe: **I** - preparar o
+> paciente para consultas, exames e tratamentos; **II** - observar, reconhecer e
+> descrever sinais e sintomas, ao nível de sua qualificação; **III** - executar
+> tratamentos especificamente prescritos, ou de rotina, além de outras atividades
+> de enfermagem, tais como: a) ministrar medicamentos por via oral e parenteral;
+> b) realizar controle hídrico; c) fazer curativos; d) aplicar oxigenoterapia,
+> nebulização, enteroclisma, enema e calor ou frio; e) executar tarefas
+> referentes à conservação e aplicação de vacinas; f) efetuar o controle de
+> pacientes e de comunicantes em doenças transmissíveis; g) realizar testes e
+> proceder à sua leitura, para subsídio de diagnóstico; h) colher material para
+> exames laboratoriais; i) prestar cuidados de enfermagem pré e pós-operatórios;
+> j) circular em sala de cirurgia e, se necessário, instrumentar; l) executar
+> atividades de desinfecção e esterilização. **IV** - prestar cuidados de higiene
+> e conforto ao paciente e zelar por sua segurança, inclusive: a) alimentá-lo ou
+> auxiliá-lo a alimentar-se; b) zelar pela limpeza e ordem do material, de
+> equipamentos e de dependências de unidades de saúde. **V** - integrar a equipe
+> de saúde. **VI** - participar de atividades de educação em saúde, inclusive:
+> a) orientar os pacientes na pós-consulta, quanto ao cumprimento das prescrições
+> de enfermagem e médicas; b) auxiliar o Enfermeiro e o Técnico de Enfermagem na
+> execução dos programas de educação para a saúde. **VII** - executar os
+> trabalhos de rotina vinculados à alta de pacientes. **VIII** - participar dos
+> procedimentos pós-morte.
+>
+> **Art. 12.** Ao Parteiro incumbe: I - prestar cuidados à gestante e à
+> parturiente; II - assistir ao parto normal, inclusive em domicílio; III -
+> cuidar da puérpera e do recém-nascido. *Parágrafo único.* As atividades de que
+> trata este artigo são exercidas sob supervisão de Enfermeiro Obstetra, quando
+> realizadas em instituições de saúde, e, sempre que possível, sob controle e
+> supervisão de unidade de saúde, quando realizadas em domicílio.
+>
+> **Art. 13.** As atividades relacionadas nos arts. 10 e 11 somente poderão ser
+> exercidas sob supervisão, orientação e direção de Enfermeiro.
+>
+> **Art. 14.** Incumbe a todo o pessoal de enfermagem: I - cumprir e fazer
+> cumprir o Código de Deontologia da Enfermagem; II - quando for o caso, anotar
+> no prontuário do paciente as atividades da assistência de enfermagem, para
+> fins estatísticos.
+>
+> **Art. 15.** Na administração pública direta e indireta [...] será exigida
+> como condição essencial para provimento de cargos e funções e contratação de
+> pessoal de enfermagem, de todos os graus, a prova de inscrição no Conselho
+> Regional de Enfermagem da respectiva região.
+
+**Da Lei nº 7.498/1986** (redação equivalente, mais o art. 15-A que só existe na
+Lei, incluído pela Lei nº 14.434/2022):
+
+> **Art. 15-A.** O piso salarial nacional dos Enfermeiros contratados sob o
+> regime da CLT [...] será de **R$ 4.750,00 (quatro mil setecentos e cinquenta
+> reais) mensais**. *Parágrafo único.* O piso salarial dos profissionais
+> celetistas [...] é fixado com base no piso estabelecido no caput [...], na
+> razão de: I - **70%** para o Técnico de Enfermagem; II - **50%** para o
+> Auxiliar de Enfermagem.
+
+### 2. Código de Ética dos Profissionais de Enfermagem (COFEN 564/2017)
+
+Baixado (`COFEN_Codigo_Etica_564_2017.pdf`), ainda não lido linha a linha — próximo
+passo antes de novembro. Confirmado por pesquisa: aplica-se a Enfermeiros, Técnicos,
+Auxiliares, Obstetrizes, Parteiras e Atendentes de Enfermagem; princípios centrais
+são dignidade, autonomia, sigilo, responsabilidade e justiça; revogou a Resolução
+COFEN 311/2007.
+
+### 3. Achado extra valioso: 4 dos 6 protocolos do PNSP já garantidos (3 já extraídos
+por completo)
+
+Ao baixar a Portaria MS 2.095/2013 pra confirmar a base legal da Farmácia (Fase 10),
+o arquivo baixado (`fontes-farmacia/Portaria_MS_2095_2013.pdf`) revelou ser uma
+**compilação com vários protocolos do PNSP**, não só o de medicamentos — os que
+vieram junto são **centrais pra Enfermagem**, então entram aqui. Fui atrás dos
+outros 3 do total de 6 na sequência (`fontes-enfermagem/`):
+
+- **Protocolo de Cirurgia Segura** — ✅ extraído por completo. Baseado na Lista de
+  Verificação de Cirurgia Segura da OMS, dividida em 3 fases (antes da indução
+  anestésica, antes da incisão/"Pausa Cirúrgica", antes de sair da sala) — passo a
+  passo completo de cada fase já extraído. O "condutor da lista de verificação" pode
+  ser médico **ou profissional de enfermagem**; a contagem final de compressas/
+  instrumentais e a identificação de amostra patológica são explicitamente
+  atribuição do **profissional de enfermagem/instrumentador**.
+- **Protocolo de Prevenção de Úlcera por Pressão (UPP)** — ✅ extraído por completo.
+  As 6 etapas essenciais (avaliação na admissão via Escala de Braden/Braden Q,
+  reavaliação diária, inspeção diária da pele, manejo de umidade, otimização
+  nutricional, minimizar pressão), classificação de risco (baixo/moderado/alto/muito
+  alto) com medidas por faixa, e o estadiamento oficial de UPP (estágio I a IV +
+  inclassificável + suspeita de lesão profunda). O texto confirma expressamente:
+  **"a avaliação e a prescrição de cuidados com a pele é uma atribuição do
+  enfermeiro"** — conecta direto com a seção 1 (Lei 7.498/86).
+- **Protocolo de Prevenção de Quedas** (`Protocolo_Prevencao_Quedas.pdf`, Anexo 01,
+  fonte oficial direta gov.br/anvisa) — ✅ baixado e extraído por completo. Fatores
+  de risco detalhados (demográfico, cognitivo, clínico, medicamentos — inclusive
+  lista de classes que aumentam risco de queda), classificação alto/baixo risco,
+  tabelas de medidas específicas por fator de risco pra adulto **e** pediátrico,
+  procedimentos operacionais e indicadores (índice de quedas por paciente-dia).
+- **Protocolo para Higiene das Mãos** (`Protocolo_Higiene_Maos.pdf`, 16 págs.) — ✅
+  baixado, ainda não lido linha a linha (próximo passo antes de novembro).
+- **Protocolo de Identificação do Paciente** — ⚠️ **não garantido ainda**: as duas
+  tentativas de baixar (biblioteca digital Anvisa, mirror www20) devolveram página
+  HTML em vez do PDF de verdade — precisa de mais uma tentativa numa próxima sessão
+  (a fonte existe e é confirmada, só a extração automática falhou desta vez).
+- **Protocolo de Medicamentos**: já coberto na Fase 10 (Farmácia), via citação
+  primária dos boletins ISMP Brasil — não precisa buscar de novo aqui.
+- **Achado de qualidade de fonte a resolver antes de publicar**: o boletim do ISMP
+  Brasil (Fase 10) cita "Anexo 03" como sendo o Protocolo de Medicamentos, mas o PDF
+  compilado (fonte diferente — Secretaria de Saúde do Paraná) numera "Anexo 03" como
+  Cirurgia Segura e "Anexo 02" como Úlcera por Pressão, enquanto o PDF oficial de
+  Quedas (baixado direto do gov.br/anvisa) se identifica como "Anexo 01". A
+  numeração pode ter mudado entre publicações/reimpressões do Anexo Único da
+  Portaria — **antes de publicar qualquer FAQ citando "Anexo NN", confirmar contra o
+  Diário Oficial original**, não confiar na numeração de um PDF de terceiro isolado
+  (mesma lição do CIHA).
+
+### 4. Segurança do trabalhador (NR-32) — já é compartilhada com a Fase 10
+
+Não é trabalho duplicado: a NR-32 já pesquisada e baixada na Fase 10 (Farmácia) vale
+igual pra Enfermagem — é a categoria profissional mais exposta a risco biológico/
+perfurocortante no dia a dia. Reaproveitar o mesmo conteúdo, sem pesquisa nova.
+
+### 5. Candidato de consulta
+
+Mesma ideia da Fase 10 (índice de Normas Regulamentadoras). Ainda não pesquisado se
+o site do COFEN tem uma busca de resoluções livre de proteção anti-bot (mesmo
+cuidado que o Bulário da ANVISA exigiu) — fica como próximo passo de pesquisa, não
+assumir que é livre sem checar.
+
+### O que fica de fora (por ora)
+
+Técnicas/procedimentos de enfermagem propriamente ditos (ex: como puncionar uma
+veia, como fazer um curativo passo a passo) **não** entram — isso é ensino técnico/
+protocolo clínico de execução, não referência regulatória, e foge do princípio
+"conteúdo oficial reproduzido, sem interpretação própria". O que o portal cobre é a
+**moldura legal e os protocolos oficiais de segurança do paciente** (que já trazem
+passo a passo detalhado quando aplicável, como Cirurgia Segura e UPP acima) — não um
+manual de técnica de enfermagem por conta própria.
 
 ## Observação (não é candidato ainda): Carteira de Identidade Nacional (CIN)
 
