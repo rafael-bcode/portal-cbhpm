@@ -1391,6 +1391,82 @@ o site do COFEN tem uma busca de resoluções livre de proteção anti-bot (mesm
 cuidado que o Bulário da ANVISA exigiu) — fica como próximo passo de pesquisa, não
 assumir que é livre sem checar.
 
+### 6. Achado extra, pedido do usuário: Protocolo de Sepse (ILAS)
+
+Pedido do usuário (20/08/2026): "se achar algo sobre protocolo de sepse também,
+pois é muito usado". Diferente dos 6 protocolos do PNSP (que são de origem
+Ministério da Saúde/Anvisa/Fiocruz), **não existe um PCDT único e obrigatório do
+Ministério da Saúde especificamente pra sepse** — a referência nacional de fato é o
+**Instituto Latino Americano de Sepse (ILAS)**, entidade sem fins lucrativos que
+desde 2004 mantém o "Programa de Melhoria de Qualidade em Sepse" em parceria com
+hospitais brasileiros, seguindo as diretrizes internacionais da *Surviving Sepsis
+Campaign* (SSC) adaptadas ao Brasil — o mesmo tipo de posição institucional que o
+ISMP Brasil ocupa pra medicamentos (não é o governo, mas é a referência técnica que
+o próprio setor e a literatura tratam como padrão nacional).
+
+- **Baixado**: `ILAS_Protocolo_Sepse_2018.pdf` (14 págs., revisado em agosto/2018 —
+  é a versão que hoje está linkada como "o" protocolo de tratamento no site oficial
+  ilas.org.br) e `ILAS_Guia_Terapia_Antimicrobiana_2024.pdf` (316 págs., 3ª edição,
+  guia complementar mais recente sobre antimicrobianos — baixado mas não lido, é
+  denso demais pra essa pesquisa inicial).
+- ⚠️ **Verificar antes de publicar**: o protocolo principal é de 2018 (a Surviving
+  Sepsis Campaign internacional teve revisão em 2021) — antes de virar FAQ,
+  confirmar no site do ILAS se não saiu uma versão mais nova do documento principal
+  (só achei o companion de 2024, não uma nova revisão do protocolo-base em si).
+
+**Conteúdo extraído por completo, em 20/08/2026:**
+- **Definições** (nomenclatura Sepsis-3, adotada pelo ILAS desde a revisão de 2018):
+  *infecção sem disfunção* (antiga "sepse") → *sepse* (antiga "sepse grave": infecção
+  + disfunção orgânica) → *choque séptico* (sepse com hipotensão refratária a
+  fluido, PAM ≤65 mmHg). SRIS (2+ de: temperatura, FC>90, FR>20/PaCO2<32, leucócitos
+  alterados) não define mais sepse, mas segue útil pra **triagem**.
+- **Disfunções orgânicas** que caracterizam sepse: hipotensão, oligúria/creatinina
+  elevada, relação PaO2/FiO2<300, plaquetas <100.000 (ou queda de 50%), lactato
+  acima do valor de referência, rebaixamento de consciência/agitação/delirium,
+  bilirrubina >2x o valor de referência.
+- **Triagem**: identificação da suspeita é **"usualmente pela enfermagem"** (texto
+  literal do protocolo) — confirma a centralidade da Enfermagem nessa frente, igual
+  os outros protocolos do PNSP já mapeados. qSOFA (rebaixamento de consciência + FR
+  ≥22 + PAS <100) não deve ser usado pra triagem (baixa sensibilidade), só pra
+  priorizar gravidade depois da triagem já feita por critério mais sensível.
+- **Pacote de 1 hora** (o núcleo prático do protocolo, o "bundle" mais citado):
+  1. Coletar exames de disfunção orgânica (gasometria, lactato arterial, hemograma,
+     creatinina, bilirrubina, coagulograma).
+  2. Lactato arterial dentro da 1ª hora, meta de resultado em 30 min.
+  3. Duas hemoculturas de sítios distintos em até 1h (+ outras culturas
+     pertinentes) **antes** do antimicrobiano — mas sem atrasar a antibioticoterapia
+     se a coleta não for possível a tempo.
+  4. Antimicrobiano de amplo espectro, EV, dentro da 1ª hora — dose máxima sem
+     ajuste renal/hepático inicial, infusão estendida de betalactâmicos (exceto
+     1ª dose em bolus).
+  5. Ressuscitação volêmica: 30 mL/kg de cristaloide na 1ª hora se hipotensão ou
+     sinais de hipoperfusão (amido contraindicado).
+  6. Vasopressor (noradrenalina 1ª escolha) se PAM <65 após volume — pode começar
+     em veia periférica enquanto se providencia acesso central.
+  7. Reavaliação de lactato em 2-4h se alterado, buscando clareamento.
+- **Reavaliação das 6 horas** (choque séptico, hiperlactatemia ou hipoperfusão):
+  reavaliação volêmica (PVC, variação de pressão de pulso, elevação passiva de
+  MMII, saturação venosa central), transfusão se Hb <7, pressão arterial invasiva
+  sob vasopressor.
+- **Outras recomendações**: corticoide (hidrocortisona 50mg/6h) só em choque
+  séptico refratário; ventilação mecânica protetora (6 mL/kg peso ideal, platô
+  <30 cmH2O); sem bicarbonato se pH>7,15; controle glicêmico <180 mg/dL; terapia
+  renal substitutiva sem indicação de início precoce por rotina.
+- **Papel multiprofissional pós-tratamento agudo**: o texto cita explicitamente
+  enfermagem (recuperação funcional), farmácia clínica (adequação da prescrição),
+  fisioterapia, fonoaudiologia, psicologia, odontologia e serviço social — reforça
+  que sepse não é só "hora 1", é linha de cuidado até a alta.
+- **Prevenção de IRAS ligada a sepse**: menor tempo possível de dispositivo
+  invasivo (cânula orotraqueal, cateter venoso central, PA invasiva, sonda
+  vesical) — conecta com NR-32/controle de infecção já mapeado.
+
+### 5b. Candidato de consulta — adendo
+
+O guia de terapia antimicrobiana do ILAS (316 págs., 2024) é denso demais pra
+reproduzir como FAQ, mas poderia virar candidato de **consulta por classe de
+antimicrobiano/foco infeccioso** no futuro, se o índice do documento permitir —
+não avaliado ainda, fica só registrada a possibilidade.
+
 ### O que fica de fora (por ora)
 
 Técnicas/procedimentos de enfermagem propriamente ditos (ex: como puncionar uma
