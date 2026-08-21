@@ -64,10 +64,17 @@ document.querySelectorAll('.tab-btn').forEach((btn) => {
   });
 });
 
+// Grupos de subaba são independentes uns dos outros via data-subtab-group (ex: a
+// "Validadores" pode ter uma subaba de topo XML/TISS-vs-SUS, e cada uma delas com seu
+// próprio segundo nível — Validador SUS já tinha BPA/AIH/APAC, agora tem uma irmã com
+// XML/DAC). Sem o group, clicar numa subaba de um grupo escondia as de outro grupo.
 document.querySelectorAll('.subtab-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.subtab-btn').forEach((b) => b.classList.remove('active'));
-    document.querySelectorAll('.subtab-panel').forEach((p) => p.classList.add('hidden'));
+    const grupo = btn.dataset.subtabGroup;
+    const selBtn = grupo ? `.subtab-btn[data-subtab-group="${grupo}"]` : '.subtab-btn:not([data-subtab-group])';
+    const selPanel = grupo ? `.subtab-panel[data-subtab-group="${grupo}"]` : '.subtab-panel:not([data-subtab-group])';
+    document.querySelectorAll(selBtn).forEach((b) => b.classList.remove('active'));
+    document.querySelectorAll(selPanel).forEach((p) => p.classList.add('hidden'));
     btn.classList.add('active');
     document.getElementById(`subtab-${btn.dataset.subtab}`).classList.remove('hidden');
   });
@@ -103,6 +110,10 @@ document.querySelectorAll('.faq-portal-link').forEach((btn) => {
     if (btn.dataset.gotoSubtab) {
       const subtabBtn = document.querySelector(`.subtab-btn[data-subtab="${btn.dataset.gotoSubtab}"]`);
       subtabBtn?.click();
+    }
+    if (btn.dataset.gotoSubtab2) {
+      const subtabBtn2 = document.querySelector(`.subtab-btn[data-subtab="${btn.dataset.gotoSubtab2}"]`);
+      subtabBtn2?.click();
     }
     if (btn.dataset.gotoAcao === 'versoes-tiss') {
       document.getElementById('btn-versoes-tiss')?.click();
@@ -381,7 +392,7 @@ function indicadorPromoHtml(indicador) {
           <span class="eco-card-nome">🧾 Você já tem essa ferramenta aqui no portal</span>
           <span class="eco-card-desc">O Validador de XML TISS e a tabela de códigos de glosa ajudam a identificar a causa antes de virar índice de glosa.</span>
           <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-            <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+            <button type="button" class="faq-portal-link" data-goto-tab="validadores">✅ Validador de XML TISS →</button>
             <button type="button" class="faq-portal-link" data-goto-tab="tiss-tabelas">📋 Tabelas de glosa TISS →</button>
           </div>
         </div>`;

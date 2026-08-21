@@ -15,3 +15,14 @@ resultado-teste.json
 # contêm dado real de paciente (nome, nascimento, endereço, CNS). Nunca commitar.
 2085569202505.txt
 2221772202607.txt
+
+# Amostra real de arquivo DMED usada pra mapear o layout — contém CPF, nome
+# completo e valores reais de pagamento. Nunca commitar.
+DMED_1_Unidade de Faturamento.txt
+
+# Documentos-fonte pra pesquisa das Fases 10 (Farmácia) e 11 (Enfermagem) — leis,
+# protocolos oficiais e boletins baixados de terceiros (ISMP Brasil, MTE, COFEN,
+# Planalto). Insumo de pesquisa, não conteúdo do portal em si; alguns têm direitos
+# autorais de terceiro (ex: boletins ISMP). Nunca commitar.
+fontes-farmacia/
+fontes-enfermagem/

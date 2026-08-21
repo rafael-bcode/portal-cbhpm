@@ -214,8 +214,7 @@
   <div class="tabs">
     <button type="button" class="tab-btn active" data-tab="consulta">Consulta por procedimento</button>
     <button type="button" class="tab-btn" data-tab="multiplos">Múltiplos procedimentos</button>
-    <button type="button" class="tab-btn" data-tab="validador">Validador de XML TISS</button>
-    <button type="button" class="tab-btn" data-tab="validador-sus">Validador SUS</button>
+    <button type="button" class="tab-btn" data-tab="validadores">Validadores</button>
     <button type="button" class="tab-btn" data-tab="sigtap">SUS / SIGTAP</button>
     <button type="button" class="tab-btn" data-tab="tiss-tabelas">Tabelas TISS</button>
     <button type="button" class="tab-btn" data-tab="cid10">CID-10</button>
@@ -482,7 +481,21 @@
 
   </div>
 
-  <div id="tab-validador" class="tab-panel hidden">
+  <div id="tab-validadores" class="tab-panel hidden">
+
+  <div class="tabs subtabs">
+    <button type="button" class="subtab-btn active" data-subtab="xml-tiss" data-subtab-group="validadores">Validador de XML TISS</button>
+    <button type="button" class="subtab-btn" data-subtab="sus" data-subtab-group="validadores">Validador SUS</button>
+  </div>
+
+  <div id="subtab-xml-tiss" class="subtab-panel" data-subtab-group="validadores">
+
+  <div class="tabs subtabs subtabs-inner">
+    <button type="button" class="subtab-btn active" data-subtab="xml" data-subtab-group="xml-tiss">XML</button>
+    <button type="button" class="subtab-btn" data-subtab="dac" data-subtab-group="xml-tiss">DAC</button>
+  </div>
+
+  <div id="subtab-xml" class="subtab-panel" data-subtab-group="xml-tiss">
 
   <section class="search-panel">
     <div class="mp-header">
@@ -547,7 +560,11 @@
 
   <section id="validador-resultado-area"></section>
 
-  <section class="search-panel" style="margin-top:32px;" id="dac-secao">
+  </div>
+
+  <div id="subtab-dac" class="subtab-panel hidden" data-subtab-group="xml-tiss">
+
+  <section class="search-panel" id="dac-secao">
     <div class="mp-header">
       <h2>Leitor de Demonstrativo de Glosa (DAC)</h2>
     </div>
@@ -583,15 +600,17 @@
 
   </div>
 
-  <div id="tab-validador-sus" class="tab-panel hidden">
-
-  <div class="tabs subtabs">
-    <button type="button" class="subtab-btn active" data-subtab="bpa">Validador BPA</button>
-    <button type="button" class="subtab-btn" data-subtab="aih">Validador AIH</button>
-    <button type="button" class="subtab-btn" data-subtab="apac">Validador APAC</button>
   </div>
 
-  <div id="subtab-bpa" class="subtab-panel">
+  <div id="subtab-sus" class="subtab-panel hidden" data-subtab-group="validadores">
+
+  <div class="tabs subtabs subtabs-inner">
+    <button type="button" class="subtab-btn active" data-subtab="bpa" data-subtab-group="sus">Validador BPA</button>
+    <button type="button" class="subtab-btn" data-subtab="aih" data-subtab-group="sus">Validador AIH</button>
+    <button type="button" class="subtab-btn" data-subtab="apac" data-subtab-group="sus">Validador APAC</button>
+  </div>
+
+  <div id="subtab-bpa" class="subtab-panel" data-subtab-group="sus">
 
   <section class="search-panel">
     <div class="mp-header">
@@ -618,7 +637,7 @@
 
   </div>
 
-  <div id="subtab-aih" class="subtab-panel hidden">
+  <div id="subtab-aih" class="subtab-panel hidden" data-subtab-group="sus">
 
   <section class="search-panel">
     <div class="mp-header">
@@ -647,7 +666,7 @@
 
   </div>
 
-  <div id="subtab-apac" class="subtab-panel hidden">
+  <div id="subtab-apac" class="subtab-panel hidden" data-subtab-group="sus">
 
   <section class="search-panel">
     <div class="mp-header">
@@ -671,6 +690,8 @@
   </section>
 
   <section id="apac-resultado-area"></section>
+
+  </div>
 
   </div>
 
@@ -932,7 +953,7 @@
         <div class="faq-resposta">
           <p>O Validador de XML TISS confere o hash MD5 do epílogo e, opcionalmente, valida a estrutura completa
           contra o XSD oficial da ANS (v4.03.00) — mostra exatamente qual elemento está errado.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">✅ Validador de XML TISS →</button>
         </div>
       </details>
 
@@ -949,7 +970,7 @@
         <div class="faq-resposta">
           <p>O Leitor de DAC, dentro do Validador de XML TISS, lê o XML de retorno da operadora e traduz cada
           motivo de glosa pelo dicionário de causas do portal, com resumo por motivo e por operadora.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validador de XML TISS →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="dac">✅ Leitor de DAC →</button>
         </div>
       </details>
 
@@ -958,7 +979,7 @@
         <div class="faq-resposta">
           <p>O Validador SUS confere o layout oficial do DATASUS, cruza com SIGTAP e CID-10, e gera um PDF de
           conferência por arquivo.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador-sus">✅ Validador SUS →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="sus">✅ Validador SUS →</button>
         </div>
       </details>
 
@@ -1009,11 +1030,14 @@
       <details class="faq-item">
         <summary class="faq-pergunta">Qual a diferença entre BPA, AIH e APAC, e como valido meu arquivo?</summary>
         <div class="faq-resposta">
-          <p><strong>BPA</strong> (Boletim de Produção Ambulatorial) registra atendimentos ambulatoriais simples;
-          <strong>AIH</strong> (Autorização de Internação Hospitalar) registra internações; <strong>APAC</strong>
-          (Autorização de Procedimento Ambulatorial de Alta Complexidade/Custo) registra procedimentos
-          ambulatoriais que exigem autorização prévia, como quimioterapia e diálise.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador-sus" data-goto-subtab="bpa">✅ Validar BPA, AIH ou APAC aqui no portal →</button>
+          <ul class="faq-lista">
+            <li><strong>BPA</strong> (Boletim de Produção Ambulatorial): registra atendimentos ambulatoriais
+            simples.</li>
+            <li><strong>AIH</strong> (Autorização de Internação Hospitalar): registra internações.</li>
+            <li><strong>APAC</strong> (Autorização de Procedimento Ambulatorial de Alta Complexidade/Custo):
+            registra procedimentos ambulatoriais que exigem autorização prévia, como quimioterapia e diálise.</li>
+          </ul>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="sus" data-goto-subtab2="bpa">✅ Validar BPA, AIH ou APAC aqui no portal →</button>
         </div>
       </details>
 
@@ -1062,6 +1086,65 @@
         </div>
       </details>
 
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é OCI (Oferta de Cuidado Integrado)?</summary>
+        <div class="faq-resposta">
+          <p>É um conjunto de procedimentos — consultas, exames e/ou outros procedimentos diagnósticos/
+          terapêuticos — organizados pra concluir uma etapa da linha de cuidado (ou resolver um agravo específico
+          de resolução rápida) de forma integrada, dentro do <strong>Programa Mais Acesso a Especialistas
+          (PMAE)</strong> do Ministério da Saúde. Fica no <strong>Grupo 09</strong> da Tabela SIGTAP
+          ("Procedimentos para Ofertas de Cuidados Integrados") e exige a habilitação 38.01 no CNES do
+          estabelecimento — os códigos já aparecem na busca SIGTAP do portal.</p>
+          <p><strong>Regras que mais pegam quem fatura, no registro da APAC:</strong></p>
+          <ul class="faq-lista">
+            <li><strong>5º dígito do número da APAC</strong>: sempre "7" (identifica o tipo de autorização do
+            PMAE).</li>
+            <li><strong>Tipo de APAC</strong>: sempre "3" (única) — <strong>não existe</strong> APAC de
+            continuidade pra OCI.</li>
+            <li><strong>Identificação do paciente</strong>: obrigatoriamente por CPF.</li>
+            <li><strong>Caráter de atendimento</strong>: sempre "01 - Eletivo".</li>
+            <li><strong>Procedimentos secundários</strong>: mínimo de 2 por APAC, um deles obrigatoriamente a
+            consulta médica em atenção especializada (0301010072) ou a teleconsulta (0301010307); só podem ser
+            registrados se compatíveis com o principal no SIGTAP, e entram com <strong>valor zerado</strong> — o
+            valor da APAC é só o do procedimento principal.</li>
+            <li><strong>Financiamento</strong>: todo procedimento de OCI (principal ou secundário) é FAEC, desde a
+            competência de março/2025.</li>
+            <li><strong>Oncologia (Subgrupo 09.01)</strong>: quando o secundário exige "data do resultado
+            diagnóstico de Neoplasia", é obrigatório informar essa data e o CID Principal.</li>
+          </ul>
+          <p>Se a OCI não for concluída dentro do prazo/regras do programa, os procedimentos já feitos podem ser
+          registrados normalmente em BPA-I — não ficam perdidos, só saem do fluxo de OCI.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="sigtap">🔎 Ver os códigos OCI na busca SIGTAP →</button>
+          <p class="faq-fonte">Fonte: <a href="https://www.gov.br/saude/pt-br/centrais-de-conteudo/publicacoes/guias-e-manuais/2024/manual-pmae-registro-da-producao-controle-e-avaliacao.pdf" target="_blank" rel="noopener">Manual PMAE — Registro da Produção, Controle e Avaliação (gov.br/saude)</a></p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é o CIHA e quem precisa enviar?</summary>
+        <div class="faq-resposta">
+          <p>CIHA (Comunicação de Informação Hospitalar e Ambulatorial) é um sistema do DATASUS de reporte
+          <strong>obrigatório</strong> de produção hospitalar/ambulatorial — mas <strong>não é</strong> instrumento
+          de faturamento ou repasse como BPA/AIH/APAC/TISS, é só informação. Precisam enviar estabelecimentos com
+          ou sem vínculo com o SUS, incluindo atendimento por convênio/plano privado, particular e programas
+          federais (PRONON/PRONAS/PROADI) — ou seja, é uma obrigação real mesmo pra hospital 100% privado.</p>
+          <ul class="faq-lista">
+            <li><strong>Periodicidade</strong>: envio mensal; a ausência de movimento também precisa ser
+            comunicada, como remessa "sem movimento".</li>
+            <li><strong>Estrutura</strong>: CIHA01 (coleta, feita no estabelecimento), CIHA02 (processamento, na
+            secretaria de saúde) e o Módulo Transmissor (envia ao Ministério da Saúde).</li>
+            <li><strong>Base legal</strong>: Portaria GM/MS 1.171/2011 (criação, renomeando o antigo CIH),
+            reforçada pela Lei 12.653/2012.</li>
+            <li><strong>Se não enviar</strong>: o estabelecimento fica sujeito a sanção (perda de benefícios
+            públicos) — é uma dor de compliance real mesmo sem vínculo com o SUS.</li>
+          </ul>
+          <p>O layout vigente do arquivo texto (CIHA01, 06/2024) tem 38 campos de largura fixa, incluindo CID
+          principal/secundário, código de procedimento, operadora (registro ANS), CNES e até o número da guia
+          TISS relacionada — dados que o portal já indexa em outras ferramentas (SIGTAP, CID-10, Operadoras ANS).
+          Ainda não é um validador de arquivo aqui no portal; fica anotado como possível evolução futura.</p>
+          <p class="faq-fonte">Fonte: <a href="https://wiki.saude.gov.br/ciha/index.php/Manual_T%C3%A9cnico-Operacional_CIHA01" target="_blank" rel="noopener">Manual Técnico-Operacional CIHA01 (wiki DATASUS)</a></p>
+        </div>
+      </details>
+
     </div>
 
     <div id="faqtab-cbhpm" class="faq-subtab-panel hidden">
@@ -1107,10 +1190,13 @@
       <details class="faq-item">
         <summary class="faq-pergunta">Qual a diferença entre CBHPM, TUSS e SIGTAP? Como converto um código?</summary>
         <div class="faq-resposta">
-          <p><strong>CBHPM</strong> é a classificação médica da AMB, usada pra negociar e calcular honorário.
-          <strong>TUSS</strong> é a terminologia padronizada da ANS, usada nas guias do Padrão TISS entre
-          prestador e operadora. <strong>SIGTAP</strong> é a tabela oficial do SUS. Um mesmo procedimento pode
-          ter três códigos diferentes, um em cada tabela.</p>
+          <ul class="faq-lista">
+            <li><strong>CBHPM</strong>: classificação médica da AMB, usada pra negociar e calcular honorário.</li>
+            <li><strong>TUSS</strong>: terminologia padronizada da ANS, usada nas guias do Padrão TISS entre
+            prestador e operadora.</li>
+            <li><strong>SIGTAP</strong>: tabela oficial do SUS.</li>
+          </ul>
+          <p>Um mesmo procedimento pode ter três códigos diferentes, um em cada tabela.</p>
           <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🔗 Converter um código entre as três tabelas →</button>
         </div>
       </details>
@@ -1206,7 +1292,7 @@
         <div class="faq-resposta">
           <p>É o padrão obrigatório da ANS pra troca eletrônica de informações (guias, faturas, glosas) entre
           prestadores e operadoras de saúde suplementar — define a estrutura dos arquivos XML enviados.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validar um XML TISS aqui no portal →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">✅ Validar um XML TISS aqui no portal →</button>
         </div>
       </details>
 
@@ -1216,7 +1302,7 @@
           <p>O validador do portal confere o hash, a versão do padrão, os tipos de guia, os códigos de tabela, os
           valores por item e o total de cada guia — e roda toda a validação de estrutura contra o XSD oficial da
           versão vigente <strong>sem que o arquivo saia do seu navegador</strong>.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Abrir o Validador de XML TISS →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">✅ Abrir o Validador de XML TISS →</button>
         </div>
       </details>
 
@@ -1237,7 +1323,7 @@
           <p>A ANS define datas a partir das quais versões antigas passam a ser rejeitadas — por exemplo, desde
           janeiro de 2026 a versão 3.05.00 não é mais aceita. O portal mostra o resumo de cada versão recente e
           desde quando ela é obrigatória.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador" data-goto-acao="versoes-tiss">📜 Ver histórico de versões do TISS →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml" data-goto-acao="versoes-tiss">📜 Ver histórico de versões do TISS →</button>
         </div>
       </details>
 
@@ -1246,7 +1332,7 @@
         <div class="faq-resposta">
           <p>Dá pra comparar as guias de dois arquivos pelo número da guia (prestador) e ver o que mudou item a
           item — quantidade, valor e a diferença de total — direto no validador.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador">🔁 Comparar dois arquivos XML aqui →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">🔁 Comparar dois arquivos XML aqui →</button>
         </div>
       </details>
 
@@ -1268,6 +1354,31 @@
           regra geral. Médico pessoa jurídica (com CNPJ) segue emitindo a NFS-e normalmente, agora dentro desse
           padrão único.</p>
           <p class="faq-fonte">Fonte oficial: <a href="https://www.gov.br/nfse/pt-br" target="_blank" rel="noopener">gov.br/nfse</a></p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é a DMED, e eu preciso entregar?</summary>
+        <div class="faq-resposta">
+          <p>DMED (Declaração de Serviços Médicos e de Saúde) é uma obrigação acessória <strong>anual</strong> à
+          Receita Federal, informando os valores recebidos de cada pessoa física atendida no ano — é o que a
+          Receita usa pra cruzar com a dedução de despesa médica na declaração de Imposto de Renda do paciente.
+          Não é sobre operadora nem SUS: é especificamente sobre o que foi recebido de pessoa física.</p>
+          <ul class="faq-lista">
+            <li><strong>Quem entrega</strong>: pessoa jurídica (CNPJ) prestadora de serviço de saúde que recebe de
+            pessoa física — hospitais, clínicas, laboratórios, centros de imagem, operadoras de plano de saúde,
+            instituições de longa permanência. Profissional autônomo <strong>sem CNPJ</strong> não entrega DMED
+            (a informação dele já vem pelo Receita Saúde/carnê-leão do próprio paciente).</li>
+            <li><strong>Prazo</strong>: último dia útil de fevereiro, referente ao ano anterior — a entrega de
+            2026 (sobre o que foi recebido em 2025) venceu em 27/02/2026; a próxima, sobre 2026, vence em
+            26/02/2027.</li>
+            <li><strong>Como entregar</strong>: só pela matriz da empresa, pelo Programa Gerador de Declaração
+            (PGD) da própria Receita Federal — não é um XML nem um layout que o portal processa hoje.</li>
+            <li><strong>Penalidade por atraso ou erro</strong>: R$ 500 a R$ 1.500 por mês de atraso (conforme o
+            porte da empresa), ou 3% sobre o valor de cada transação omitida/incorreta (mínimo R$ 100 por
+            declaração) — a multa cai pela metade se corrigida antes de qualquer notificação da Receita.</li>
+          </ul>
+          <p class="faq-fonte">Fonte: <a href="https://www.gov.br/receitafederal/pt-br" target="_blank" rel="noopener">gov.br/receitafederal</a> — Programa Gerador da DMED</p>
         </div>
       </details>
 
@@ -1335,7 +1446,7 @@
           o arquivo original e o reenviado (Validador de XML TISS), o Demonstrativo de Glosa da operadora já
           cruzado com o motivo (Leitor de DAC) e os relatórios de conferência em PDF (Validador SUS) — vale
           guardar esses documentos junto com a guia e a autorização original.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Ver a trilha de conferência do Validador de XML TISS →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">✅ Ver a trilha de conferência do Validador de XML TISS →</button>
           <p class="faq-fonte">Fonte: IESS, "Judicialização" (série Caminhos da Saúde Suplementar, 2025)</p>
         </div>
       </details>
@@ -1358,11 +1469,15 @@
       <details class="faq-item">
         <summary class="faq-pergunta">Quais são as principais acreditações usadas no Brasil?</summary>
         <div class="faq-resposta">
-          <p>A mais adotada é a <strong>ONA</strong> (Organização Nacional de Acreditação), com três níveis
-          crescentes de exigência: Nível 1 (Acreditado), Nível 2 (Acreditado Pleno) e Nível 3 (Acreditado com
-          Excelência). Também são usadas certificações internacionais como a <strong>Joint Commission
-          International (JCI)</strong> e o <strong>Qmentum International</strong> (Accreditation Canada), mais
-          comuns em grandes hospitais e redes.</p>
+          <ul class="faq-lista">
+            <li><strong>ONA</strong> (Organização Nacional de Acreditação): a mais adotada, com três níveis
+            crescentes de exigência — Nível 1 (Acreditado), Nível 2 (Acreditado Pleno) e Nível 3 (Acreditado com
+            Excelência).</li>
+            <li><strong>Joint Commission International (JCI)</strong>: certificação internacional, mais comum em
+            grandes hospitais e redes.</li>
+            <li><strong>Qmentum International</strong> (Accreditation Canada): idem, mais comum em grandes
+            hospitais e redes.</li>
+          </ul>
           <p class="faq-fonte">Fonte oficial: <a href="https://ona.org.br/" target="_blank" rel="noopener">ona.org.br</a></p>
         </div>
       </details>
@@ -1408,13 +1523,50 @@
       <details class="faq-item">
         <summary class="faq-pergunta">O que são as tarjas dos medicamentos (vermelha, preta, amarela, sem tarja)?</summary>
         <div class="faq-resposta">
-          <p><strong>Sem tarja</strong> (embalagem branca): venda livre, sem receita (medicamento isento de
-          prescrição). <strong>Tarja vermelha</strong>: só com receita médica — em alguns casos com retenção da
-          receita pela farmácia (ex: antibióticos), em outros sem retenção. <strong>Tarja preta</strong>: controle
-          mais rígido, entorpecentes e psicotrópicos, sempre com retenção de receita e notificação especial
-          própria. <strong>Tarja amarela</strong> identifica o medicamento genérico — aparece junto com a
-          vermelha ou a preta quando o genérico também é controlado.</p>
+          <ul class="faq-lista">
+            <li><strong>Sem tarja</strong> (embalagem branca): venda livre, sem receita (medicamento isento de
+            prescrição).</li>
+            <li><strong>Tarja vermelha</strong>: só com receita médica — em alguns casos com retenção da receita
+            pela farmácia (ex: antibióticos), em outros sem retenção.</li>
+            <li><strong>Tarja preta</strong>: controle mais rígido, entorpecentes e psicotrópicos, sempre com
+            retenção de receita e notificação especial própria.</li>
+            <li><strong>Tarja amarela</strong>: identifica o medicamento genérico — aparece junto com a vermelha
+            ou a preta quando o genérico também é controlado.</li>
+          </ul>
           <button type="button" class="faq-portal-link" data-goto-tab="cmed">💊 Ver a tarja de um medicamento aqui no portal →</button>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual a classificação completa da Portaria SVS/MS 344/98 (listas A1 a F2)?</summary>
+        <div class="faq-resposta">
+          <p>É a norma que classifica substâncias entorpecentes, psicotrópicas e outras de controle especial no
+          Brasil, em listas identificadas por código — é a base tanto das tarjas quanto das notificações de
+          receita acima, e do livro de registro específico que farmácia hospitalar precisa manter (ver pergunta
+          mais abaixo).</p>
+          <ul class="faq-lista">
+            <li><strong>A1</strong> — substâncias entorpecentes: sujeitas à Notificação de Receita A.</li>
+            <li><strong>A2</strong> — substâncias entorpecentes de uso permitido só em concentrações especiais:
+            sujeitas à Notificação A.</li>
+            <li><strong>A3</strong> — substâncias psicotrópicas: sujeitas à Notificação A.</li>
+            <li><strong>B1</strong> — substâncias psicotrópicas: sujeitas à Notificação B.</li>
+            <li><strong>B2</strong> — substâncias psicotrópicas anorexígenas: sujeitas à Notificação B2.</li>
+            <li><strong>C1</strong> — outras substâncias sujeitas a controle especial: controle especial.</li>
+            <li><strong>C2</strong> — substâncias retinoicas: controle especial.</li>
+            <li><strong>C3</strong> — substâncias imunossupressoras: controle especial.</li>
+            <li><strong>C4</strong> — substâncias antirretrovirais: controle especial.</li>
+            <li><strong>C5</strong> — substâncias anabolizantes: controle especial.</li>
+            <li><strong>D1</strong> — substâncias precursoras: controle específico.</li>
+            <li><strong>D2</strong> — insumos químicos usados na fabricação de entorpecentes/psicotrópicos:
+            controle específico.</li>
+            <li><strong>E</strong> — plantas que podem originar substâncias entorpecentes e/ou psicotrópicas:
+            proibidas/controladas.</li>
+            <li><strong>F1</strong> — substâncias entorpecentes de uso proscrito: proibidas.</li>
+            <li><strong>F2</strong> — substâncias psicotrópicas de uso proscrito: proibidas.</li>
+          </ul>
+          <p>Hoje o portal não classifica um medicamento específico dentro dessas listas — a base de preços
+          CMED/ANVISA que a Consulta de Medicamentos usa só traz tarja e restrição hospitalar, não o código A1-F2
+          (são fontes oficiais diferentes). Fica anotado como possível evolução futura.</p>
         </div>
       </details>
 
@@ -1422,11 +1574,14 @@
         <summary class="faq-pergunta">O que são as notificações de receita (amarela, azul, branca)?</summary>
         <div class="faq-resposta">
           <p>São formulários numerados e controlados pela vigilância sanitária, exigidos além da receita comum
-          pra prescrever medicamentos de tarja preta e alguns de risco elevado. <strong>Notificação A</strong>
-          (amarela): entorpecentes e psicotrópicos com maior potencial de abuso (listas A1, A2, A3).
-          <strong>Notificação B</strong> (azul): psicotrópicos e anorexígenos (B1, B2). <strong>Notificação
-          C</strong> (branca, com faixa colorida conforme a lista): retinoides, talidomida, antirretrovirais e
-          outras substâncias de controle especial (C1 a C5).</p>
+          pra prescrever medicamentos de tarja preta e alguns de risco elevado.</p>
+          <ul class="faq-lista">
+            <li><strong>Notificação A</strong> (amarela): entorpecentes e psicotrópicos com maior potencial de
+            abuso (listas A1, A2, A3).</li>
+            <li><strong>Notificação B</strong> (azul): psicotrópicos e anorexígenos (B1, B2).</li>
+            <li><strong>Notificação C</strong> (branca, com faixa colorida conforme a lista): retinoides,
+            talidomida, antirretrovirais e outras substâncias de controle especial (C1 a C5).</li>
+          </ul>
         </div>
       </details>
 
@@ -1455,26 +1610,34 @@
       <details class="faq-item">
         <summary class="faq-pergunta">Genérico, similar, referência e biológico — qual a diferença?</summary>
         <div class="faq-resposta">
-          <p><strong>Referência</strong>: o medicamento original, testado e aprovado, que serve de parâmetro.
-          <strong>Genérico</strong>: mesmo princípio ativo, dose e forma, sem marca própria, com bioequivalência
-          comprovada — pode substituir o referência automaticamente. <strong>Similar</strong>: mesmo princípio
-          ativo, dose e forma, mas com marca própria — só é intercambiável com o referência quando também tem o
-          teste de bioequivalência comprovado (nem todo similar tem). <strong>Biológico</strong>: produzido a
-          partir de organismos vivos (ex: insulina, anticorpos monoclonais), com regras de registro próprias,
-          diferentes da bioequivalência química tradicional.</p>
+          <ul class="faq-lista">
+            <li><strong>Referência</strong>: o medicamento original, testado e aprovado, que serve de
+            parâmetro.</li>
+            <li><strong>Genérico</strong>: mesmo princípio ativo, dose e forma, sem marca própria, com
+            bioequivalência comprovada — pode substituir o referência automaticamente.</li>
+            <li><strong>Similar</strong>: mesmo princípio ativo, dose e forma, mas com marca própria — só é
+            intercambiável com o referência quando também tem o teste de bioequivalência comprovado (nem todo
+            similar tem).</li>
+            <li><strong>Biológico</strong>: produzido a partir de organismos vivos (ex: insulina, anticorpos
+            monoclonais), com regras de registro próprias, diferentes da bioequivalência química
+            tradicional.</li>
+          </ul>
         </div>
       </details>
 
       <details class="faq-item">
         <summary class="faq-pergunta">Hospital precisa ter o livro de medicamentos controlados, igual farmácia de bairro?</summary>
         <div class="faq-resposta">
-          <p>Precisa, mas o sistema é diferente. Farmácia e drogaria <strong>privada</strong> fazem a
-          escrituração pelo <strong>SNGPC</strong> (sistema digital da ANVISA). Farmácia <strong>hospitalar e
-          pública</strong> não usa o SNGPC — precisa manter o <strong>Livro de Registro Específico</strong>
-          (físico, com abertura e fechamento pela vigilância sanitária) ou um sistema informatizado próprio
-          previamente aprovado pela autoridade sanitária, conforme a Portaria SVS/MS nº 344/1998: um livro pra
-          cada conjunto de listas — entorpecentes (A1, A2), psicotrópicos (A3, B1, B2), controle especial (C1,
-          C2, C4, C5) e imunossupressores (C3).</p>
+          <p>Precisa, mas o sistema é diferente:</p>
+          <ul class="faq-lista">
+            <li><strong>Farmácia e drogaria privada</strong>: escrituração pelo <strong>SNGPC</strong> (sistema
+            digital da ANVISA).</li>
+            <li><strong>Farmácia hospitalar e pública</strong>: não usa o SNGPC — precisa manter o
+            <strong>Livro de Registro Específico</strong> (físico, com abertura e fechamento pela vigilância
+            sanitária) ou um sistema informatizado próprio previamente aprovado pela autoridade sanitária,
+            conforme a Portaria SVS/MS nº 344/1998: um livro pra cada conjunto de listas — entorpecentes (A1,
+            A2), psicotrópicos (A3, B1, B2), controle especial (C1, C2, C4, C5) e imunossupressores (C3).</li>
+          </ul>
         </div>
       </details>
 
@@ -1527,11 +1690,14 @@
       <details class="faq-item">
         <summary class="faq-pergunta">O que significa operadora em "liquidação" ou sob "direção fiscal/técnica"?</summary>
         <div class="faq-resposta">
-          <p>São regimes especiais que a ANS aplica quando identifica risco à operadora ou aos beneficiários:
-          <strong>direção técnica/fiscal</strong> é uma intervenção temporária, com um diretor nomeado pela ANS
-          acompanhando a gestão; <strong>liquidação</strong> é o processo de encerramento das atividades da
-          operadora. Prestadores com contas em aberto contra uma operadora nessas situações costumam ter que
-          habilitar crédito dentro do processo, e não só cobrar diretamente como em uma operação normal.</p>
+          <p>São regimes especiais que a ANS aplica quando identifica risco à operadora ou aos beneficiários:</p>
+          <ul class="faq-lista">
+            <li><strong>Direção técnica/fiscal</strong>: intervenção temporária, com um diretor nomeado pela ANS
+            acompanhando a gestão.</li>
+            <li><strong>Liquidação</strong>: processo de encerramento das atividades da operadora.</li>
+          </ul>
+          <p>Prestadores com contas em aberto contra uma operadora nessas situações costumam ter que habilitar
+          crédito dentro do processo, e não só cobrar diretamente como em uma operação normal.</p>
         </div>
       </details>
 
@@ -1634,12 +1800,15 @@
       <details class="faq-item">
         <summary class="faq-pergunta">Quais são os tipos de auditoria (prévia, concorrente, retrospectiva)?</summary>
         <div class="faq-resposta">
-          <p><strong>Prévia (ou prospectiva):</strong> antes do procedimento, avalia autorização e adequação do
-          que foi solicitado. <strong>Concorrente:</strong> durante a internação, acompanha em tempo real a
-          evolução do paciente e o uso de insumos, com visitas técnicas do auditor ao prestador.
-          <strong>Retrospectiva:</strong> depois do atendimento, é a mais comum na rotina — confere a conta
-          fechada antes do envio (do lado do prestador) ou depois do recebimento (do lado da operadora). As três
-          são complementares, cobrindo o ciclo inteiro da pré-autorização ao envio da conta.</p>
+          <ul class="faq-lista">
+            <li><strong>Prévia (ou prospectiva)</strong>: antes do procedimento, avalia autorização e adequação
+            do que foi solicitado.</li>
+            <li><strong>Concorrente</strong>: durante a internação, acompanha em tempo real a evolução do
+            paciente e o uso de insumos, com visitas técnicas do auditor ao prestador.</li>
+            <li><strong>Retrospectiva</strong>: depois do atendimento, é a mais comum na rotina — confere a conta
+            fechada antes do envio (do lado do prestador) ou depois do recebimento (do lado da operadora).</li>
+          </ul>
+          <p>As três são complementares, cobrindo o ciclo inteiro da pré-autorização ao envio da conta.</p>
         </div>
       </details>
 
@@ -1650,7 +1819,7 @@
           habilitação exigida, código de glosa TISS de referência e o arquivo XML validado contra o schema
           oficial — é exatamente o conjunto de conferências que o portal já reúne, pra fazer essa auditoria
           prévia antes de mandar pra operadora.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador">✅ Validar o XML TISS aqui no portal →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">✅ Validar o XML TISS aqui no portal →</button>
         </div>
       </details>
 
@@ -1675,7 +1844,7 @@
           TISS e nos arquivos de AIH/BPA/APAC do SUS. O layout do AIH, por exemplo, não traz o nome do
           estabelecimento, só o código CNES + município — por isso o Validador AIH do portal busca o nome real
           direto no CNESNet do DATASUS pra deixar o relatório de conferência legível.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validador-sus" data-goto-subtab="aih">✅ Ver o Validador AIH aqui no portal →</button>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="sus" data-goto-subtab2="aih">✅ Ver o Validador AIH aqui no portal →</button>
         </div>
       </details>
 
@@ -1695,11 +1864,14 @@
       <details class="faq-item">
         <summary class="faq-pergunta">Qual a diferença entre pacote fechado e conta aberta?</summary>
         <div class="faq-resposta">
-          <p><strong>Pacote fechado:</strong> um valor fixo é negociado pra um procedimento inteiro (ex: uma
-          cirurgia com um período de internação determinado) — o prestador é quem gerencia o uso de materiais e
-          serviços dentro desse valor, sem detalhar item a item na cobrança (exceto imprevistos/urgência, que
-          costumam ficar de fora do pacote). <strong>Conta aberta:</strong> cada item usado — material,
-          medicamento, taxa, diária — é cobrado separadamente, conforme o combinado em contrato.</p>
+          <ul class="faq-lista">
+            <li><strong>Pacote fechado</strong>: um valor fixo é negociado pra um procedimento inteiro (ex: uma
+            cirurgia com um período de internação determinado) — o prestador é quem gerencia o uso de materiais e
+            serviços dentro desse valor, sem detalhar item a item na cobrança (exceto imprevistos/urgência, que
+            costumam ficar de fora do pacote).</li>
+            <li><strong>Conta aberta</strong>: cada item usado — material, medicamento, taxa, diária — é cobrado
+            separadamente, conforme o combinado em contrato.</li>
+          </ul>
         </div>
       </details>
 
@@ -1707,25 +1879,31 @@
         <summary class="faq-pergunta">O que é diária hospitalar, e o que muda entre diária aberta, global e semi-global?</summary>
         <div class="faq-resposta">
           <p>Diária é a cobrança pelo uso do leito por até 24 horas, variando pelo tipo de acomodação
-          (enfermaria, apartamento, UTI). <strong>Diária aberta:</strong> só os itens de hotelaria e EPI básico
-          (luvas, máscaras etc.) entram na diária — quase tudo o mais é cobrado à parte. <strong>Diária
-          global:</strong> a maior parte dos serviços e materiais de rotina já está incluída num valor único por
-          dia, reduzindo o que pode ser cobrado separadamente. <strong>Diária semi-global:</strong> fica no meio
-          termo — alguns grupos de itens entram na diária, outros continuam sendo cobrados à parte, conforme o
-          que estiver definido em contrato.</p>
+          (enfermaria, apartamento, UTI).</p>
+          <ul class="faq-lista">
+            <li><strong>Diária aberta</strong>: só os itens de hotelaria e EPI básico (luvas, máscaras etc.)
+            entram na diária — quase tudo o mais é cobrado à parte.</li>
+            <li><strong>Diária global</strong>: a maior parte dos serviços e materiais de rotina já está incluída
+            num valor único por dia, reduzindo o que pode ser cobrado separadamente.</li>
+            <li><strong>Diária semi-global</strong>: fica no meio termo — alguns grupos de itens entram na
+            diária, outros continuam sendo cobrados à parte, conforme o que estiver definido em contrato.</li>
+          </ul>
         </div>
       </details>
 
       <details class="faq-item">
         <summary class="faq-pergunta">O que é "hospital-dia"? É a mesma coisa que "paciente-dia"?</summary>
         <div class="faq-resposta">
-          <p>Não — são conceitos diferentes, fáceis de confundir. <strong>Hospital-dia</strong> é uma modalidade
-          de atendimento: o paciente fica na unidade por no máximo 12 horas (ex: quimioterapia, pequenas
-          cirurgias, procedimentos que não exigem pernoite), ocupando leito de observação, não leito de
-          internação. <strong>Paciente-dia</strong> é uma unidade de medida estatística: representa um paciente
-          internado ocupando um leito por um dia hospitalar completo, usada em indicadores como taxa de
-          ocupação e média de permanência — pacientes de hospital-dia não entram nessa contagem, justamente por
-          não serem internação.</p>
+          <p>Não — são conceitos diferentes, fáceis de confundir.</p>
+          <ul class="faq-lista">
+            <li><strong>Hospital-dia</strong>: modalidade de atendimento — o paciente fica na unidade por no
+            máximo 12 horas (ex: quimioterapia, pequenas cirurgias, procedimentos que não exigem pernoite),
+            ocupando leito de observação, não leito de internação.</li>
+            <li><strong>Paciente-dia</strong>: unidade de medida estatística — representa um paciente internado
+            ocupando um leito por um dia hospitalar completo, usada em indicadores como taxa de ocupação e média
+            de permanência. Pacientes de hospital-dia não entram nessa contagem, justamente por não serem
+            internação.</li>
+          </ul>
         </div>
       </details>
 
@@ -1738,11 +1916,14 @@
         <div class="faq-resposta">
           <p>São entidades de <strong>autogestão em saúde</strong>, criadas por lei estadual ou municipal, que
           administram a assistência médico-hospitalar dos servidores públicos daquele ente e seus dependentes —
-          muitas vezes junto da própria previdência (aposentadoria e pensão). Praticamente todo estado tem o
-          seu: <strong>IPSEMG</strong> em Minas Gerais, <strong>IPE Saúde</strong> no Rio Grande do Sul (o nome
-          histórico "IPERGS" foi reorganizado em duas frentes — IPE Saúde cuida da assistência médica, IPE Prev
-          cuida da previdência), <strong>IPASGO</strong> em Goiás, entre vários outros — cada um com regras
-          próprias.</p>
+          muitas vezes junto da própria previdência (aposentadoria e pensão). Praticamente todo estado tem o seu,
+          cada um com regras próprias — por exemplo:</p>
+          <ul class="faq-lista">
+            <li><strong>IPSEMG</strong>: Minas Gerais.</li>
+            <li><strong>IPE Saúde</strong>: Rio Grande do Sul (o nome histórico "IPERGS" foi reorganizado em duas
+            frentes — IPE Saúde cuida da assistência médica, IPE Prev cuida da previdência).</li>
+            <li><strong>IPASGO</strong>: Goiás.</li>
+          </ul>
         </div>
       </details>
 

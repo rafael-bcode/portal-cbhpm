@@ -33,12 +33,10 @@ const pool = new Pool({
 // de entrega que pode não se confirmar. Atualizar aqui só quando algo
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
-  'Melhor identificação dos tópicos nas respostas do FAQ',
   'Organização por tipo de faturamento (SUS x operadoras) nas perguntas de rejeição/validação',
   'Ajustes de exibição em telas menores (celular/tablet)',
   'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
-  'Conteúdo novo nas Dúvidas frequentes sobre OCI (Oferta de Cuidado Integrado)',
-  'Reorganização das telas de validador pra ficarem mais parecidas entre si',
+  'Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial)',
 ];
 
 // Versão atual do portal, histórico de mudanças e o que está sendo avaliado

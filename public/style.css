@@ -390,6 +390,8 @@ body > * {
 .subtab-btn:hover { color: var(--teal-dark); }
 .subtab-btn.active { color: var(--teal-dark); border-bottom-color: var(--teal); }
 .subtab-panel.hidden { display: none; }
+.tabs.subtabs.subtabs-inner { margin-top: 2px; margin-bottom: 16px; border-bottom-style: dashed; }
+.subtabs-inner .subtab-btn { font-size: 0.8rem; padding: 8px 14px; }
 
 /* ---------- Favoritos ---------- */
 .field-favoritos.hidden { display: none; }
@@ -1686,6 +1688,10 @@ body > * {
 }
 .faq-resposta p { margin: 0 0 10px; }
 .faq-resposta p:last-child { margin-bottom: 0; }
+.faq-resposta ul.faq-lista { margin: 0 0 10px; padding-left: 20px; }
+.faq-resposta ul.faq-lista:last-child { margin-bottom: 0; }
+.faq-resposta ul.faq-lista li { margin-bottom: 6px; }
+.faq-resposta ul.faq-lista li:last-child { margin-bottom: 0; }
 .faq-resposta a:not(.faq-portal-link) { color: var(--teal-dark); font-weight: 600; }
 .faq-portal-link,
 a.faq-portal-link,
