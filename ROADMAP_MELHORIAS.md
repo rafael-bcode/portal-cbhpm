@@ -1077,6 +1077,15 @@ de saúde" abaixo) — pesquisa já concluída, só falta escrever/publicar o it
 Esforço baixo, sem dependência de outro item; primeira sexta de ajuste livre depois
 do pacote de 04/09.
 
+**Também em 11/09/2026 — infra: ativar CodeQL** (decisão do usuário, 21/08/2026):
+varredura automática de segurança de código, programada pra exatamente uma semana
+depois da entrega de CIHA/DMED (04/09) — código novo de parsing de arquivo de
+terceiros é justamente o que mais se beneficia da varredura. É ativação de
+ferramenta (Settings → Security → Code scanning → Default setup), não
+desenvolvimento; não compete com o item de FAQ do mesmo dia. Tracking:
+[Issue #12](https://github.com/rafael-bcode/portal-cbhpm/issues/12), milestone
+"11/09 — FAQ NOTIVISA".
+
 **02/10/2026 (1ª sexta de outubro) — Fase 10: Farmácia (segurança do paciente e do
 trabalhador)**: **decisão do usuário em 20/08/2026** — data fechada pra essa entrega
 específica (não é só uma sinalização de overflow como o resto de setembro). Entre
