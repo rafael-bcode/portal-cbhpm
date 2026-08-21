@@ -1610,10 +1610,10 @@ function mpCriarLinha(relacaoPadrao) {
   linha.dataset.codigo = '';
   linha.innerHTML = `
     <div class="busca-wrapper">
-      <input type="text" class="mp-busca-input" placeholder="Buscar por código ou descrição" autocomplete="off">
+      <input type="text" class="mp-busca-input" placeholder="Buscar por código ou descrição" autocomplete="off" aria-label="Buscar procedimento por código ou descrição">
       <div class="busca-dropdown hidden mp-busca-dropdown"></div>
     </div>
-    <select class="mp-relacao">
+    <select class="mp-relacao" aria-label="Relação do procedimento com os demais no mesmo ato">
       <option value="principal">Principal</option>
       <option value="mesma_via">Mesma via</option>
       <option value="via_diferente">Via diferente</option>

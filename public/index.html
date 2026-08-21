@@ -47,7 +47,7 @@
           <button type="button" id="btn-tiss-versao-checar" class="btn-consultar" style="padding:8px 16px;">Verificar</button>
         </div>
       </div>
-      <div id="tiss-versao-checar-resultado"></div>
+      <div id="tiss-versao-checar-resultado" aria-live="polite"></div>
       <div class="versoes-tiss-lista">
         <div class="versao-tiss-item versao-tiss-item-desatualizada">
           <div class="versao-tiss-nome">3.05.00 <span class="versao-tiss-data">publicada em mai/2020 — desde jan/2026 não é mais aceita pela ANS</span></div>
@@ -477,7 +477,7 @@
     </form>
   </section>
 
-  <section id="mp-resultado-area"></section>
+  <section id="mp-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -552,13 +552,13 @@
           <input type="file" id="comparar-arquivo-b" accept=".xml">
         </div>
         <button type="button" id="btn-comparar-arquivos" class="btn-consultar">Comparar</button>
-        <div id="comparar-resultado" style="margin-top:16px;"></div>
+        <div id="comparar-resultado" style="margin-top:16px;" aria-live="polite"></div>
       </div>
     </details>
 
   </section>
 
-  <section id="validador-resultado-area"></section>
+  <section id="validador-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -571,8 +571,9 @@
     <p class="ajustes-nota">
       Lê o <strong>Demonstrativo de Análise de Conta Médica (DAC)</strong> — o XML padrão TISS que a operadora
       devolve dizendo item a item o que pagou e o que glosou — <strong>só no seu navegador</strong>, o arquivo
-      nunca sai do computador. Traduz cada código de glosa pelo dicionário de causas do portal e soma o valor
-      glosado por motivo, pra você ver o padrão em vez de reler guia por guia.
+      nunca sai do computador. Traduz cada código de glosa pelo dicionário de causas do portal (última revisão:
+      04/08/2026 — mesma data e fontes detalhadas na aba Fontes) e soma o valor glosado por motivo, pra você ver
+      o padrão em vez de reler guia por guia.
       <br>Pode carregar mais de um arquivo de uma vez (ex: vários protocolos da mesma operadora).
     </p>
     <div class="field">
@@ -596,7 +597,7 @@
     </details>
   </section>
 
-  <section id="dac-resultado-area"></section>
+  <section id="dac-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -633,7 +634,7 @@
     </div>
   </section>
 
-  <section id="bpa-resultado-area"></section>
+  <section id="bpa-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -662,7 +663,7 @@
     </div>
   </section>
 
-  <section id="aih-resultado-area"></section>
+  <section id="aih-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -689,7 +690,7 @@
     </div>
   </section>
 
-  <section id="apac-resultado-area"></section>
+  <section id="apac-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -725,7 +726,7 @@
     </div>
   </section>
 
-  <section id="sigtap-resultado-area"></section>
+  <section id="sigtap-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -754,7 +755,7 @@
     <p class="ajustes-nota" id="tiss-tabelas-fonte" style="margin-top:14px; font-size:0.72rem;"></p>
   </section>
 
-  <section id="tiss-tabelas-resultado-area"></section>
+  <section id="tiss-tabelas-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -778,7 +779,7 @@
     </div>
   </section>
 
-  <section id="cid10-resultado-area"></section>
+  <section id="cid10-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -808,7 +809,7 @@
       </div>
     </div>
     <button type="button" id="btn-checklist-verificar" class="btn-consultar">Rodar checklist</button>
-    <section id="checklist-resultado-area" style="margin-top:16px;"></section>
+    <section id="checklist-resultado-area" style="margin-top:16px;" aria-live="polite"></section>
   </section>
 
   <section class="search-panel" style="margin-top:32px;">
@@ -830,7 +831,7 @@
     <button type="button" id="btn-compat-verificar" class="btn-consultar">Verificar compatibilidade</button>
   </section>
 
-  <section id="compat-resultado-area"></section>
+  <section id="compat-resultado-area" aria-live="polite"></section>
 
   <section class="search-panel" style="margin-top:32px;">
     <div class="mp-header">
@@ -848,7 +849,7 @@
     </div>
   </section>
 
-  <section id="habilitacao-resultado-area"></section>
+  <section id="habilitacao-resultado-area" aria-live="polite"></section>
 
   <section class="search-panel" style="margin-top:32px;">
     <div class="mp-header">
@@ -868,7 +869,7 @@
     </div>
   </section>
 
-  <section id="conversor-resultado-area"></section>
+  <section id="conversor-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -908,8 +909,10 @@
     <div id="faqtab-rejeicao" class="faq-subtab-panel">
       <p class="ajustes-nota">
         Diga o que a operadora reclamou (ou o que você desconfia que vai gerar glosa) e veja qual verificador do
-        portal resolve isso.
+        portal resolve isso — organizado por tipo de faturamento, com os itens que servem pros dois no fim.
       </p>
+
+      <h3 class="conversor-secao-titulo" style="margin-top:8px;">SUS / SIGTAP</h3>
 
       <details class="faq-item">
         <summary class="faq-pergunta">"Rejeitado por incompatibilidade entre procedimentos"</summary>
@@ -940,13 +943,15 @@
       </details>
 
       <details class="faq-item">
-        <summary class="faq-pergunta">"Código não é reconhecido, ou não sei o equivalente em outra tabela"</summary>
+        <summary class="faq-pergunta">"Arquivo BPA, AIH ou APAC (SUS) foi rejeitado"</summary>
         <div class="faq-resposta">
-          <p>Use o Conversor CBHPM ↔ TUSS ↔ SIGTAP, na aba Verificadores — informe qualquer código de qualquer
-          uma das 3 tabelas e ele acha os equivalentes nas outras duas.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🧩 Abrir Verificadores →</button>
+          <p>O Validador SUS confere o layout oficial do DATASUS, cruza com SIGTAP e CID-10, e gera um PDF de
+          conferência por arquivo.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="sus">✅ Validador SUS →</button>
         </div>
       </details>
+
+      <h3 class="conversor-secao-titulo">Operadoras / Padrão TISS</h3>
 
       <details class="faq-item">
         <summary class="faq-pergunta">"XML rejeitado por hash/MD5 ou por estrutura inválida"</summary>
@@ -974,12 +979,14 @@
         </div>
       </details>
 
+      <h3 class="conversor-secao-titulo">Cadastros e registros (serve pros dois)</h3>
+
       <details class="faq-item">
-        <summary class="faq-pergunta">"Arquivo BPA, AIH ou APAC (SUS) foi rejeitado"</summary>
+        <summary class="faq-pergunta">"Código não é reconhecido, ou não sei o equivalente em outra tabela"</summary>
         <div class="faq-resposta">
-          <p>O Validador SUS confere o layout oficial do DATASUS, cruza com SIGTAP e CID-10, e gera um PDF de
-          conferência por arquivo.</p>
-          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="sus">✅ Validador SUS →</button>
+          <p>Use o Conversor CBHPM ↔ TUSS ↔ SIGTAP, na aba Verificadores — informe qualquer código de qualquer
+          uma das 3 tabelas e ele acha os equivalentes nas outras duas.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="verificadores">🧩 Abrir Verificadores →</button>
         </div>
       </details>
 
@@ -2031,7 +2038,7 @@
 
   </section>
 
-  <section id="indicador-resultado-area"></section>
+  <section id="indicador-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -2091,7 +2098,7 @@
     </div>
   </section>
 
-  <section id="cmed-resultado-area"></section>
+  <section id="cmed-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -2118,7 +2125,7 @@
     </div>
   </section>
 
-  <section id="operadoras-resultado-area"></section>
+  <section id="operadoras-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -2149,7 +2156,7 @@
     </div>
   </section>
 
-  <section id="cnes-resultado-area"></section>
+  <section id="cnes-resultado-area" aria-live="polite"></section>
 
   </div>
 
@@ -2182,7 +2189,7 @@
     </div>
   </section>
 
-  <section id="opme-resultado-area"></section>
+  <section id="opme-resultado-area" aria-live="polite"></section>
 
   </div>
 
