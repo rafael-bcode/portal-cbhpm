@@ -764,22 +764,89 @@ implementação sem mais definição de escopo:
   1. **Baseline**: `PRT_SVS_344_1998_COMP.pdf` (ANVISA, compilado até Atualização nº
      51 / RDC 87, de 28/06/2016) — usado só como esqueleto estrutural das 15 listas
      (A1, A2, A3, B1, B2, C1-C5, D1, D2, E, F1-F4), não como fonte de conteúdo atual.
-  2. **Levantamento sistemático de RDCs pós-2016**: a busca de hoje achou 4 (RDC
-     861/2024, RDC 958/2024, RDC 970/2025, RDC 999/2025) só numa busca rápida — não é
-     lista fechada. Antes de publicar qualquer coisa, precisa checar ano a ano
-     (2016-2026) no índice oficial de normas da ANVISA
-     (gov.br/anvisa/.../controlados) pra não deixar RDC nenhuma de fora.
-  3. **Aplicar cada RDC encontrada** sobre o baseline (inclusão/exclusão/mudança de
-     lista por substância), registrando por linha: substância, lista atual, **RDC que
-     originou essa posição atual** e **data de publicação dessa RDC**.
+  2. **Levantamento sistemático de RDCs pós-2016 — concluído em 21/08/2026**: a busca
+     rápida do dia anterior tinha achado só 4 RDCs — **subestimativa grande**. A fonte
+     certa era a página oficial de changelog da ANVISA
+     (gov.br/anvisa/pt-br/assuntos/medicamentos/controlados/lista-substancias), lida
+     por completo hoje. Resultado real: **51 RDCs** entre a base de 2016 e a versão
+     vigente, RDC nº 1.036/2026 (09/07/2026). Lista completa, em ordem cronológica,
+     na tabela abaixo — cada uma ainda **não aplicada** ao baseline, com o tipo de
+     alteração (quando a página informa) como pista de por onde começar.
+  3. **Aplicar cada RDC** sobre o baseline (inclusão/exclusão/mudança de lista por
+     substância), registrando por linha: substância, lista atual, **RDC que originou
+     essa posição atual** e **data de publicação dessa RDC**. Com 51 RDCs pra ler e
+     aplicar uma a uma, **não é realista terminar tudo numa sentada** — vira trabalho
+     incremental nas revisões semanais (ver "Revisão semanal do roadmap" no topo deste
+     documento), marcando cada linha da tabela como aplicada conforme for.
   4. **No portal**: cada exibição da classificação leva um aviso do tipo "última
      verificação: [data] — base: Portaria SVS/MS 344/98, compilada até RDC 87/2016 +
      RDCs [lista] aplicadas manualmente", no mesmo padrão de transparência de data já
-     usado no Leitor de DAC (Validadores → XML/TISS → DAC).
+     usado no Leitor de DAC (Validadores → XML/TISS → DAC). Se 02/10 chegar com o
+     levantamento incompleto, o aviso deve refletir isso com honestidade (ex: "48 de
+     51 RDCs pós-2016 aplicadas, atualizado até RDC nº 985/2025") em vez de aparentar
+     100% de cobertura sem ser verdade.
   5. **Manutenção**: como a ANVISA não tem fonte viva, esse "última verificação" some
      desatualizado assim que sair uma RDC nova — não tem como automatizar; fica
      registrado como processo manual recorrente (não uma tarefa "pronta pra sempre"),
      a ser revisitado em cada ciclo de revisão do portal.
+
+  **Tracker das 51 RDCs a aplicar (levantado em 21/08/2026, nenhuma aplicada ainda)**:
+
+  | RDC | Data | Alteração (conforme changelog ANVISA) | Aplicada? |
+  |---|---|---|---|
+  | 103/2016 | 31/08/2016 | Inclusões/exclusões/alterações | ☐ |
+  | 117/2016 | 19/10/2016 | Múltiplas inclusões e exclusões | ☐ |
+  | 130/2016 | 02/12/2016 | Inclusões nas Listas A3, E | ☐ |
+  | 143/2017 | 17/03/2017 | Inclusões nas Listas D1, F1, F2 | ☐ |
+  | 159/2017 | 02/06/2017 | Inclusões nas Listas C1, F2 | ☐ |
+  | 169/2017 | 15/08/2017 | Inclusões nas Listas A1, C1 | ☐ |
+  | 175/2017 | 19/09/2017 | Inclusão na Lista F2 | ☐ |
+  | 186/2017 | 25/10/2017 | Múltiplas inclusões em várias listas | ☐ |
+  | 188/2017 | 13/11/2017 | Inclusões nas Listas A1-F4 | ☐ |
+  | 192/2017 | 11/12/2017 | Inclusão na Lista C3 | ☐ |
+  | 227/2018 | 17/05/2018 | Inclusões/exclusões nas Listas A3, F1-F3 | ☐ |
+  | 246/2018 | 21/08/2018 | Inclusões nas Listas C1, F1-F2 | ☐ |
+  | 254/2018 | 10/12/2018 | Inclusão na Lista F2 | ☐ |
+  | 265/2019 | 08/02/2019 | Inclusão na Lista F2 (RH-34) | ☐ |
+  | 277/2019 | 16/04/2019 | Inclusões nas Listas B1, C1 | ☐ |
+  | 300/2019 | 12/08/2019 | Inclusões nas Listas C5, F2 | ☐ |
+  | 314/2019 | 10/10/2019 | Inclusões nas Listas D1, F1-F2 | ☐ |
+  | 325/2019 | 03/12/2019 | Inclusões/alterações na Lista F2 | ☐ |
+  | 337/2020 | 11/02/2020 | Inclusão na Lista C1 | ☐ |
+  | 345/2020 | 09/03/2020 | Inclusões/alterações em várias listas | ☐ |
+  | 351/2020 | 20/03/2020 | Inclusão na Lista C1 | ☐ |
+  | 368/2020 | 07/04/2020 | Inclusão na Lista C1 | ☐ |
+  | 372/2020 | 15/04/2020 | Inclusão na Lista C1 | ☐ |
+  | 404/2020 | 21/07/2020 | Inclusões/alterações na Lista A3 | ☐ |
+  | 473/2021 | 24/03/2021 | Inclusões/remanejamento entre listas | ☐ |
+  | 581/2021 | 02/12/2021 | Inclusões/alterações nas Listas B1, C1, F1-F2 | ☐ |
+  | 598/2022 | 09/02/2022 | Inclusão na Lista F2 | ☐ |
+  | 607/2022 | 23/02/2022 | Exclusão/inclusões nas Listas B1, C1 | ☐ |
+  | 676/2022 | 28/04/2022 | Exclusão/inclusões/alterações em várias listas | ☐ |
+  | 734/2022 | 11/07/2022 | Exclusões/inclusões/alterações | ☐ |
+  | 762/2022 | 24/11/2022 | Inclusões/alterações nas Listas B1, F2 | ☐ |
+  | 767/2022 | 08/12/2022 | Inclusão na Lista C1 | ☐ |
+  | 784/2023 | 31/03/2023 | Inclusões/alterações em várias listas | ☐ |
+  | 804/2023 | 24/07/2023 | Inclusões nas Listas D1, F1-F2 | ☐ |
+  | 816/2023 | 15/09/2023 | Exclusões/inclusões/alterações | ☐ |
+  | 827/2023 | 24/11/2023 | Inclusões/alterações nas Listas A1, F1 | ☐ |
+  | 835/2023 | 13/12/2023 | Inclusões/alterações em várias listas | ☐ |
+  | 861/2024 | 06/05/2024 | Exclusões/inclusões/alterações | ☐ |
+  | 871/2024 | 17/05/2024 | Exclusão na Lista B1 | ☐ |
+  | 877/2024 | 28/05/2024 | Exclusão na Lista B1 | ☐ |
+  | 936/2024 | 05/11/2024 | Inclusões nas Listas A3, E | ☐ |
+  | 958/2024 | 31/12/2024 | Exclusões/inclusões/alterações | ☐ |
+  | 970/2025 | 19/03/2025 | Inclusões/alterações em várias listas | ☐ |
+  | 974/2025 | 23/04/2025 | Inclusão na Lista B1 | ☐ |
+  | 985/2025 | 29/07/2025 | Inclusões/alterações nas Listas F1-F2 | ☐ |
+  | 999/2025 | 24/11/2025 | Inclusões nas Listas B1, C1 | ☐ |
+  | 1.011/2026 | 30/01/2026 | Inclusões nas Listas C1, E (vigência 04/08/2026) | ☐ |
+  | 1.017/2026 | 20/02/2026 | Inclusões/exclusões/alterações | ☐ |
+  | 1.021/2026 | 09/04/2026 | Inclusões/alterações nas Listas F1-F4 | ☐ |
+  | 1.023/2026 | 11/05/2026 | Exclusões/inclusões/alterações | ☐ |
+  | 1.036/2026 | 09/07/2026 | Inclusões nas Listas D1, F1 — **versão vigente** | ☐ |
+
+  Fonte da lista: [Lista de substâncias sujeitas a controle especial — ANVISA](https://www.gov.br/anvisa/pt-br/assuntos/medicamentos/controlados/lista-substancias), consultada em 21/08/2026. A própria página não oferece PDF consolidado — confirma de novo que não existe atalho, cada RDC precisa ser aberta individualmente.
 
 Demais candidatos (levantados em rodadas de revisão anteriores, sem
 pedido direto do usuário — prioridade abaixo dos itens acima):
@@ -984,6 +1051,16 @@ local, aguardando só a decisão de subir junto com a liberação de 28/08.
 - Validador de arquivo DMED (layout confirmado por arquivo real, ver acima).
 - Tabela de Compatibilidade entre Procedimentos SIGTAP (nova tabela no banco,
   importador e endpoint — feature de verdade, não é extensão do que já existe).
+  **Fonte de dados confirmada em 21/08/2026**: dentro do zip oficial já baixado
+  (`TabelaUnificada_202607_v2607101010.zip`) existe `rl_procedimento_compativel.txt`
+  (12.226 registros, layout oficial documentado em
+  `rl_procedimento_compativel_layout.txt`: CO_PROCEDIMENTO_PRINCIPAL,
+  CO_REGISTRO_PRINCIPAL, CO_PROCEDIMENTO_COMPATIVEL, CO_REGISTRO_COMPATIVEL,
+  TP_COMPATIBILIDADE, QT_PERMITIDA, DT_COMPETENCIA) e também
+  `rl_excecao_compatibilidade.txt` (regra de exceção quando um terceiro procedimento
+  de restrição também está na guia). Achado de graça, sem precisar baixar nada novo —
+  reduz bastante o risco desta entrega, o importador já pode ser desenhado direto em
+  cima do layout real.
 
   ⚠️ **Sinal de atenção, não decisão fechada**: são 3 features de porte real no
   mesmo dia (CIHA é esforço Alto, DMED é um validador completo novo, Compatibilidade
@@ -1056,24 +1133,23 @@ esforço e encaixe de data avaliados abaixo.
   de implementação a decidir junto da Fase 10 (02/10/2026), sem mudar o escopo já
   fechado pra essa entrega.
 
-- **[Média]** **Completar os protocolos PNSP pendentes (Higiene das Mãos e
-  Identificação do Paciente)** — a Fase 11 (Enfermagem) já cobre em detalhe 3 dos 6
-  protocolos do PNSP (Cirurgia Segura, Úlcera por Pressão, Prevenção de Quedas).
-  Faltam 2 dos 6 pra fechar o conjunto completo:
-  - **Higiene das Mãos**: PDF já baixado (`Protocolo_Higiene_Maos.pdf`), só falta
-    ler/extrair o conteúdo — esforço baixo, sem bloqueio conhecido.
-  - **Identificação do Paciente**: PDF trava no download há 2 tentativas
-    (retorna página HTML/redirect em vez do arquivo real) — precisa de nova
-    tentativa com outra abordagem (mesmo método que resolveu o COFEN: Playwright
-    com `page.waitForEvent('download')` em vez de curl direto) ou uma fonte
-    alternativa. É risco de pesquisa, não só tarefa mecânica.
-  - **Encaixe de data**: os dois entram no escopo já existente da Fase 11
-    (06/11/2026) — não é item novo fora do que já está planejado, é completar o
-    que já estava previsto. Mas pra não descobrir o bloqueio do Identificação do
-    Paciente em cima da hora, a tentativa de resolver a fonte deve acontecer **antes
-    de outubro** (prazo sugerido: até 02/10/2026, junto da checagem de progresso da
-    Fase 10), deixando setembro/outubro como janela de folga se precisar buscar
-    fonte alternativa.
+- ~~**Completar os protocolos PNSP pendentes (Higiene das Mãos e Identificação do
+  Paciente)**~~ — **✅ resolvido em 21/08/2026, os 6 dos 6 protocolos do PNSP estão
+  garantidos**:
+  - **Higiene das Mãos**: lido por completo (`Protocolo_Higiene_Maos.pdf`, 16 págs.,
+    Anexo 01, MS/Anvisa/Fiocruz, 09/07/2013) — "Meus 5 Momentos", técnica de
+    higienização simples/antisséptica/fricção alcoólica passo a passo, Estratégia
+    Multimodal da OMS, indicadores.
+  - **Identificação do Paciente**: bloqueio de download **resolvido** — o link
+    original (ANVISA) continuava quebrado, mas o mesmo documento oficial (Anexo 02,
+    MS/Anvisa/Fiocruz) está espelhado pela Secretaria de Saúde de Mato Grosso
+    (saude.mt.gov.br), que serviu o PDF genuíno sem bloqueio. Lido por completo: uso
+    obrigatório de pulseira branca com no mínimo 2 identificadores, especificações
+    técnicas da pulseira (cor, tamanho, conforto, durabilidade), procedimento de
+    confirmação antes de qualquer cuidado, casos especiais (recém-nascido,
+    transferência, paciente sem identidade disponível).
+  - Conteúdo já pronto pra entrar no escopo da Fase 11 (06/11/2026) sem risco de
+    pesquisa pendente — só falta estruturar como FAQ quando a data chegar.
 
 ## Fase 10 — Nova direção estratégica: Farmácia (segurança do paciente e do
 trabalhador) — pesquisa feita em 20/08/2026, sem data de implementação ainda
@@ -1462,8 +1538,8 @@ Auxiliares, Obstetrizes, Parteiras e Atendentes de Enfermagem; princípios centr
 são dignidade, autonomia, sigilo, responsabilidade e justiça; revogou a Resolução
 COFEN 311/2007.
 
-### 3. Achado extra valioso: 4 dos 6 protocolos do PNSP já garantidos (3 já extraídos
-por completo)
+### 3. Achado extra valioso: 6 dos 6 protocolos do PNSP garantidos e extraídos por
+completo (atualizado em 21/08/2026)
 
 Ao baixar a Portaria MS 2.095/2013 pra confirmar a base legal da Farmácia (Fase 10),
 o arquivo baixado (`fontes-farmacia/Portaria_MS_2095_2013.pdf`) revelou ser uma
@@ -1492,12 +1568,22 @@ outros 3 do total de 6 na sequência (`fontes-enfermagem/`):
   lista de classes que aumentam risco de queda), classificação alto/baixo risco,
   tabelas de medidas específicas por fator de risco pra adulto **e** pediátrico,
   procedimentos operacionais e indicadores (índice de quedas por paciente-dia).
-- **Protocolo para Higiene das Mãos** (`Protocolo_Higiene_Maos.pdf`, 16 págs.) — ✅
-  baixado, ainda não lido linha a linha (próximo passo antes de novembro).
-- **Protocolo de Identificação do Paciente** — ⚠️ **não garantido ainda**: as duas
-  tentativas de baixar (biblioteca digital Anvisa, mirror www20) devolveram página
-  HTML em vez do PDF de verdade — precisa de mais uma tentativa numa próxima sessão
-  (a fonte existe e é confirmada, só a extração automática falhou desta vez).
+- **Protocolo para Higiene das Mãos** (`Protocolo_Higiene_Maos.pdf`, 16 págs., Anexo
+  01, 09/07/2013) — ✅ extraído por completo em 21/08/2026: "Meus 5 Momentos" pra
+  higiene das mãos, as 3 técnicas (simples/antisséptica/fricção alcoólica) passo a
+  passo com tempos mínimos, Estratégia Multimodal da OMS (5 componentes), indicadores
+  obrigatórios (consumo de preparação alcoólica e sabonete por 1.000 pacientes-dia).
+- **Protocolo de Identificação do Paciente** (Anexo 02) — ✅ **bloqueio resolvido e
+  extraído por completo em 21/08/2026**. As duas tentativas anteriores (biblioteca
+  digital Anvisa, mirror www20) devolviam página HTML em vez do PDF; o mesmo
+  documento oficial (MS/Anvisa/Fiocruz) foi localizado espelhado pela Secretaria de
+  Saúde de Mato Grosso (saude.mt.gov.br), que serviu o arquivo genuíno. Conteúdo:
+  uso obrigatório de pulseira branca com no mínimo 2 identificadores (nome completo,
+  nome da mãe, data de nascimento ou nº de prontuário — nunca número de
+  leito/quarto), especificações técnicas da pulseira, confirmação obrigatória antes
+  de medicação/sangue/hemoderivados/coleta/dieta/procedimento invasivo, casos
+  especiais (recém-nascido, transferência entre serviços, paciente sem identidade
+  disponível).
 - **Protocolo de Medicamentos**: já coberto na Fase 10 (Farmácia), via citação
   primária dos boletins ISMP Brasil — não precisa buscar de novo aqui.
 - **Achado de qualidade de fonte a resolver antes de publicar**: o boletim do ISMP
