@@ -731,6 +731,56 @@ implementação sem mais definição de escopo:
   validar uma fonte oficial estruturada (não só PDF) das listas vigentes da Portaria
   344/98 antes de estimar esforço de verdade.
 
+  **Atualização da pesquisa (21/08/2026)**: localizado e baixado um PDF oficial da
+  ANVISA já "compilado" (`PRT_SVS_344_1998_COMP.pdf`, hospedado em
+  antigo.anvisa.gov.br, 84 páginas) — texto completo lido e conferido. Confirma que
+  esse formato de documento existe e é utilizável como base: traz o regulamento
+  inteiro (Art. 1º a 110) mais os Anexos I a XXIV, incluindo as 15 listas de
+  substâncias (A1, A2, A3, B1, B2, C1-C5, D1, D2, E, F1-F4) já nomeadas e separadas,
+  com o histórico de qual Resolução/RDC alterou cada trecho. **Mas está desatualizado**:
+  a última atualização registrada no Anexo I é a nº 51 (RDC 87/2016) — quase 10 anos
+  atrás. Busca rápida confirma que a ANVISA seguiu emitindo RDCs alterando essas
+  listas depois disso (pelo menos RDC 861/2024, RDC 958/2024, RDC 970/2025 e RDC
+  999/2025 — nomes de fármacos podem ter entrado, saído ou mudado de lista nesse
+  intervalo). Isso **reforça a conclusão do teste de 28/08 abaixo**, não a substitui: a
+  ANVISA não publica uma versão HTML/CSV/JSON viva e sempre atual — só PDFs "Anexo I"
+  por Portaria/RDC, sem um "compilado" oficial que se atualize sozinho. Pra ter uma
+  lista realmente atual e confiável no portal, o caminho seria: (1) usar esse PDF de
+  2016 como esqueleto/estrutura de dados (já que o formato das 15 listas está pronto),
+  e (2) aplicar manualmente as alterações de cada RDC publicada depois de 2016 até
+  hoje (pelo menos as 4 achadas nesta busca, possivelmente mais) — um trabalho de
+  curadoria de dados pontual, não recorrente-automático, mas que precisa ser refeito a
+  cada nova RDC que a ANVISA publicar dali pra frente (não tem como isso ficar
+  "pronto para sempre"). Sites privados como farmaciasdigitais.com.br dizem manter
+  lista "atualizada", mas não são fonte oficial — não servem pra citar diretamente,
+  só como pista de quais RDCs procurar.
+
+  **Decisão (21/08/2026)**: vira **mini-projeto de dados**, encaixado na Fase 10 -
+  Farmácia (alvo 02/10/2026), com exigência explícita do usuário de **deixar claras
+  as origens e a vigência de cada informação** — não é só popular uma tabela, é
+  documentar de onde veio cada dado e até quando ele vale.
+
+  Escopo do mini-projeto:
+  1. **Baseline**: `PRT_SVS_344_1998_COMP.pdf` (ANVISA, compilado até Atualização nº
+     51 / RDC 87, de 28/06/2016) — usado só como esqueleto estrutural das 15 listas
+     (A1, A2, A3, B1, B2, C1-C5, D1, D2, E, F1-F4), não como fonte de conteúdo atual.
+  2. **Levantamento sistemático de RDCs pós-2016**: a busca de hoje achou 4 (RDC
+     861/2024, RDC 958/2024, RDC 970/2025, RDC 999/2025) só numa busca rápida — não é
+     lista fechada. Antes de publicar qualquer coisa, precisa checar ano a ano
+     (2016-2026) no índice oficial de normas da ANVISA
+     (gov.br/anvisa/.../controlados) pra não deixar RDC nenhuma de fora.
+  3. **Aplicar cada RDC encontrada** sobre o baseline (inclusão/exclusão/mudança de
+     lista por substância), registrando por linha: substância, lista atual, **RDC que
+     originou essa posição atual** e **data de publicação dessa RDC**.
+  4. **No portal**: cada exibição da classificação leva um aviso do tipo "última
+     verificação: [data] — base: Portaria SVS/MS 344/98, compilada até RDC 87/2016 +
+     RDCs [lista] aplicadas manualmente", no mesmo padrão de transparência de data já
+     usado no Leitor de DAC (Validadores → XML/TISS → DAC).
+  5. **Manutenção**: como a ANVISA não tem fonte viva, esse "última verificação" some
+     desatualizado assim que sair uma RDC nova — não tem como automatizar; fica
+     registrado como processo manual recorrente (não uma tarefa "pronta pra sempre"),
+     a ser revisitado em cada ciclo de revisão do portal.
+
 Demais candidatos (levantados em rodadas de revisão anteriores, sem
 pedido direto do usuário — prioridade abaixo dos itens acima):
 
@@ -889,25 +939,35 @@ acima**: menu Validadores, reformatação de listas do FAQ, FAQ de OCI/CIHA(text
 Portaria 344-98, FAQ de DMED.
 
 **28/08/2026 (sexta) — ajustes/melhorias de funcionalidade existente**:
-- Sub-abas separando SUS de ANS/TISS em "Rejeição/Validação de arquivos" — **decisão
-  de design fechada em 20/08/2026**: reagrupar com cabeçalho de seção dentro da
-  própria subaba (SUS de um lado, ANS/TISS do outro), **sem criar sub-aba aninhada
-  nova** — critério do usuário foi "o que puder economizar espaço pra não poluir a
-  tela", e cabeçalho de seção não consome espaço horizontal de navegação extra como
-  uma nova linha de sub-abas consumiria.
-- Passada mobile completa (grade de edições, cards SUS/SIGTAP, tabelas do Validador
-  de XML TISS, gráfico comparativo abaixo de ~480px).
-- Data de "última revisão" do dicionário de glosas, exposta direto na aba do
-  Validador de XML TISS (não só na aba Fontes).
-- Passada de acessibilidade — **investigação feita em 20/08/2026, escopo baixo
-  confirmado**: checagem automatizada (Playwright) encontrou 20 áreas de resultado
-  sem `aria-live` (`#...-resultado-area`/`#...-resultado`, atualizam via fetch sem
-  avisar leitor de tela) e 4 inputs sem label associado (os campos de busca/relação
-  da aba Múltiplos procedimentos, que usam só `placeholder`) — ambos mecânicos e
-  baratos de corrigir. Navegação por teclado nas abas de topo já funciona nativamente
-  (são `<button>`) e nenhuma imagem está sem `alt`. Contraste de cor **não foi
-  conferido** nessa passada rápida (precisaria de uma ferramenta dedicada tipo
-  axe-core) — se entrar no escopo de 28/08, avaliar contraste como item à parte.
+
+Todos os 4 itens abaixo foram **implementados e testados em 21/08/2026** (uma semana
+antes da entrega, pra não deixar nada de última hora) — ficam prontos no servidor
+local, aguardando só a decisão de subir junto com a liberação de 28/08.
+
+- ~~Sub-abas separando SUS de ANS/TISS em "Rejeição/Validação de arquivos"~~ — **✅
+  implementado**: reagrupado com cabeçalho de seção dentro da própria subaba (3
+  grupos: "SUS / SIGTAP", "Operadoras / Padrão TISS", "Cadastros e registros (serve
+  pros dois)" — os 3 itens que genuinamente se aplicam aos dois lados, como o
+  conversor de código e a consulta de OPME, ficaram num terceiro grupo em vez de
+  forçado num dos dois primeiros), sem sub-aba aninhada nova, reaproveitando o
+  estilo `.conversor-secao-titulo` que já existia. Testado com Playwright: todos os
+  ~12 deep-links continuam funcionando após a reorganização.
+- ~~Passada mobile completa~~ — **✅ testado em 375px, nenhuma correção precisou ser
+  feita**: as 4 áreas apontadas como não verificadas (grade de edições da Consulta
+  por procedimento, cards do SUS/SIGTAP, tabelas do Validador de XML TISS — incluindo
+  o modal de guia com tabela de materiais — e o gráfico comparativo) já funcionam bem
+  sem overflow horizontal nem quebra de layout. O gráfico comparativo já usa SVG com
+  `viewBox` responsivo (não pixel fixo), por isso escalou bem sem ajuste.
+- ~~Data de "última revisão" do dicionário de glosas~~ — **✅ implementado**: a data
+  (04/08/2026) agora aparece direto na descrição do Leitor de DAC (dentro de
+  Validadores → XML/TISS → DAC), com nota de que a mesma data e fontes detalhadas
+  continuam na aba Fontes.
+- ~~Passada de acessibilidade~~ — **✅ implementado**: `aria-live="polite"` adicionado
+  às 20 áreas de resultado que atualizam via fetch (script único, não manual item a
+  item) e `aria-label` nos 2 campos (busca + relação) do template de linha da aba
+  Múltiplos procedimentos. Contraste de cor **continua não avaliado** — não entrou
+  no escopo desta rodada, fica como possível item futuro à parte se quiser aprofundar
+  a acessibilidade além do que já foi corrigido.
 - ~~Classificação 344/98 na CMED~~ — **investigado em 20/08/2026, resultado: não
   cabe em 28/08**. Conferido diretamente o site oficial da ANVISA
   (gov.br/anvisa/.../controlados/lista-substancias): a página **não tem** a lista de
@@ -934,6 +994,12 @@ Portaria 344-98, FAQ de DMED.
   escorregue pra 02/10/2026 (a sexta seguinte do padrão mensal) se não estiver
   madura a tempo — decisão de qual, se for o caso, fica pra mais perto da data.
 
+**11/09/2026 (sexta de ajuste) — FAQ: NOTIVISA**: item novo de conteúdo transversal
+(decisão de 21/08/2026, ver seção "Frentes transversais de suporte a profissionais
+de saúde" abaixo) — pesquisa já concluída, só falta escrever/publicar o item de FAQ.
+Esforço baixo, sem dependência de outro item; primeira sexta de ajuste livre depois
+do pacote de 04/09.
+
 **02/10/2026 (1ª sexta de outubro) — Fase 10: Farmácia (segurança do paciente e do
 trabalhador)**: **decisão do usuário em 20/08/2026** — data fechada pra essa entrega
 específica (não é só uma sinalização de overflow como o resto de setembro). Entre
@@ -942,6 +1008,72 @@ MPP/MAV do ISMP Brasil, o Protocolo de Segurança na Prescrição/Uso/Administra
 Medicamentos, o texto da NR-32) pra depois estruturar o conteúdo — mesmo método que
 funcionou bem pro CIHA (arquivo/documento fonte primeiro, estrutura de dado depois).
 Se sobrar algum item de 04/09 sem terminar a tempo, entra também nessa data.
+Também entra aqui o **mini-projeto de dados da classificação Portaria 344/98 (A1-F2)
+na CMED** (decisão de 21/08/2026, ver detalhe na seção "[Baixa] Mostrar a
+classificação... na Consulta de Medicamentos" acima) — levantamento das RDCs
+posteriores a 2016 e aplicação sobre o baseline compilado, com origem e vigência de
+cada dado documentadas no próprio portal.
+
+## Frentes transversais de suporte a profissionais de saúde (pesquisa 21/08/2026)
+
+**Contexto**: o usuário perguntou (21/08/2026) o que mais dá pra incluir — FAQ,
+pesquisa ou validação — na transição do portal de "suporte a faturamento" pra
+"suporte a profissionais de saúde de modo geral". Resposta: não abrir profissão
+nova ainda (Farmácia e Enfermagem nem saíram do papel — mantém a regra de "um
+módulo de cada vez"), e sim reforçar conteúdo **transversal**, que serve mais de um
+público ao mesmo tempo, com baixo esforço. Três frentes identificadas, cada uma com
+esforço e encaixe de data avaliados abaixo.
+
+- **[Alta]** **FAQ: NOTIVISA (Sistema de Notificações em Vigilância Sanitária,
+  ANVISA)** — pesquisado e confirmado em 21/08/2026. É o sistema oficial pra
+  notificar eventos adversos (EA) e queixas técnicas (QT) de medicamentos e outros
+  produtos/serviços sob vigilância sanitária. Base legal: **Portaria MS nº 1.660, de
+  22/07/2009**. Pode notificar: profissionais de serviços de saúde, empresas
+  detentoras de registro, e também cidadãos (paciente/familiar/cuidador) via
+  formulário simplificado. Portal oficial: `notivisa.anvisa.gov.br` (área
+  profissional, com cadastro/login) e `www16.anvisa.gov.br/notivisaServicos/cidadao/
+  notificacao/evento-adverso` (formulário direto pro cidadão, sem cadastro). Serve
+  como **conteúdo transversal** — útil pra Farmácia (erro de medicação), Enfermagem
+  (evento adverso na administração) e Medicina, não é exclusivo de nenhuma das
+  fases já planejadas. **Esforço: baixo** — é um item de FAQ com link oficial,
+  mesmo padrão já usado nos itens de "onde consultar" (CIHA/DMED). Não precisa
+  esperar feature nova nem entrar só no dia 1ª-sexta-do-mês porque não é código
+  novo (banco, importador, endpoint) — é conteúdo, então cabe numa sexta de ajuste
+  comum.
+  - **Agendado pra 11/09/2026** (sexta de ajuste, a primeira sexta livre depois do
+    pacote de 04/09 — que é feature nova de peso: CIHA + DMED + Compatibilidade — e
+    depois do já fechado/testado de 28/08). Sem dependência de nenhum outro item.
+
+- **[Média]** **NR-32 como seção transversal, não só dentro de Farmácia** — hoje a
+  NR-32 (segurança do trabalhador em serviços de saúde) está pesquisada e
+  encaixada só no escopo da Fase 10 (Farmácia). Mas a norma vale pra qualquer
+  profissional de saúde, não só farmacêutico — enfermagem, medicina, etc. também
+  são "trabalhador de serviço de saúde" pra efeito da NR-32. **Esforço: quase zero**
+  — o conteúdo já está pesquisado e baixado (`NR-32_atualizada_2022.pdf`, ver Fase
+  10 abaixo); é só uma decisão de estrutura (seção própria de "segurança do
+  trabalhador da saúde", referenciada por Farmácia e por Enfermagem, em vez de
+  duplicar ou prender só numa aba). **Não precisa de data própria** — é um detalhe
+  de implementação a decidir junto da Fase 10 (02/10/2026), sem mudar o escopo já
+  fechado pra essa entrega.
+
+- **[Média]** **Completar os protocolos PNSP pendentes (Higiene das Mãos e
+  Identificação do Paciente)** — a Fase 11 (Enfermagem) já cobre em detalhe 3 dos 6
+  protocolos do PNSP (Cirurgia Segura, Úlcera por Pressão, Prevenção de Quedas).
+  Faltam 2 dos 6 pra fechar o conjunto completo:
+  - **Higiene das Mãos**: PDF já baixado (`Protocolo_Higiene_Maos.pdf`), só falta
+    ler/extrair o conteúdo — esforço baixo, sem bloqueio conhecido.
+  - **Identificação do Paciente**: PDF trava no download há 2 tentativas
+    (retorna página HTML/redirect em vez do arquivo real) — precisa de nova
+    tentativa com outra abordagem (mesmo método que resolveu o COFEN: Playwright
+    com `page.waitForEvent('download')` em vez de curl direto) ou uma fonte
+    alternativa. É risco de pesquisa, não só tarefa mecânica.
+  - **Encaixe de data**: os dois entram no escopo já existente da Fase 11
+    (06/11/2026) — não é item novo fora do que já está planejado, é completar o
+    que já estava previsto. Mas pra não descobrir o bloqueio do Identificação do
+    Paciente em cima da hora, a tentativa de resolver a fonte deve acontecer **antes
+    de outubro** (prazo sugerido: até 02/10/2026, junto da checagem de progresso da
+    Fase 10), deixando setembro/outubro como janela de folga se precisar buscar
+    fonte alternativa.
 
 ## Fase 10 — Nova direção estratégica: Farmácia (segurança do paciente e do
 trabalhador) — pesquisa feita em 20/08/2026, sem data de implementação ainda

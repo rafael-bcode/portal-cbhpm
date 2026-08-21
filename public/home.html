@@ -5,12 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Argus Fatura — Confira CBHPM, SIGTAP e TISS antes de faturar</title>
 <link rel="icon" type="image/webp" href="logo.webp">
-<meta name="description" content="Consulte CBHPM, SUS/SIGTAP, TUSS e CID-10, e valide arquivos XML do Padrão TISS antes de enviar — gratuito, sem cadastro. Reduza glosas conferindo cada valor antes de faturar.">
+<meta name="description" content="Consulte CBHPM, SUS/SIGTAP, TUSS e CID-10, e valide arquivos XML do Padrão TISS antes de enviar — gratuito, sem cadastro. Reduza glosas conferindo cada valor antes de faturar. Portal em expansão para farmácia clínica e enfermagem.">
 <meta name="robots" content="index, follow">
 <link rel="canonical" href="/">
 <meta property="og:type" content="website">
 <meta property="og:title" content="Argus Fatura — Confira CBHPM, SIGTAP e TISS antes de faturar">
-<meta property="og:description" content="Consulte CBHPM, SUS/SIGTAP, TUSS e CID-10, e valide arquivos XML do Padrão TISS antes de enviar — gratuito, sem cadastro.">
+<meta property="og:description" content="Consulte CBHPM, SUS/SIGTAP, TUSS e CID-10, e valide arquivos XML do Padrão TISS antes de enviar — gratuito, sem cadastro. Portal em expansão para farmácia clínica e enfermagem.">
 <meta property="og:locale" content="pt_BR">
 <meta name="twitter:card" content="summary">
 <script type="application/ld+json">
@@ -139,6 +139,25 @@
   .why-card h3 { font-size: 1.02rem; margin: 0 0 8px; color: #fff; font-weight: 700; }
   .why-card p { color: #94A3B8; font-size: 0.9rem; line-height: 1.55; margin: 0; }
 
+  /* ---------- Crescimento / roadmap ---------- */
+  .roadmap { max-width: 1180px; margin: 0 auto; padding: 64px 24px; }
+  .roadmap-head { max-width: 62ch; margin-bottom: 36px; }
+  .roadmap-head .eyebrow { margin-bottom: 12px; }
+  .roadmap-head h2 { font-size: 1.7rem; margin: 0 0 10px; font-weight: 800; letter-spacing: -0.01em; }
+  .roadmap-head p { color: var(--ink-soft); line-height: 1.6; margin: 0; }
+  .roadmap-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .roadmap-card {
+    background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--cyan);
+    border-radius: 12px; padding: 24px;
+  }
+  .roadmap-badge {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase;
+    color: var(--blue); background: var(--blue-tint); display: inline-block;
+    padding: 4px 10px; border-radius: 999px; margin-bottom: 14px;
+  }
+  .roadmap-card h3 { font-size: 1.15rem; margin: 0 0 8px; font-weight: 800; }
+  .roadmap-card p { font-size: 0.92rem; color: var(--ink-soft); line-height: 1.6; margin: 0; }
+
   /* ---------- Features ---------- */
   .features { max-width: 1180px; margin: 0 auto; padding: 64px 24px; }
   .section-head { max-width: 60ch; margin-bottom: 40px; }
@@ -189,7 +208,7 @@
 
   @media (max-width: 860px) {
     .hero { grid-template-columns: 1fr; padding-top: 40px; }
-    .why-grid, .feature-grid { grid-template-columns: 1fr; }
+    .why-grid, .feature-grid, .roadmap-grid { grid-template-columns: 1fr; }
     .trust-inner { grid-template-columns: 1fr; }
     .stat-row { grid-template-columns: repeat(2, 1fr); }
     .ecosystem { max-width: 320px; }
@@ -207,11 +226,11 @@
 
 <section class="hero">
   <div>
-    <span class="eyebrow">Apoio ao faturamento em saúde</span>
+    <span class="eyebrow">Referência para faturamento e cuidado em saúde</span>
     <h1>Cada valor conferido <em>antes</em> de virar glosa.</h1>
     <p class="hero-sub">
-      Um lugar só para consultar CBHPM, SUS/SIGTAP, TUSS e TISS — e cruzar tudo isso
-      antes de enviar a guia. Menos retrabalho, menos glosa, mais confiança no valor que você faturou.
+      Comece pelo faturamento: CBHPM, SUS/SIGTAP, TUSS e TISS num só lugar, cruzados
+      antes de enviar a guia. E acompanhe o portal <a href="#crescimento" style="color: var(--blue); font-weight: 600; text-decoration: none; border-bottom: 1.5px solid var(--blue-tint);">crescendo para apoiar farmácia clínica e enfermagem</a> — sempre com o mesmo compromisso: informação de fonte oficial, sem interpretação própria.
     </p>
     <div class="hero-ctas">
       <a class="btn-primary" href="index.html">Visite o site</a>
@@ -312,11 +331,45 @@
   </div>
 </section>
 
+<section class="roadmap" id="crescimento">
+  <div class="roadmap-head">
+    <span class="eyebrow">Pra onde o portal está indo</span>
+    <h2>De apoio ao faturamento a apoio a quem cuida.</h2>
+    <p>
+      O Argus Fatura nasceu pra conferir valor antes de virar glosa. Agora está
+      crescendo pra apoiar outros profissionais da saúde — sempre com o mesmo
+      compromisso de sempre: só conteúdo de fonte oficial, sem gerar interpretação
+      ou orientação clínica própria.
+    </p>
+  </div>
+  <div class="roadmap-grid">
+    <div class="roadmap-card">
+      <span class="roadmap-badge">Chegando em outubro/2026</span>
+      <h3>Farmácia clínica</h3>
+      <p>
+        Medicamentos de alta vigilância e potencialmente perigosos, o protocolo
+        oficial de segurança na prescrição, uso e administração de medicamentos, e
+        segurança do trabalhador em saúde (NR-32) — direto do ISMP Brasil, do
+        Ministério da Saúde e da ANVISA.
+      </p>
+    </div>
+    <div class="roadmap-card">
+      <span class="roadmap-badge">Chegando em novembro/2026</span>
+      <h3>Enfermagem</h3>
+      <p>
+        Atribuições legais da profissão, os protocolos de segurança do paciente do
+        Ministério da Saúde (cirurgia segura, prevenção de quedas, identificação do
+        paciente e mais) e o protocolo de sepse do ILAS.
+      </p>
+    </div>
+  </div>
+</section>
+
 <section class="features" id="recursos">
   <div class="section-head">
-    <span class="eyebrow">O que tem no portal</span>
+    <span class="eyebrow">O que já tem no portal hoje</span>
     <h2 id="features-titulo">Formas de conferir antes de enviar</h2>
-    <p>Cada ferramenta resolve uma dúvida específica do dia a dia de quem fatura — da consulta simples de um código até a validação completa de um lote de XML.</p>
+    <p>Cada ferramenta resolve uma dúvida específica do dia a dia de quem fatura — da consulta simples de um código até a validação completa de um lote de XML. As ferramentas de farmácia e enfermagem entram aqui assim que forem lançadas.</p>
   </div>
   <div class="feature-grid" id="feature-grid"></div>
 </section>
@@ -327,6 +380,7 @@
       <h2>Os dados vêm das fontes oficiais</h2>
       <p>O portal organiza e cruza informação pública — não substitui a documentação oficial, e não é um validador certificado pela ANS. Em caso de dúvida sobre um caso específico, a palavra final é sempre da operadora ou do órgão competente.</p>
       <p>Nada do que você consulta ou dos arquivos XML que você confere é enviado a servidor nenhum além do necessário para a própria consulta — o validador de TISS, por exemplo, roda inteiramente no seu navegador.</p>
+      <p>O mesmo princípio vale pros módulos de farmácia e enfermagem que estão chegando: fonte oficial (ANVISA, Ministério da Saúde, ISMP Brasil, ILAS) citada e datada, sem interpretação clínica do portal.</p>
     </div>
     <div class="trust-sources">
       <div class="source-item"><span class="stag">AMB</span><span class="sdesc">Associação Médica Brasileira — publicadora oficial da CBHPM</span></div>
