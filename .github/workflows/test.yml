@@ -15,6 +15,26 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm test
+      - run: npm run lint
+      - name: Rodar testes e gerar relatório
+        run: |
+          set +e
+          npm test > /tmp/resultado-testes.txt 2>&1
+          RESULTADO=$?
+          set -e
+
+          if [ $RESULTADO -eq 0 ]; then
+            echo "## ✅ Testes passaram" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "## ❌ Testes falharam" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          cat /tmp/resultado-testes.txt >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+          cat /tmp/resultado-testes.txt
+          exit $RESULTADO
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          NO_COLOR: "1"

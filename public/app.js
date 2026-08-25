@@ -454,7 +454,7 @@ if (indicadorSelectEl) {
   function renderizarComparacaoIndicador(indicador, periodo, meuValor, benchmark) {
     const diferenca = meuValor - benchmark;
     const diferencaPct = benchmark !== 0 ? (diferenca / Math.abs(benchmark)) * 100 : null;
-    let veredito = '';
+    let veredito;
     let corVeredito = 'var(--ink-soft)';
     if (indicador.sentido === 'menor') {
       veredito = diferenca <= 0 ? '✅ Melhor que o benchmark' : '⚠️ Pior que o benchmark';
@@ -4919,7 +4919,7 @@ function renderizarProtocoloDac(proto) {
     </details>`;
 }
 
-function renderizarDemonstrativoDac(dem, nomeArquivo) {
+function renderizarDemonstrativoDac(dem) {
   const pctGlosa = dem.valorInformadoGeral > 0 ? (dem.valorGlosaGeral / dem.valorInformadoGeral) * 100 : 0;
   return `
     <div class="edicao-card" style="margin-bottom:12px;">
@@ -4956,7 +4956,7 @@ async function renderizarResultadosDac(resultados) {
       }
       return `<div style="margin-bottom:24px;">
         <p class="ajustes-nota" style="margin:0 0 8px;font-family:var(--mono);font-size:0.72rem;">${escaparHtml(r.nomeArquivo)}</p>
-        ${r.demonstrativos.map((dem) => renderizarDemonstrativoDac(dem, r.nomeArquivo)).join('')}
+        ${r.demonstrativos.map((dem) => renderizarDemonstrativoDac(dem)).join('')}
       </div>`;
     })
     .join('');
