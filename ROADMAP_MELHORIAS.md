@@ -1077,6 +1077,60 @@ de saúde" abaixo) — pesquisa já concluída, só falta escrever/publicar o it
 Esforço baixo, sem dependência de outro item; primeira sexta de ajuste livre depois
 do pacote de 04/09.
 
+**Também em 11/09/2026 — FAQ: assinatura digital vs. assinatura eletrônica**: item
+novo de conteúdo, pedido do usuário (26/08/2026, "acha válido falar sobre assinatura
+digital no FAQ?") — avaliação: **válido e direto ligado ao core do portal** (TISS
+exige assinatura nas guias/documentos trocados), diferente de atestado/receituário/
+"lei do atestado", que ficam fora por serem prática clínica em si, fora do escopo de
+conferência de faturamento (mesmo critério da expansão farmácia/enfermagem: conteúdo
+de referência, não orientação clínica/legal de terceiros). **[Alta]** — esforço baixo
+(só texto, sem feature nova), pesquisa já concluída, sem decisão de escopo pendente.
+Mesma categoria que o item NOTIVISA acima (conteúdo transversal, cabe numa sexta de
+ajuste comum, não precisa esperar a 1ª sexta do mês).
+
+- Vai na sub-aba **TISS / TUSS** do FAQ (`faqtab-tiss`), que já tem o padrão de item
+  com `faq-portal-link` apontando pro Validador de XML TISS.
+- **Pesquisa (26/08/2026)**, fontes primárias — Medida Provisória 2.200-2/2001 (cria a
+  ICP-Brasil), Lei 14.063/2020 e o Padrão TISS — Componente Organizacional (versão
+  maio/2026, baixado de gov.br/ans):
+  - **Assinatura eletrônica** é o termo genérico (Lei 14.063/2020): três tipos com
+    validade jurídica — simples, avançada e qualificada — variando o grau de certeza
+    sobre a identidade de quem assina.
+  - **Assinatura digital ICP-Brasil** é o tipo qualificado: usa certificado emitido
+    por Autoridade Certificadora credenciada à ICP-Brasil (MP 2.200-2/2001),
+    criptografia assimétrica, presunção legal de autenticidade (art. 10 da MP).
+  - **No TISS não é qualquer assinatura eletrônica que vale** — o Componente
+    Organizacional (itens 23-24) veda a operadora aceitar substituto em papel do que
+    é trocado eletronicamente com certificado ICP-Brasil, e exige que esse
+    certificado seja do tipo **e-CNPJ** (instituição) ou **e-CPF** (quando o agente
+    atua como pessoa física) — não serve assinatura eletrônica simples/avançada.
+  - **Achado novo, versão maio/2026** (mudança recente, vale destacar no FAQ): a
+    assinatura da mensagem "Envio de Documentos" passou de **Condicionado** (só
+    quando o tipo de documento exigia, conforme Tabela de Domínio 81) para
+    **Obrigatório**, independente do tipo de documento — reforça que o padrão está
+    ficando mais rígido nesse ponto, não mais permissivo.
+  - **Requisitos técnicos** (contexto pra quem desenvolve/audita o gerador de XML,
+    não pro usuário final): padrão XAdES formato "Enveloped", política AD-RB
+    (DOC-ICP-15.03 v6.1), certificado ICP-Brasil de assinatura tipo A1 a A4,
+    propriedade XMLDSIG/XAdES `SigningTime`, validação de cadeia de certificação e
+    estado de revogação (LCR ou OCSP) na geração e na recepção.
+  - **Conexão com o que o portal já faz**: os 6 XSDs oficiais usados na validação
+    estrutural (Fase 6c) incluem `tissAssinaturaDigital_v1.01.xsd` e
+    `xmldsig-core-schema.xsd` — o Validador de XML TISS já confere a **estrutura**
+    do bloco de assinatura quando presente no arquivo. Precisa deixar explícito no
+    FAQ (mesmo padrão de ressalva usado no resto do portal) que isso **não é**
+    verificação da validade criptográfica da assinatura em si (exigiria acesso à
+    chave privada/cadeia de certificação, que o navegador não tem) — não substitui a
+    validação feita pela operadora receptora.
+  - Fontes: [MP 2.200-2/2001](https://www.planalto.gov.br/ccivil_03/mpv/antigas_2001/2200-2.htm),
+    Lei 14.063/2020, [Padrão TISS — Componente Organizacional, maio/2026](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/PadroTISS_ComponenteOrganizacional_202605.pdf)
+    (itens 23-24, 146-149, mudanças 8.25/8.27/8.31/8.32 do changelog da própria
+    versão).
+- **Fora do escopo, por decisão de critério (não é indecisão, é corte
+  deliberado)**: atestado médico/"lei do atestado", receituário — são prática
+  clínica/legal de terceiros, não faturamento; entrariam em conflito com o critério
+  já fixado de "referência, sem interpretação" da expansão farmácia/enfermagem.
+
 **Também em 11/09/2026 — infra: ativar CodeQL** (decisão do usuário, 21/08/2026):
 varredura automática de segurança de código, programada pra exatamente uma semana
 depois da entrega de CIHA/DMED (04/09) — código novo de parsing de arquivo de
