@@ -34,9 +34,10 @@ const pool = new Pool({
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
   'Organização por tipo de faturamento (SUS x operadoras) nas perguntas de rejeição/validação',
-  'Ajustes de exibição em telas menores (celular/tablet)',
   'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
   'Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial)',
+  'Validador de arquivo DMED (Declaração de Serviços Médicos e de Saúde)',
+  'Tabela de Compatibilidade entre Procedimentos SIGTAP',
 ];
 
 // Versão atual do portal, histórico de mudanças e o que está sendo avaliado

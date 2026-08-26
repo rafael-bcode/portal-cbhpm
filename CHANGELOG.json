@@ -1,5 +1,12 @@
 [
   {
+    "versao": "2.12.1",
+    "data": "2026-08-26",
+    "mudancas": [
+      "Corrige a seção 'Em breve' do modal de versão: remove 'Ajustes de exibição em telas menores (celular/tablet)' (a investigação de 21/08/2026 concluiu que nenhuma correção era necessária) e adiciona 'Validador de arquivo DMED' e 'Tabela de Compatibilidade entre Procedimentos SIGTAP' (ambos já com escopo fechado e agendados pra 04/09/2026, mesmo critério já usado pro CIHA)."
+    ]
+  },
+  {
     "versao": "2.12.0",
     "data": "2026-08-21",
     "mudancas": [

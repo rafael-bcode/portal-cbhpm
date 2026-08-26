@@ -380,6 +380,64 @@ pode não se confirmar. Atualizar essa lista só com itens realmente em
 avaliação — lista vazia é melhor que item furado (o array já suporta
 ficar vazio, a seção some da tela nesse caso).
 
+### Fluxo das 3 sextas (oficializado em 26/08/2026)
+
+Processo proposto pelo usuário em 26/08/2026 pra dar visibilidade de 3 sextas à
+frente em vez de organizar tudo em cima da hora. Toda sexta-feira de release, três
+ações rodam juntas, cada uma mirando uma semana diferente do calendário:
+
+1. **Subir (deploy)** o que está programado no "Calendário planejado" pra **esta
+   sexta** (a mais próxima) — **e atualizar `proximosPassos` em `server.js`** (a
+   seção "Em breve" do modal de versão) no mesmo commit: remover os itens que
+   acabaram de ir pro ar, e conferir se algum candidato com escopo já fechado pra
+   uma sexta próxima (mesmo critério já usado pro CIHA — "não é Baixa prioridade,
+   tem escopo fechado") ainda não está listado.
+2. **Colocar em teste** o que está programado pra **daqui a 1 semana** (a próxima
+   sexta) — só é possível pros itens que já estão com escopo fechado e código
+   pronto pra essa etapa; segue o mesmo padrão já usado no pacote de 28/08
+   (implementado e testado com uma semana de antecedência).
+3. **Pesquisar novidade** sobre o que está programado pra **daqui a 2 semanas** (a
+   sexta seguinte) — só relevante pra item que **já tem pesquisa-base registrada**
+   no roadmap (ex.: assinatura digital, glosa estrutural, CIHA); pra candidato sem
+   nenhuma pesquisa prévia, essa etapa vira "primeira pesquisa" em vez de
+   "atualização", e normalmente já deveria ter sido feita antes de virar candidato.
+
+**Exemplo de aplicação (sexta 28/08/2026)**:
+1. Sobe o pacote já pronto de 28/08 (sub-abas SUS/ANS, passada mobile, data do
+   dicionário de glosas, acessibilidade).
+2. Coloca em teste o pacote de 04/09 (CIHA, DMED, Compatibilidade SIGTAP).
+3. Pesquisa se surgiu algo novo sobre os itens de 11/09 (NOTIVISA, assinatura
+   digital, CodeQL).
+
+**Why:** o fluxo evita duas armadilhas já discutidas no roadmap — item chegando
+sem teste numa sexta (pressão de calendário, ver "Sem cota fixa" acima) e pesquisa
+desatualizada virando texto publicado sem checar se a norma mudou (ver o próprio
+caso de assinatura digital, onde a versão de maio/2026 do TISS trouxe mudança
+recente que só apareceu porque a pesquisa foi feita perto da implementação).
+Formaliza como rotina o que já vinha acontecendo de forma pontual.
+
+**Achado concreto que motivou incluir `proximosPassos` no passo 1 (26/08/2026)**:
+numa checagem pedida pelo usuário, achei duas falhas na lista "Em breve" — o item
+"Ajustes de exibição em telas menores" continuava listado mesmo depois da
+investigação de 21/08/2026 ter concluído que **nenhuma correção era necessária**
+(nada ia realmente mudar pro usuário quando 28/08 subisse), e DMED/Compatibilidade
+SIGTAP (ambos com escopo fechado, agendados pra 04/09, mesmo critério já usado pro
+CIHA) **não estavam** na lista — pura omissão. Corrigido nesta mesma sessão. Sem um
+passo formal de "atualizar a lista ao subir", esse tipo de esquecimento tende a se
+repetir a cada sexta.
+
+**How to apply:**
+- Ao preparar a pauta de qualquer sexta, verificar as três janelas (esta semana,
+  +1 semana, +2 semanas) antes de decidir o que fazer no dia.
+- Item sem escopo fechado não entra na etapa 2 (teste) mesmo que a data esteja
+  próxima — só entra quando o escopo fechar, ainda que isso empurre a data.
+- No passo 1 (subir), sempre revisar `proximosPassos`: remover o que acabou de ir
+  pro ar, remover item cuja investigação concluiu "sem correção necessária" (não
+  promete algo que não vai acontecer), e adicionar candidato novo com escopo
+  fechado pra sexta próxima que ainda não esteja listado.
+- Item sem pesquisa-base não entra na etapa 3 como "atualização" — some da lista
+  até ter uma primeira pesquisa registrada como candidato.
+
 ### Mapeamento pra próxima sexta (21/08/2026) — feito em 14/08/2026
 
 Os dois itens da pauta inicial já foram resolvidos na própria sessão de
