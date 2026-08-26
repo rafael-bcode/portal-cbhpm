@@ -3034,8 +3034,8 @@ function renderizarGuiaTiss(g, indice) {
     : '';
 
   const resumoPartes = [
-    qtdItens > 0 ? `${qtdItens} item${qtdItens === 1 ? '' : 'ns'}` : '',
-    qtdProfissionais > 0 ? `${qtdProfissionais} profissional${qtdProfissionais === 1 ? '' : 'is'}` : '',
+    qtdItens > 0 ? `${qtdItens} ${qtdItens === 1 ? 'item' : 'itens'}` : '',
+    qtdProfissionais > 0 ? `${qtdProfissionais} ${qtdProfissionais === 1 ? 'profissional' : 'profissionais'}` : '',
   ].filter(Boolean);
 
   return `
