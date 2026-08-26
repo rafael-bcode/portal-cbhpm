@@ -1086,6 +1086,56 @@ desenvolvimento; não compete com o item de FAQ do mesmo dia. Tracking:
 [Issue #12](https://github.com/rafael-bcode/portal-cbhpm/issues/12), milestone
 "11/09 — FAQ NOTIVISA".
 
+**18/09/2026 (sexta de ajuste) — Sinalização de risco de glosa estrutural no
+Validador de XML TISS**: pedido do usuário (26/08/2026, "vamos mapear tudo que possa
+auxiliar o faturista a identificar possíveis glosas que não estejam relacionadas a
+contrato") — escopo explicitamente fechado pelo usuário: só **estrutura,
+compatibilidade e falta de informação** derivável do próprio XML TISS padrão ANS +
+bases que o portal já tem; nada de tabela negociada/contrato prestador-operadora
+(decisão já fixada na Fase 3) nem pertinência clínica (julgamento médico, fora do
+critério de "referência, sem interpretação" adotado na expansão farmácia/enfermagem).
+Só ANS/TISS por ora — SUS fica de fora desta rodada, mas o mesmo raciocínio pode valer
+pros validadores BPA/AIH/APAC depois, como frente separada.
+
+É **ajuste do Validador de XML TISS que já existe** (não feature nova — não cria
+validador novo nem tabela nova), então não precisa esperar a 1ª sexta do mês. Marca
+cada achado como **⚠ "possível risco de glosa"**, nunca como erro certo — mesmo
+padrão de linguagem cautelosa já usado no resto do validador — porque sempre existe
+caso legítimo de exceção (ex.: "Consultor" numa cirurgia complexa é válido).
+
+- **[Alta] Consistência interna do próprio XML** (sem depender de nenhuma base
+  externa nova, só reforçar o parsing que já existe):
+  - Datas incoerentes: execução fora do intervalo admissão→alta; autorização
+    posterior à execução; alta anterior à admissão.
+  - Duplicidade de item: mesmo código + mesma data + mesma via de acesso/lateralidade
+    repetido na guia sem diferença aparente.
+  - Quantidade de diária maior que os dias entre admissão e alta.
+  - Mais de um grau "Cirurgião" (00) no mesmo procedimento (só pode haver um pela
+    norma — os demais deveriam ser Auxiliar).
+  - Taxa/diária de sala ou centro cirúrgico sem nenhum procedimento cirúrgico na
+    mesma guia.
+- **[Média] Grau de participação × natureza cirúrgica do procedimento** (o exemplo
+  que motivou o item): cruza o grau de participação (Tabela de Domínio 35) de cada
+  profissional do item contra `valores_procedimento` (mesma base que já alimenta a
+  calculadora de Múltiplos Procedimentos) — **regra validada em 26/08/2026 direto no
+  banco de produção**: `porte_anestesico IS NOT NULL AND porte_anestesico <> '0'` OU
+  `numero_auxiliares > 0` separa corretamente os ~2.476 códigos genuinamente
+  cirúrgicos (ex.: 30205069 Amigdalectomia lingual, 30731208 Tenotomia) dos ~2.401
+  não-cirúrgicos (ex.: 10102027 Visita/consulta hospitalar, 10106170 Consulta
+  ocupacional — ambos com `porte_anestesico null` e `numero_auxiliares 0`). Sinaliza
+  quando um procedimento cirúrgico não tem nenhum profissional em grau "Cirurgião"
+  (00), ou quando um procedimento sem porte cirúrgico/anestésico tem alguém em grau
+  "Cirurgião" lançado. Esforço médio: a lógica em si é simples, o cuidado maior é
+  redigir o texto de alerta pra não soar como acusação de erro certo.
+- **Pesquisado e não localizado (26/08/2026) — não é candidato por ora**:
+  compatibilidade procedimento×CID e procedimento×OPME do lado TUSS/ANS, equivalente
+  ao que o SIGTAP tem (`rl_procedimento_cid`, `rl_procedimento_compativel`, já usados
+  nas Fases 8 e no candidato de 04/09). Busca não achou uma tabela pública
+  estruturada nesse sentido — só a "Tabela de Compatibilização TUSS-SIP", que serve
+  outro propósito (mapear código TUSS pro item de envio obrigatório ao SIP da ANS,
+  não compatibilidade clínica procedimento-CID). Fica de fora até aparecer fonte
+  melhor — revisitar se o usuário achar/tiver acesso a algo assim futuramente.
+
 **02/10/2026 (1ª sexta de outubro) — Fase 10: Farmácia (segurança do paciente e do
 trabalhador)**: **decisão do usuário em 20/08/2026** — data fechada pra essa entrega
 específica (não é só uma sinalização de overflow como o resto de setembro). Entre
