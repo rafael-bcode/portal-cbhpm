@@ -1905,3 +1905,69 @@ validar esse campo. Vale checar o changelog do Padrão TISS (ANS) nas
 próximas rodadas de revisão.
 
 Fontes: [Gazeta do Povo — Nova Carteira de Identidade (CIN)](https://www.gazetadopovo.com.br/brasil/cin-obrigatoria-saiba-como-emitir-e-o-que-muda-na-sua-identificacao/), [Alerta Gov — cronograma de transição CIN até 2032](https://alertagov.com.br/2026/04/ate-2032-todos-os-brasileiros-deverao-possuir-a-cin-veja-o-cronograma-de-transicao/), [Correio do Pantanal — CPF substitui número do Cartão SUS](https://correiodopantanal.com.br/cpf-substitui-numero-do-cartao-sus-e-passa-a-ser-identificador-unico-dos-usuarios-da-saude-publica/), [ANS — Cartão Nacional de Saúde](https://www.ans.gov.br/index.php/a-ans/sala-de-noticias-ans/consumidor/1819-cartao-nacional-de-saude-uma-realidade-para-todos-os-brasileiros), [M3BS Advogados — ANS divulga nova versão do Padrão TISS (jan/2026)](https://m3bs.com.br/ans-divulga-nova-versao-do-padrao-tiss-janeiro-2026/), [Padrão TISS — Julho/2026 (gov.br/ans)](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-julho-2026)
+
+## Observação (sem previsão de entrega): Logo da operadora na busca de Operadoras ANS
+
+Pedido do usuário (27/08/2026): na tela de busca de Operadoras ANS (aba
+Verificadores), trazer a logo da operadora pra download junto do card de
+resultado (registro, razão social, CNPJ, endereço, contato).
+
+**Verificado no mesmo dia**: a fonte oficial usada por essa tela
+(`Relatorio_cadop.csv` da ANS, ver [create-tabela-operadoras-ans.sql](create-tabela-operadoras-ans.sql)
+e [operadoras-atualizador.js](operadoras-atualizador.js)) não tem campo de
+logo — só dado cadastral (CNPJ, razão social, endereço, contato). Não existe
+API pública da ANS que sirva logo de operadora.
+
+**Único caminho encontrado, e por que não é candidato ainda**: heurística de
+extrair o domínio do e-mail cadastrado e buscar o favicon via serviço de
+terceiro (ex.: `google.com/s2/favicons`) — sem custo, mas com dois problemas
+que travam a decisão: (1) cobertura desigual, muita operadora pequena/
+cooperativa não tem e-mail com domínio próprio identificável; (2) um botão de
+**download** redistribui a marca de ~1.100 empresas privadas sem autorização
+— questão de marca registrada, diferente de só exibir o ícone. Precisaria de
+uma etapa de pesquisa antes (checar % de cobertura real e decidir "exibir" vs
+"baixar") — mesmo padrão já usado antes de CIHA/DMED virarem candidato de
+verdade.
+
+**Decisão do usuário (27/08/2026)**: registrar a solicitação e deixar de lado
+por ora, sem entrar no calendário planejado nem na lista "Em breve" do
+portal.
+
+**O que observar pra virar candidato de verdade**: alguém rodar a pesquisa de
+cobertura (quantas das ~1.115 operadoras têm e-mail com domínio próprio
+utilizável) e uma decisão de escopo entre "exibir" (mais defensável) e
+"baixar" (redistribuição, mais exposto).
+
+## Observação (sem previsão de entrega): Status de deploy do Render visível no GitHub
+
+Pergunta do usuário (27/08/2026), depois de configurar acesso de leitura à API do
+Render (ver [[project_deploy_render]]): dá pra centralizar no GitHub a informação de
+"qual deploy foi feito, de qual commit/PR, com qual status" em vez de precisar
+perguntar?
+
+**Verificado no mesmo dia, direto na API do Render**
+(`GET /v1/services/srv-d9qrns1t0dsc738jmqcg`): o Render **não** escreve
+status/check de volta pro GitHub pra esse tipo de serviço (web service comum) — só
+faz isso pra "Preview Environments" de PR (`pullRequestPreviewsEnabled`), que está
+desligado nesse serviço. Não é limitação de acesso — a plataforma simplesmente não
+tem esse retorno automático pra web service fora do fluxo de preview.
+
+**Duas opções levantadas**:
+1. **Sem construir nada** (❤ escolhida em 27/08/2026, ver decisão abaixo): o Render
+   já marca cada deploy com o SHA exato do commit — como já existe acesso de leitura
+   à API (`GET /v1/services/{id}/deploys`), a informação já pode ser consultada e
+   cruzada com o `git log`/número da PR a qualquer momento, sob demanda. Zero
+   manutenção, zero peça nova.
+2. **GitHub Deployments de verdade**: um workflow do GitHub Actions, disparado a
+   cada push em `main`, que consulta a API do Render e cria um GitHub Deployment
+   (apareceria na aba "Environments" do repo e como link "View deployment" na
+   própria PR). Exigiria: `RENDER_API_KEY` como GitHub Secret (separado do `.env`
+   local), um workflow novo, e manutenção contínua — mais uma peça que pode quebrar.
+
+**Decisão do usuário (27/08/2026)**: manter a opção 1 por ora (consulta sob demanda,
+sem nada novo no GitHub). Registrar a opção 2 documentada, caso o usuário queira
+visibilidade direto na tela do GitHub/PR no futuro sem precisar perguntar.
+
+**O que observar pra reconsiderar**: se a consulta sob demanda começar a incomodar
+(esquecimento de checar, ou querer ver isso de relance sem perguntar), a opção 2 já
+está especificada acima, pronta pra implementar sem pesquisa adicional.
