@@ -7248,7 +7248,7 @@ async function cihaCrossCheck(linhas) {
   return {
     sigtapPorCodigo: new Map(sigtapLista.map((r) => [r.codigo, r])),
     cidValidos: new Set((Array.isArray(cidResp) ? cidResp : []).map((r) => r.codigo)),
-    cnesEncontrados: new Set((Array.isArray(cnesResp) ? cnesResp : []).map((r) => r.codigo_cnes)),
+    cnesEncontrados: new Map((Array.isArray(cnesResp) ? cnesResp : []).map((r) => [r.codigo_cnes, r.razao_social])),
     operadorasEncontradas: new Set((Array.isArray(operadorasResp) ? operadorasResp : []).map((r) => r.registro_ans)),
     procedimentosComCid: new Set(sigtapLista.filter((r) => r.tem_cid_vinculado).map((r) => r.codigo)),
   };
@@ -7282,6 +7282,7 @@ function cihaValidarArquivo(analise, ctx) {
 
 const CIHA_LIMITE_EXIBICAO = 200;
 let cihaUltimoResultado = [];
+let cihaUltimoContexto = { analises: [], ctx: {} };
 
 function cihaLinhaValidador(item) {
   const icone = item.severidade === 'erro' ? '✘' : '⚠';
@@ -7340,12 +7341,54 @@ function renderizarResultadoCiha(resultados) {
           }
           <div style="margin:14px 16px 0;">
             <button type="button" class="acao-btn btn-ciha-exportar" data-arquivo="${escaparHtml(r.nomeArquivo)}">⬇ Exportar CSV das linhas com problema</button>
+            <button type="button" class="acao-btn btn-ciha-pdf" data-arquivo="${escaparHtml(r.nomeArquivo)}">🖨 Gerar PDF de conferência</button>
           </div>
         </div>
       </div>`;
   }).join('');
 
   cihaResultadoAreaEl.innerHTML = html;
+}
+
+function cihaLinhasRelatorio(nomeArquivo) {
+  const analise = cihaUltimoContexto.analises.find((a) => a.nomeArquivo === nomeArquivo);
+  const resultado = cihaUltimoResultado.find((r) => r.nomeArquivo === nomeArquivo);
+  if (!analise || !resultado) return null;
+  const ctx = cihaUltimoContexto.ctx;
+  const problemasPorOrdinal = new Map((resultado.linhasComProblema || []).map((l) => [l.ordinal, l]));
+
+  const linhas = (analise.linhas || []).map((l, i) => {
+    const c = l.campos;
+    const sig = ctx.sigtapPorCodigo && ctx.sigtapPorCodigo.get(c.coProcedimento);
+    const qtd = Number(c.qtAtendimento) || 0;
+    // Modalidade 02 (hospitalar) usa componente hospitalar (SH); ambulatorial
+    // (01) e consolidado (sem modalidade) usam o ambulatorial (SA) — mesmo
+    // critério já usado nos Validadores AIH (SH) e BPA/APAC (SA).
+    const valorUnit = sig ? (c.coModalidade === '02' ? Number(sig.vl_sh) || 0 : Number(sig.vl_sa) || 0) + (Number(sig.vl_sp) || 0) : null;
+    const problema = problemasPorOrdinal.get(l.ordinal);
+    const individualizado = c.tpAtendimento === 'I';
+    const nomeBruto = individualizado && analise.linhasBrutas ? cihaExtrairBruto(analise.linhasBrutas[i], 'noPaciente').trim() : '';
+    return {
+      chave: individualizado ? (nomeBruto || `linha ${l.ordinal}`) : `Consolidado (linha ${l.ordinal})`,
+      tipo: individualizado ? 'CIHA-I' : 'CIHA-C', codigo: c.coProcedimento,
+      descricao: (sig && sig.nome) || '(não encontrado na SIGTAP)', quantidade: qtd,
+      valorUnit, valorTotal: valorUnit !== null ? valorUnit * qtd : null,
+      status: problema ? (problema.erros.length ? 'erro' : 'aviso') : 'ok',
+      problemas: problema ? [...problema.erros, ...problema.avisos] : [],
+      paciente: individualizado ? nomeBruto : undefined,
+      cns: individualizado ? c.nuCns : undefined,
+    };
+  });
+
+  const primeiraCnes = analise.linhas[0]?.campos.coCnes;
+  const primeiraCompetencia = analise.linhas[0]?.campos.dtCmpt;
+  return {
+    titulo: 'Validador CIHA', nomeArquivo, colunaChave: 'Paciente',
+    instituicao: (ctx.cnesEncontrados && ctx.cnesEncontrados.get(primeiraCnes)) || '—',
+    cgcCpf: primeiraCnes ? `CNES ${primeiraCnes}` : '',
+    competencia: primeiraCompetencia ? `${primeiraCompetencia.slice(4, 6)}/${primeiraCompetencia.slice(0, 4)}` : '',
+    linhas, formulaValor: 'SH + SP (hospitalar) ou SA + SP (ambulatorial/consolidado)', agruparPorPaciente: true,
+  };
 }
 
 function exportarCihaCsv(nomeArquivo) {
@@ -7374,6 +7417,7 @@ async function processarArquivosCiha(files) {
     }
     const todasLinhas = analises.flatMap((a) => a.linhas || []);
     const ctx = await cihaCrossCheck(todasLinhas);
+    cihaUltimoContexto = { analises, ctx };
     renderizarResultadoCiha(analises.map((analise) => cihaValidarArquivo(analise, ctx)));
   } catch (err) {
     console.error(err);
@@ -7390,6 +7434,8 @@ if (cihaArquivoEl) {
 document.getElementById('ciha-resultado-area')?.addEventListener('click', (e) => {
   const btnCsv = e.target.closest('.btn-ciha-exportar');
   if (btnCsv) exportarCihaCsv(btnCsv.dataset.arquivo);
+  const btnPdf = e.target.closest('.btn-ciha-pdf');
+  if (btnPdf) gerarPdfValidacao(cihaLinhasRelatorio(btnPdf.dataset.arquivo));
 });
 
 // ---------- Validador DMED ----------
@@ -7534,6 +7580,7 @@ async function dmedCrossCheck(analises) {
 }
 
 let dmedUltimoResultado = [];
+let dmedUltimoContexto = { analises: [] };
 
 function dmedLinhaValidador(item) {
   const icone = item.severidade === 'erro' ? '✘' : '⚠';
@@ -7577,12 +7624,94 @@ function renderizarResultadoDmed(resultados) {
           }
           <div style="margin:14px 16px 0;">
             <button type="button" class="acao-btn btn-dmed-exportar" data-arquivo="${escaparHtml(r.nomeArquivo)}">⬇ Exportar CSV dos problemas</button>
+            <button type="button" class="acao-btn btn-dmed-pdf" data-arquivo="${escaparHtml(r.nomeArquivo)}">🖨 Gerar PDF de conferência</button>
           </div>
         </div>
       </div>`;
   }).join('');
 
   dmedResultadoAreaEl.innerHTML = html;
+}
+
+// Relatório dedicado (não reaproveita montarRelatorioValidacaoHtml): a Dmed
+// não é procedimento×quantidade×valor-de-tabela como BPA/AIH/APAC/CIHA — é
+// um valor já declarado no próprio arquivo, então "valor estimado com base
+// na SIGTAP" não se aplica. Mostra o valor exatamente como veio no arquivo,
+// com aviso explícito de que a unidade (reais ou centavos) não pôde ser
+// confirmada — não temos o leiaute oficial em texto pra afirmar isso (ver
+// nota no topo do Validador DMED).
+function montarRelatorioDmedHtml(dados) {
+  const qtdErros = dados.beneficiarios.filter((b) => b.status === 'erro').length;
+  const qtdAvisos = dados.beneficiarios.filter((b) => b.status === 'aviso').length;
+  const declarantesHtml = dados.declarantes.map((d) => `
+    <span>Declarante: <b>${escaparHtml(d.razaoSocial || '—')}</b> — CNPJ ${escaparHtml(d.cnpj || '—')}${d.cnes ? ` — CNES ${escaparHtml(d.cnes)}` : ''}${d.registroAns ? ` — Registro ANS ${escaparHtml(d.registroAns)}` : ''}</span>`).join('');
+
+  const linhasHtml = dados.beneficiarios.map((b) => `
+    <tr>
+      <td class="detail">${escaparHtml(b.cpf)}</td>
+      <td>${escaparHtml(b.nome || '—')}${b.problemas && b.problemas.length ? `<br><span class="detail">${b.problemas.map(escaparHtml).join(' · ')}</span>` : ''}</td>
+      <td class="detail">${escaparHtml(b.valorDeclarado ?? '—')}</td>
+      <td>${RELATORIO_ROTULO_STATUS[b.status] || b.status}</td>
+    </tr>`).join('');
+
+  return `
+    <div class="guia-doc-head">
+      <h2>Relatório de conferência — Validador DMED</h2>
+      <p class="guia-doc-aviso">
+        Gerado localmente pelo portal a partir do arquivo informado — não é um documento oficial da Receita
+        Federal/PGD. O valor de cada beneficiário é exibido <strong>exatamente como declarado no arquivo</strong>
+        — a unidade (reais ou centavos) não pôde ser confirmada contra o leiaute oficial vigente (ADE Cofis nº
+        27/2025 não está disponível em texto extraível, só como imagem escaneada); confira contra o PGD antes de
+        usar este relatório como referência de valor.
+      </p>
+      <div class="guia-doc-meta">
+        <span>Arquivo: <b>${escaparHtml(dados.nomeArquivo)}</b></span>
+        ${declarantesHtml}
+        <span>Ano-calendário: <b>${escaparHtml(dados.anoCalendario || '—')}</b></span>
+        <span>Gerado em: <b>${escaparHtml(new Date().toLocaleString('pt-BR'))}</b></span>
+        <span>${dados.beneficiarios.length} beneficiário(s) · ${qtdErros} com erro · ${qtdAvisos} com aviso</span>
+      </div>
+    </div>
+    <table class="guia-doc-tabela guia-doc-tabela-itens">
+      <thead><tr><th>CPF</th><th>Nome</th><th>Valor declarado (bruto)</th><th>Status</th></tr></thead>
+      <tbody>${linhasHtml}</tbody>
+    </table>`;
+}
+
+function gerarPdfDmed(dados) {
+  if (!dados) return;
+  const guiaPrintAreaEl = document.getElementById('guia-print-area');
+  guiaPrintAreaEl.innerHTML = montarRelatorioDmedHtml(dados);
+  document.body.classList.add('modo-guia');
+  window.print();
+}
+
+function dmedLinhasRelatorio(nomeArquivo) {
+  const analise = dmedUltimoContexto.analises.find((a) => a.nomeArquivo === nomeArquivo);
+  const resultado = dmedUltimoResultado.find((r) => r.nomeArquivo === nomeArquivo);
+  if (!analise || !resultado) return null;
+
+  const errosPorLinha = new Map();
+  const avisosPorLinha = new Map();
+  for (const e of resultado.erros) { if (e.linha != null) { if (!errosPorLinha.has(e.linha)) errosPorLinha.set(e.linha, []); errosPorLinha.get(e.linha).push(e.texto); } }
+  for (const a of resultado.avisos) { if (a.linha != null) { if (!avisosPorLinha.has(a.linha)) avisosPorLinha.set(a.linha, []); avisosPorLinha.get(a.linha).push(a.texto); } }
+
+  const declarantes = (analise.registros || []).filter((r) => r.tipo === 'DECPJ').map((r) => ({
+    cnpj: r.campos[0], razaoSocial: r.campos[1], tipoDeclarante: r.campos[2], registroAns: r.campos[3], cnes: r.campos[4],
+  }));
+  const dmedHeader = (analise.registros || []).find((r) => r.tipo === 'Dmed');
+
+  const beneficiarios = (analise.registros || []).filter((r) => r.tipo === 'RPPSS').map((r) => {
+    const erros = errosPorLinha.get(r.ordinal) || [];
+    const avisos = avisosPorLinha.get(r.ordinal) || [];
+    return {
+      cpf: r.campos[0], nome: r.campos[1], valorDeclarado: r.campos[2],
+      status: erros.length ? 'erro' : avisos.length ? 'aviso' : 'ok',
+      problemas: [...erros, ...avisos],
+    };
+  });
+
+  return { nomeArquivo, declarantes, anoCalendario: dmedHeader?.campos[1], beneficiarios };
 }
 
 function exportarDmedCsv(nomeArquivo) {
@@ -7605,6 +7734,7 @@ async function processarArquivosDmed(files) {
       analises.push(analisarArquivoDmed(texto, file.name));
     }
     const ctx = await dmedCrossCheck(analises);
+    dmedUltimoContexto = { analises };
     renderizarResultadoDmed(analises.map((analise) => dmedValidarArquivo(analise, ctx)));
   } catch (err) {
     console.error(err);
@@ -7621,6 +7751,8 @@ if (dmedArquivoEl) {
 document.getElementById('dmed-resultado-area')?.addEventListener('click', (e) => {
   const btnCsv = e.target.closest('.btn-dmed-exportar');
   if (btnCsv) exportarDmedCsv(btnCsv.dataset.arquivo);
+  const btnPdf = e.target.closest('.btn-dmed-pdf');
+  if (btnPdf) gerarPdfDmed(dmedLinhasRelatorio(btnPdf.dataset.arquivo));
 });
 
 // ---------- Validador APAC (SIA/SUS) ----------
