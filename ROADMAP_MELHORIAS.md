@@ -1063,11 +1063,12 @@ mês por definição, não por falta de prontidão.
 acima**: menu Validadores, reformatação de listas do FAQ, FAQ de OCI/CIHA(texto)/
 Portaria 344-98, FAQ de DMED.
 
-**28/08/2026 (sexta) — ajustes/melhorias de funcionalidade existente**:
+**28/08/2026 (sexta) — ajustes/melhorias de funcionalidade existente — ✅ no ar
+(v2.13.0)**:
 
 Todos os 4 itens abaixo foram **implementados e testados em 21/08/2026** (uma semana
-antes da entrega, pra não deixar nada de última hora) — ficam prontos no servidor
-local, aguardando só a decisão de subir junto com a liberação de 28/08.
+antes da entrega, pra não deixar nada de última hora) e **publicados em
+28/08/2026** junto com a liberação da semana.
 
 - ~~Sub-abas separando SUS de ANS/TISS em "Rejeição/Validação de arquivos"~~ — **✅
   implementado**: reagrupado com cabeçalho de seção dentro da própria subaba (3

@@ -33,8 +33,6 @@ const pool = new Pool({
 // de entrega que pode não se confirmar. Atualizar aqui só quando algo
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
-  'Organização por tipo de faturamento (SUS x operadoras) nas perguntas de rejeição/validação',
-  'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
   'Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial)',
   'Validador de arquivo DMED (Declaração de Serviços Médicos e de Saúde)',
   'Tabela de Compatibilidade entre Procedimentos SIGTAP',
