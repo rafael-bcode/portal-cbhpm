@@ -35,7 +35,6 @@ const pool = new Pool({
 const proximosPassos = [
   'Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial)',
   'Validador de arquivo DMED (Declaração de Serviços Médicos e de Saúde)',
-  'Tabela de Compatibilidade entre Procedimentos SIGTAP',
 ];
 
 // Versão atual do portal, histórico de mudanças e o que está sendo avaliado

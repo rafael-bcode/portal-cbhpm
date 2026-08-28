@@ -1,5 +1,12 @@
 [
   {
+    "versao": "2.13.1",
+    "data": "2026-08-28",
+    "mudancas": [
+      "Corrige a seção 'Em breve' do modal de versão: remove 'Tabela de Compatibilidade entre Procedimentos SIGTAP' — auditoria encontrou que a feature já estava implementada e em produção desde 19/08/2026 (endpoint /api/sigtap/compatibilidade, aba Verificadores), só o roadmap/Em-breve não refletiam isso."
+    ]
+  },
+  {
     "versao": "2.13.0",
     "data": "2026-08-28",
     "mudancas": [
