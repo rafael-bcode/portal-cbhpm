@@ -2,6 +2,7 @@
 node_modules/
 .claude/
 server.log
+logs/
 
 # Arquivos-fonte de importação (planilhas/PDFs oficiais e dumps intermediários).
 # São insumos únicos para popular o banco (Supabase) — a aplicação em si nunca
