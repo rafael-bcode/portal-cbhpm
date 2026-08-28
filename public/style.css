@@ -1342,6 +1342,7 @@ body > * {
   color: var(--amber);
 }
 .sigtap-competencia-area .chip-btn.disponivel:hover { background: var(--amber-tint); }
+.sigtap-competencia-badge.erro { background: #FBE7E4; color: #A0341C; }
 
 #mp-edicao {
   font-family: var(--sans);
