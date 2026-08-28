@@ -6949,6 +6949,680 @@ document.getElementById('aih-resultado-area')?.addEventListener('click', (e) => 
   }
 });
 
+// ---------- Validador CIHA ----------
+// Layout oficial vigente: "Layout - CIHA01" (DATASUS, atualizado em 06/2024,
+// achado pelo usuário em ciha.saude.gov.br/documentos/documentos_ciha1.php).
+// Registro de largura fixa, 609 posições, 38 campos. Dois PDFs mais antigos
+// (Layout_Arquivos_CIHA.pdf, layout de disseminação pública; e
+// LayoutCIHA01_v1.0.4.2.docx, de 2014, 390 posições) foram testados contra
+// arquivo real do Totvs GSH e descartados por não baterem — esse é o
+// terceiro e o que efetivamente confere campo a campo.
+//
+// NU_CNPJ: o PDF vigente declara Tamanho=014 mas imprime Início-Fim como
+// 069-081 (13 posições) — inconsistência interna do próprio documento.
+// Confirmado contra os 213 registros reais (2 arquivos do Totvs GSH) que o
+// campo real é 069-082 (14 posições): todos os 170 CNPJs não-zerados da
+// amostra passam no dígito verificador nessa janela, e a extensão de 1
+// posição não invade o campo seguinte (que já começa corretamente em 083).
+const CIHA_CAMPOS = [
+  ['dtCmpt', 1, 6],
+  ['coCnes', 7, 13],
+  ['tpAtendimento', 14, 14],
+  ['coProcedimento', 15, 24],
+  ['qtAtendimento', 25, 30],
+  ['coFonteRemuneracao', 31, 32],
+  ['coOperadora', 33, 38],
+  ['dtAdmissao', 39, 46],
+  ['dtSaida', 47, 54],
+  ['coModalidade', 55, 56],
+  ['coMotivoSaida', 57, 58],
+  // 59-60: FILLER (preencher com zeros)
+  ['coCidPrincipal', 61, 64],
+  ['coCidSecundario', 65, 68],
+  ['nuCnpj', 69, 82], // ver nota acima — Tamanho=014, não 069-081 como impresso
+  ['nuCnpjFonteRemuneracao', 83, 96],
+  ['coBeneficiario', 97, 126],
+  ['nuDocumentoObito', 127, 158],
+  ['nuTiss', 159, 178],
+  ['nuProntuario', 179, 190],
+  ['nuCns', 191, 205],
+  ['noPaciente', 206, 275],
+  ['dtNascimento', 276, 283],
+  ['tpSexo', 284, 284],
+  ['dsLogradouro', 285, 309],
+  ['nuLogradouro', 310, 314],
+  ['dsComplemento', 315, 329],
+  ['coCep', 330, 337],
+  ['coMunicipio', 338, 343],
+  ['sgUf', 344, 345],
+  ['qtRegistroCivil', 346, 346],
+  ['nuDnv1', 347, 378],
+  ['nuDnv2', 379, 410],
+  ['nuDnv3', 411, 442],
+  ['nuDnv4', 443, 474],
+  ['nuDnv5', 475, 506],
+  ['qtDias', 507, 509],
+  ['dsProcedimentoGenerico', 510, 609],
+];
+const CIHA_TAMANHO_LINHA = 609;
+
+const CIHA_FONTES_REMUNERACAO = {
+  '01': 'Pagamento por convênio - plano privado', '02': 'Pagamento particular - pessoa física',
+  '03': 'Gratuito', '04': 'Financiado com recursos da Sec. Est. de Saúde',
+  '05': 'Financiado com recursos da Sec. Mun. de Saúde', '06': 'Pagamento por convênio - plano público',
+  '08': 'DPVAT', '09': 'Pagamento particular - pessoa jurídica', '10': 'PRONON', '11': 'PRONAS/PCD',
+  '12': 'PROADI', '13': 'Consórcio público',
+};
+
+const CIHA_MOTIVOS_SAIDA = {
+  '11': 'Alta curado', '12': 'Alta melhorado', '61': 'Alta da mãe/puérpera e do recém-nascido',
+  '14': 'Alta a pedido', '15': 'Alta com previsão de retorno para acompanhamento', '16': 'Alta por evasão',
+  '62': 'Alta da mãe/puérpera e permanência do recém-nascido', '18': 'Alta por outros motivos',
+  '21': 'Permanência por características próprias da doença', '22': 'Permanência por intercorrência',
+  '23': 'Permanência por impossibilidade sócio-familiar',
+  '24': 'Permanência por doação de órgãos/tecidos/células - doador vivo',
+  '25': 'Permanência por doação de órgãos/tecidos/células - doador morto',
+  '31': 'Transferência para outro estabelecimento',
+  '41': 'Óbito com declaração fornecida pelo médico assistente',
+  '42': 'Óbito com declaração fornecida pelo IML', '43': 'Óbito com declaração fornecida pelo SVO',
+  '51': 'Encerramento administrativo', '26': 'Permanência por mudança de procedimento',
+  '27': 'Permanência por reoperação', '28': 'Permanência por outros motivos',
+  '19': 'Alta de paciente agudo em psiquiatria', '32': 'Transferência para internação domiciliar',
+  '63': 'Alta da mãe/puérpera e óbito do recém-nascido', '64': 'Alta da mãe/puérpera com óbito fetal',
+  '65': 'Óbito da gestante e do concepto', '66': 'Óbito da mãe/puérpera e alta do recém-nascido',
+  '67': 'Óbito da mãe/puérpera e permanência do recém-nascido',
+};
+
+function cihaValidarDataDDMMAAAA(s) {
+  if (!bpaSoNumeros(s) || s.length !== 8) return null;
+  const dia = Number(s.slice(0, 2));
+  const mes = Number(s.slice(2, 4));
+  const ano = Number(s.slice(4, 8));
+  if (mes < 1 || mes > 12 || dia < 1 || dia > 31) return null;
+  const d = new Date(Date.UTC(ano, mes - 1, dia));
+  if (d.getUTCFullYear() !== ano || d.getUTCMonth() !== mes - 1 || d.getUTCDate() !== dia) return null;
+  return d;
+}
+
+function cihaTodoZero(s) {
+  return /^0*$/.test(s || '');
+}
+
+function cihaDividirLinhas(texto) {
+  return texto.split(/\r\n|\n|\r/).filter((l) => l.trim().length > 0);
+}
+
+function analisarArquivoCiha(texto, nomeArquivo) {
+  const linhasTexto = cihaDividirLinhas(texto);
+  if (linhasTexto.length === 0) return { nomeArquivo, semConteudo: true };
+  const linhas = linhasTexto.map((linha, i) => ({
+    ordinal: i + 1,
+    tamanho: linha.length,
+    campos: bpaExtrairCampos(linha, CIHA_CAMPOS.map(([n, ini, fim]) => [n, ini, fim])),
+  }));
+  return { nomeArquivo, linhas };
+}
+
+// bpaExtrairCampos usa .trim() em cada campo — bom pra códigos, mas ruim pra
+// nome/endereço, onde precisamos diferenciar "zero-preenchido" de "vazio de
+// verdade" e não perder espaços internos do nome. Refaz a extração bruta
+// (sem trim) só pros campos onde isso importa.
+function cihaExtrairBruto(linha, nomeCampo) {
+  const def = CIHA_CAMPOS.find(([n]) => n === nomeCampo);
+  if (!def) return '';
+  return linha.slice(def[1] - 1, def[2]);
+}
+
+function validarLinhaCiha(l, linhaBruta, ctx) {
+  const erros = [];
+  const avisos = [];
+  const c = l.campos;
+
+  // Linha mais curta que 609 corrompe/desloca campos de verdade — erro. Mais
+  // longa (achado real: 42 linhas Consolidado de um arquivo Totvs com 1
+  // espaço extra no fim) não afeta nenhum campo, já que todos ficam dentro
+  // de 1-609 — sinal mais fraco, aviso.
+  if (l.tamanho < CIHA_TAMANHO_LINHA) {
+    erros.push(`Linha com ${l.tamanho} caracteres, menor que os ${CIHA_TAMANHO_LINHA} esperados (largura fixa) — campos do final da linha podem estar ausentes ou deslocados.`);
+  } else if (l.tamanho > CIHA_TAMANHO_LINHA) {
+    avisos.push(`Linha com ${l.tamanho} caracteres, ${l.tamanho - CIHA_TAMANHO_LINHA} a mais que os ${CIHA_TAMANHO_LINHA} esperados (largura fixa) — sobra após a posição 609, não afeta nenhum campo do layout.`);
+  }
+
+  const individualizado = c.tpAtendimento === 'I';
+  if (!['C', 'I'].includes(c.tpAtendimento)) {
+    erros.push(`Tipo de atendimento deveria ser "C" (Consolidado) ou "I" (Individualizado), encontrado "${c.tpAtendimento}"`);
+  }
+
+  if (!bpaSoNumeros(c.dtCmpt) || c.dtCmpt.length !== 6) erros.push(`Competência (AAAAMM) inválida: "${c.dtCmpt}"`);
+  else {
+    const mes = Number(c.dtCmpt.slice(4, 6));
+    if (mes < 1 || mes > 12) erros.push(`Competência com mês fora do domínio [01-12]: "${c.dtCmpt}"`);
+  }
+
+  if (!/^\d{7}$/.test(c.coCnes)) erros.push(`CNES fora do formato (7 dígitos numéricos): "${c.coCnes}"`);
+  else if (ctx.cnesEncontrados && !ctx.cnesEncontrados.has(c.coCnes)) avisos.push(`CNES "${c.coCnes}" não encontrado na base CNES já carregada.`);
+
+  if (!/^\d{10}$/.test(c.coProcedimento)) erros.push(`Código de procedimento fora do formato (10 dígitos): "${c.coProcedimento}"`);
+  const procedimentoSigtap = ctx.sigtapPorCodigo && ctx.sigtapPorCodigo.get(c.coProcedimento);
+  const procedimentoNaoSus = /^\d{10}$/.test(c.coProcedimento) && !procedimentoSigtap;
+
+  if (!/^\d{6}$/.test(c.qtAtendimento) || Number(c.qtAtendimento) <= 0) erros.push(`Quantidade do procedimento deveria ser um número maior que zero: "${c.qtAtendimento}"`);
+
+  if (!CIHA_FONTES_REMUNERACAO[c.coFonteRemuneracao]) {
+    erros.push(`Fonte de remuneração "${c.coFonteRemuneracao}" fora do domínio conhecido (01-06, 08-13).`);
+  }
+  const fonte = c.coFonteRemuneracao;
+
+  // CO_OPERADORA: obrigatório e cruzado contra a ANS só pra fonte 01
+  // (plano privado) — fontes como 06 (convênio público) referenciam outro
+  // cadastro (arquivo de Operadora do próprio CIHA), fora do escopo do
+  // Relatorio_cadop.csv da ANS que o portal já carrega; cruzar indistintamente
+  // gera "não encontrado" pra maioria legítima dos casos de convênio público.
+  if (fonte === '01') {
+    if (cihaTodoZero(c.coOperadora)) avisos.push('Fonte de remuneração 01 (convênio privado) sem código de operadora informado.');
+    else if (!/^\d{6}$/.test(c.coOperadora)) avisos.push(`Código de operadora fora do formato (6 dígitos): "${c.coOperadora}"`);
+    else if (ctx.operadorasEncontradas && !ctx.operadorasEncontradas.has(c.coOperadora)) {
+      avisos.push(`Operadora "${c.coOperadora}" não encontrada no cadastro de operadoras ativas da ANS.`);
+    }
+  } else if (!cihaTodoZero(c.coOperadora)) {
+    avisos.push(`Código de operadora informado ("${c.coOperadora}"), mas a fonte de remuneração é "${fonte}" — o layout só espera esse campo pra fonte 01.`);
+  }
+
+  let dtAdmissao;
+  let dtSaida;
+  if (individualizado) {
+    dtAdmissao = cihaValidarDataDDMMAAAA(c.dtAdmissao);
+    if (!dtAdmissao) erros.push(`Data de admissão inválida ou ausente (obrigatória para atendimento individualizado): "${c.dtAdmissao}"`);
+    dtSaida = cihaValidarDataDDMMAAAA(c.dtSaida);
+    if (!dtSaida) erros.push(`Data de saída inválida ou ausente (obrigatória para atendimento individualizado): "${c.dtSaida}"`);
+    if (dtAdmissao && dtSaida && dtSaida < dtAdmissao) erros.push('Data de saída é anterior à data de admissão.');
+
+    if (!['01', '02'].includes(c.coModalidade)) erros.push(`Modalidade deveria ser "01" (Ambulatorial) ou "02" (Hospitalar) — obrigatória para atendimento individualizado, encontrado "${c.coModalidade}"`);
+  } else if (c.coModalidade !== '00' && !cihaTodoZero(c.coModalidade)) {
+    avisos.push(`Modalidade informada ("${c.coModalidade}") em atendimento consolidado — o layout não espera esse campo preenchido fora do individualizado.`);
+  }
+
+  const modalidadeHospitalar = individualizado && c.coModalidade === '02';
+  if (modalidadeHospitalar) {
+    if (!CIHA_MOTIVOS_SAIDA[c.coMotivoSaida]) erros.push(`Motivo de encerramento "${c.coMotivoSaida}" fora do domínio oficial — obrigatório para atendimento individualizado em modalidade hospitalar.`);
+  } else if (!cihaTodoZero(c.coMotivoSaida) && !CIHA_MOTIVOS_SAIDA[c.coMotivoSaida]) {
+    avisos.push(`Motivo de encerramento "${c.coMotivoSaida}" preenchido mas fora do domínio oficial conhecido.`);
+  }
+  const desfechoObito = c.coMotivoSaida === '41';
+
+  const cidPrincipal = c.coCidPrincipal.toUpperCase();
+  const cidSecundario = c.coCidSecundario.toUpperCase();
+  const exigeCid = ctx.procedimentosComCid && ctx.procedimentosComCid.has(c.coProcedimento);
+  if (individualizado && exigeCid && cihaTodoZero(cidPrincipal)) {
+    avisos.push('Procedimento tem CID vinculado na tabela SIGTAP (atributo "Exige CID" ou lista de CID compatíveis) mas o Diagnóstico Principal está zerado.');
+  }
+  if (!cihaTodoZero(cidPrincipal)) {
+    if (!/^[A-Z]\d{2,3}$/.test(cidPrincipal)) avisos.push(`Diagnóstico Principal fora do formato CID-10 esperado: "${c.coCidPrincipal}"`);
+    else if (ctx.cidValidos && !ctx.cidValidos.has(cidPrincipal)) avisos.push(`Diagnóstico Principal "${c.coCidPrincipal}" não encontrado na base de CID-10 carregada.`);
+  }
+  if (!cihaTodoZero(cidSecundario)) {
+    if (!/^[A-Z]\d{2,3}$/.test(cidSecundario)) avisos.push(`Diagnóstico Secundário fora do formato CID-10 esperado: "${c.coCidSecundario}"`);
+    else if (ctx.cidValidos && !ctx.cidValidos.has(cidSecundario)) avisos.push(`Diagnóstico Secundário "${c.coCidSecundario}" não encontrado na base de CID-10 carregada.`);
+    if (cidSecundario === cidPrincipal) erros.push('Diagnóstico Secundário é igual ao Diagnóstico Principal — o layout exige que sejam diferentes.');
+  }
+
+  // NU_CNPJ: obrigatório pras fontes 01 (convênio privado), 06 (convênio
+  // público) e 09 (particular PJ); não deve ser informado pras demais.
+  if (['01', '06', '09'].includes(fonte)) {
+    if (cihaTodoZero(c.nuCnpj)) avisos.push(`CNPJ ausente — o layout espera esse campo preenchido para a fonte de remuneração ${fonte}.`);
+    else if (!validarCnpj(c.nuCnpj)) erros.push(`CNPJ com dígito verificador inválido: "${c.nuCnpj}"`);
+  } else if (!cihaTodoZero(c.nuCnpj)) {
+    avisos.push(`CNPJ informado, mas a fonte de remuneração ("${fonte}") não é uma das que o layout espera esse campo preenchido (01, 06 ou 09).`);
+  }
+
+  if (fonte === '13') {
+    if (cihaTodoZero(c.nuCnpjFonteRemuneracao)) avisos.push('Fonte de remuneração 13 (Consórcio Público) sem o CNPJ do consórcio informado.');
+    else if (!validarCnpj(c.nuCnpjFonteRemuneracao)) erros.push(`CNPJ da Fonte de Remuneração (Consórcios Públicos) com dígito verificador inválido: "${c.nuCnpjFonteRemuneracao}"`);
+  } else if (!cihaTodoZero(c.nuCnpjFonteRemuneracao)) {
+    avisos.push(`CNPJ da Fonte de Remuneração informado, mas a fonte de remuneração ("${fonte}") não é 13 (Consórcio Público).`);
+  }
+
+  if (fonte === '01' && cihaTodoZero(c.coBeneficiario)) avisos.push('Fonte de remuneração 01 (convênio privado) sem código do beneficiário informado.');
+
+  if (desfechoObito && cihaTodoZero(c.nuDocumentoObito)) avisos.push('Desfecho "Óbito com declaração fornecida pelo médico assistente" sem o número do documento de óbito informado.');
+
+  if (fonte === '01' && cihaTodoZero(c.nuProntuario)) avisos.push('Fonte de remuneração 01 (convênio privado) sem número de prontuário informado.');
+
+  if (!cihaTodoZero(c.nuCns)) {
+    const cns = validarCns(c.nuCns);
+    if (!cns.valido) avisos.push(`Cartão Nacional de Saúde do paciente ${cns.motivo === 'formato' ? 'fora do formato (15 dígitos)' : 'com dígito verificador inválido'}: "${c.nuCns}"`);
+    else if (cns.naoVerificado) avisos.push(`CNS do paciente "${c.nuCns}" começa com "${c.nuCns[0]}" — dígito verificador não checado pra esse prefixo.`);
+  }
+
+  if (individualizado) {
+    const nomeBruto = cihaExtrairBruto(linhaBruta, 'noPaciente').trim();
+    if (!nomeBruto) erros.push('Nome do paciente ausente — obrigatório para atendimento individualizado.');
+
+    const dtNascimento = cihaValidarDataDDMMAAAA(c.dtNascimento);
+    if (!dtNascimento) erros.push(`Data de nascimento inválida ou ausente (obrigatória para atendimento individualizado): "${c.dtNascimento}"`);
+    else if (dtAdmissao && dtNascimento > dtAdmissao) erros.push('Data de nascimento é posterior à data de admissão.');
+
+    if (!['M', 'F'].includes(c.tpSexo)) erros.push(`Sexo do paciente deveria ser "M" ou "F" — obrigatório para atendimento individualizado, encontrado "${c.tpSexo}"`);
+
+    if (!cihaExtrairBruto(linhaBruta, 'dsLogradouro').trim()) avisos.push('Logradouro do paciente ausente — obrigatório para atendimento individualizado.');
+    if (cihaTodoZero(c.coCep) || !/^\d{8}$/.test(c.coCep)) avisos.push(`CEP do paciente fora do formato (8 dígitos) — obrigatório para atendimento individualizado: "${c.coCep}"`);
+    if (!/^\d{6}$/.test(c.coMunicipio)) avisos.push(`Código do município do paciente fora do formato (código IBGE de 6 dígitos) — obrigatório para atendimento individualizado: "${c.coMunicipio}"`);
+    if (!AIH_UFS_VALIDAS.has(c.sgUf)) avisos.push(`UF do paciente inválida — obrigatória para atendimento individualizado: "${c.sgUf}"`);
+  }
+
+  const qtNascidos = Number(c.qtRegistroCivil) || 0;
+  if (qtNascidos > 5) erros.push(`Quantidade de nascidos "${c.qtRegistroCivil}" acima do máximo de 5 declarações de nascido vivo suportadas pelo layout.`);
+  const dnvs = [c.nuDnv1, c.nuDnv2, c.nuDnv3, c.nuDnv4, c.nuDnv5];
+  for (let i = 0; i < Math.min(qtNascidos, 5); i++) {
+    if (cihaTodoZero(dnvs[i])) avisos.push(`Quantidade de nascidos informa ${qtNascidos}, mas a Declaração de Nascido Vivo do ${i + 1}º filho está zerada.`);
+  }
+
+  const dsProcedimentoGenerico = cihaExtrairBruto(linhaBruta, 'dsProcedimentoGenerico').trim();
+  if (procedimentoNaoSus) {
+    if (!dsProcedimentoGenerico) avisos.push(`Procedimento "${c.coProcedimento}" não encontrado na SIGTAP local — se for procedimento não-SUS (Tabela de Procedimentos Genéricos), o layout exige a Descrição do Procedimento preenchida.`);
+  } else if (dsProcedimentoGenerico) {
+    avisos.push('Descrição do Procedimento (não-SUS) preenchida, mas o código encontrado na SIGTAP indica procedimento da Tabela SUS — o layout não espera esse campo preenchido nesse caso.');
+  }
+
+  return { erros, avisos };
+}
+
+async function cihaCrossCheck(linhas) {
+  const codigosProc = [...new Set(linhas.map((l) => l.campos.coProcedimento).filter((c) => /^\d{10}$/.test(c)))];
+  const codigosCid = [...new Set(linhas.flatMap((l) => [l.campos.coCidPrincipal, l.campos.coCidSecundario]).map((c) => c.toUpperCase()).filter((c) => /^[A-Z]\d{2,3}$/.test(c)))];
+  const codigosCnes = [...new Set(linhas.map((l) => l.campos.coCnes).filter((c) => /^\d{7}$/.test(c)))];
+  const codigosOperadora = [...new Set(linhas.filter((l) => l.campos.coFonteRemuneracao === '01').map((l) => l.campos.coOperadora).filter((c) => /^\d{6}$/.test(c)))];
+
+  const postLote = (url, body) => (Object.values(body)[0] || []).length
+    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json()).catch(() => [])
+    : Promise.resolve([]);
+
+  const [sigtapResp, cidResp, cnesResp, operadorasResp] = await Promise.all([
+    postLote('/api/sigtap/lote', { codigos: codigosProc }),
+    postLote('/api/cid10/lote', { codigos: codigosCid }),
+    postLote('/api/cnes/existe-lote', { codigos: codigosCnes }),
+    postLote('/api/operadoras/lote', { codigos: codigosOperadora }),
+  ]);
+
+  const sigtapLista = Array.isArray(sigtapResp) ? sigtapResp : [];
+  return {
+    sigtapPorCodigo: new Map(sigtapLista.map((r) => [r.codigo, r])),
+    cidValidos: new Set((Array.isArray(cidResp) ? cidResp : []).map((r) => r.codigo)),
+    cnesEncontrados: new Set((Array.isArray(cnesResp) ? cnesResp : []).map((r) => r.codigo_cnes)),
+    operadorasEncontradas: new Set((Array.isArray(operadorasResp) ? operadorasResp : []).map((r) => r.registro_ans)),
+    procedimentosComCid: new Set(sigtapLista.filter((r) => r.tem_cid_vinculado).map((r) => r.codigo)),
+  };
+}
+
+function cihaValidarArquivo(analise, ctx) {
+  if (analise.semConteudo) return { nomeArquivo: analise.nomeArquivo, vazio: true };
+
+  const linhasComProblema = [];
+  analise.linhas.forEach((l, i) => {
+    const linhaBruta = analise.linhasBrutas ? analise.linhasBrutas[i] : '';
+    const { erros, avisos } = validarLinhaCiha(l, linhaBruta, ctx);
+    if (erros.length || avisos.length) linhasComProblema.push({ ...l, erros, avisos });
+  });
+
+  const totalErros = linhasComProblema.reduce((s, l) => s + l.erros.length, 0);
+  const totalAvisos = linhasComProblema.reduce((s, l) => s + l.avisos.length, 0);
+  const totalIndividualizado = analise.linhas.filter((l) => l.campos.tpAtendimento === 'I').length;
+  const totalConsolidado = analise.linhas.filter((l) => l.campos.tpAtendimento === 'C').length;
+
+  return {
+    nomeArquivo: analise.nomeArquivo,
+    linhasComProblema,
+    totalLinhas: analise.linhas.length,
+    totalIndividualizado,
+    totalConsolidado,
+    totalErros,
+    totalAvisos,
+  };
+}
+
+const CIHA_LIMITE_EXIBICAO = 200;
+let cihaUltimoResultado = [];
+
+function cihaLinhaValidador(item) {
+  const icone = item.severidade === 'erro' ? '✘' : '⚠';
+  const classe = item.severidade === 'erro' ? 'erro' : 'aviso';
+  return `<div class="validador-linha ${classe}">${icone} ${escaparHtml(item.texto)}</div>`;
+}
+
+function renderizarResultadoCiha(resultados) {
+  cihaUltimoResultado = resultados;
+  const cihaResultadoAreaEl = document.getElementById('ciha-resultado-area');
+
+  const html = resultados.map((r) => {
+    if (r.vazio) return `<div class="msg vazio">${escaparHtml(r.nomeArquivo)}: arquivo vazio.</div>`;
+
+    const statusHtml = r.totalErros > 0
+      ? '<span class="sigtap-badge sigtap-badge-erro">Com erros</span>'
+      : r.totalAvisos > 0
+        ? '<span class="sigtap-badge sigtap-badge-3">Com avisos</span>'
+        : '<span class="sigtap-badge">OK</span>';
+
+    const linhasExibidas = r.linhasComProblema.slice(0, CIHA_LIMITE_EXIBICAO);
+    const linhasHtml = linhasExibidas
+      .map(
+        (l) => `
+      <div class="bpa-linha-card">
+        <div class="bpa-linha-cab">
+          <span>${l.campos.tpAtendimento === 'I' ? 'Individualizado' : 'Consolidado'}</span>
+          <span>Proc. ${escaparHtml(l.campos.coProcedimento)}</span><span>linha ${l.ordinal}</span>
+        </div>
+        ${l.erros.map((e) => cihaLinhaValidador({ severidade: 'erro', texto: e })).join('')}
+        ${l.avisos.map((a) => cihaLinhaValidador({ severidade: 'aviso', texto: a })).join('')}
+      </div>`
+      )
+      .join('');
+
+    const notaLimite = r.linhasComProblema.length > CIHA_LIMITE_EXIBICAO
+      ? `<p class="ajustes-nota">Mostrando as primeiras ${CIHA_LIMITE_EXIBICAO} linhas com problema, de ${r.linhasComProblema.length} no total. Use "Exportar CSV" para ver todas.</p>`
+      : '';
+
+    return `
+      <div class="grupo grupo-principal" style="margin-bottom:16px;">
+        <div class="grupo-corpo" style="padding-top:14px;">
+          <div class="mp-header" style="margin:0 16px 10px;">
+            <h3 style="margin:0;">${escaparHtml(r.nomeArquivo)}</h3>
+            ${statusHtml}
+          </div>
+          <div style="margin:0 16px 10px; display:flex; gap:16px; flex-wrap:wrap; font-size:0.85rem; color:var(--ink-soft);">
+            <span>${r.totalLinhas} linha(s)</span><span>${r.totalIndividualizado} individualizada(s)</span>
+            <span>${r.totalConsolidado} consolidada(s)</span>
+            <span>${r.totalErros} erro(s)</span><span>${r.totalAvisos} aviso(s)</span>
+          </div>
+          ${
+            linhasHtml
+              ? `<div style="margin:14px 16px 0;"><div class="ajustes-nota" style="margin-bottom:8px;"><strong>Linhas com problema (${r.linhasComProblema.length})</strong></div>${linhasHtml}${notaLimite}</div>`
+              : '<div class="msg vazio" style="margin:14px 16px 0;">Nenhuma linha com problema.</div>'
+          }
+          <div style="margin:14px 16px 0;">
+            <button type="button" class="acao-btn btn-ciha-exportar" data-arquivo="${escaparHtml(r.nomeArquivo)}">⬇ Exportar CSV das linhas com problema</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  cihaResultadoAreaEl.innerHTML = html;
+}
+
+function exportarCihaCsv(nomeArquivo) {
+  const r = cihaUltimoResultado.find((x) => x.nomeArquivo === nomeArquivo);
+  if (!r) return;
+  const linhas = [['Arquivo', 'Tipo', 'Linha', 'Procedimento', 'Severidade', 'Problema']];
+  for (const l of r.linhasComProblema) {
+    const tipo = l.campos.tpAtendimento === 'I' ? 'Individualizado' : 'Consolidado';
+    for (const e of l.erros) linhas.push([r.nomeArquivo, tipo, l.ordinal, l.campos.coProcedimento, 'erro', e]);
+    for (const a of l.avisos) linhas.push([r.nomeArquivo, tipo, l.ordinal, l.campos.coProcedimento, 'aviso', a]);
+  }
+  baixarCsv(`ciha-problemas-${nomeArquivo.replace(/\.[^.]+$/, '')}.csv`, linhas);
+}
+
+async function processarArquivosCiha(files) {
+  const cihaResultadoAreaEl = document.getElementById('ciha-resultado-area');
+  cihaResultadoAreaEl.innerHTML = '<div class="msg vazio">Analisando…</div>';
+  try {
+    const analises = [];
+    for (const file of files) {
+      const buffer = await file.arrayBuffer();
+      const texto = new TextDecoder('iso-8859-1').decode(new Uint8Array(buffer));
+      const analise = analisarArquivoCiha(texto, file.name);
+      if (!analise.semConteudo) analise.linhasBrutas = cihaDividirLinhas(texto);
+      analises.push(analise);
+    }
+    const todasLinhas = analises.flatMap((a) => a.linhas || []);
+    const ctx = await cihaCrossCheck(todasLinhas);
+    renderizarResultadoCiha(analises.map((analise) => cihaValidarArquivo(analise, ctx)));
+  } catch (err) {
+    console.error(err);
+    cihaResultadoAreaEl.innerHTML = `<div class="msg erro">Erro ao analisar arquivo(s): ${escaparHtml(err.message)}</div>`;
+  }
+}
+
+const cihaArquivoEl = document.getElementById('ciha-arquivo');
+if (cihaArquivoEl) {
+  cihaArquivoEl.addEventListener('change', () => {
+    if (cihaArquivoEl.files.length > 0) processarArquivosCiha(Array.from(cihaArquivoEl.files));
+  });
+}
+document.getElementById('ciha-resultado-area')?.addEventListener('click', (e) => {
+  const btnCsv = e.target.closest('.btn-ciha-exportar');
+  if (btnCsv) exportarCihaCsv(btnCsv.dataset.arquivo);
+});
+
+// ---------- Validador DMED ----------
+// Leiaute do Anexo Único da Dmed (Receita Federal, Ato Declaratório
+// Executivo Cofis) — texto plano delimitado por "|", um registro por linha.
+// Hierarquia: Dmed (cabeçalho) -> RESPO -> DECPJ -> ramo prestador
+// (PSS -> RPPSS -> BRPPSS) e/ou ramo operadora (OPPAS -> TOP -> RTOP/DTOP ->
+// RDTOP) -> FIMDmed (rodapé).
+//
+// Diferente do Validador CIHA (que tem o PDF oficial vigente completo): o
+// PDF do ADE Cofis nº 27/2025 (leiaute vigente 2026) não foi encontrado em
+// texto extraível — só imagem escaneada do Diário Oficial. A estrutura foi
+// confirmada contra 1 arquivo real do Totvs GSH (12 registros, ramo
+// prestador, "Tipo do declarante" = 1) — bate campo a campo com o que está
+// documentado no ROADMAP_MELHORIAS.md, inclusive o "identificador de
+// estrutura do leiaute" (S5830B) idêntico ao de uma versão anterior
+// confirmada. Por isso este validador cobre o que dá pra confirmar com
+// segurança — ordem/cardinalidade dos registros, dígito verificador de
+// CPF/CNPJ, CNES, ordenação crescente dentro de cada bloco — e NÃO afirma o
+// significado de negócio de todo campo opcional. O ramo operadora
+// (OPPAS/TOP/RTOP/DTOP/RDTOP) só teve a hierarquia verificada contra a
+// documentação — nenhum arquivo real desse ramo foi testado ainda.
+const DMED_TIPOS_CONHECIDOS = new Set(['Dmed', 'RESPO', 'DECPJ', 'PSS', 'RPPSS', 'BRPPSS', 'OPPAS', 'TOP', 'RTOP', 'DTOP', 'RDTOP', 'FIMDmed']);
+
+function dmedDividirLinhas(texto) {
+  return texto.split(/\r\n|\n|\r/).filter((l) => l.trim().length > 0);
+}
+
+function analisarArquivoDmed(texto, nomeArquivo) {
+  const linhasTexto = dmedDividirLinhas(texto);
+  if (linhasTexto.length === 0) return { nomeArquivo, semConteudo: true };
+  const registros = linhasTexto.map((linha, i) => {
+    const campos = linha.split('|');
+    return { ordinal: i + 1, tipo: campos[0], campos: campos.slice(1) };
+  });
+  return { nomeArquivo, registros };
+}
+
+function dmedValidarArquivo(analise, ctx) {
+  if (analise.semConteudo) return { nomeArquivo: analise.nomeArquivo, vazio: true };
+  const erros = [];
+  const avisos = [];
+  const regs = analise.registros;
+
+  const tiposDesconhecidos = regs.filter((r) => !DMED_TIPOS_CONHECIDOS.has(r.tipo));
+  for (const r of tiposDesconhecidos) erros.push({ linha: r.ordinal, texto: `Tipo de registro desconhecido: "${r.tipo}"` });
+
+  const qtdDmed = regs.filter((r) => r.tipo === 'Dmed').length;
+  if (regs[0]?.tipo !== 'Dmed') erros.push({ linha: 1, texto: 'Arquivo deveria começar com um registro "Dmed" (cabeçalho).' });
+  if (qtdDmed !== 1) erros.push({ linha: null, texto: `Esperado exatamente 1 registro "Dmed", encontrado(s) ${qtdDmed}.` });
+
+  const qtdFim = regs.filter((r) => r.tipo === 'FIMDmed').length;
+  if (regs[regs.length - 1]?.tipo !== 'FIMDmed') erros.push({ linha: regs.length, texto: 'Arquivo deveria terminar com um registro "FIMDmed" (rodapé).' });
+  if (qtdFim !== 1) erros.push({ linha: null, texto: `Esperado exatamente 1 registro "FIMDmed", encontrado(s) ${qtdFim}.` });
+
+  const dmed = regs.find((r) => r.tipo === 'Dmed');
+  if (dmed) {
+    const [anoDeclaracao, anoCalendario, retificadora] = dmed.campos;
+    if (!/^\d{4}$/.test(anoDeclaracao)) avisos.push({ linha: dmed.ordinal, texto: `Ano da declaração fora do formato esperado (4 dígitos): "${anoDeclaracao}"` });
+    if (!/^\d{4}$/.test(anoCalendario)) avisos.push({ linha: dmed.ordinal, texto: `Ano-calendário fora do formato esperado (4 dígitos): "${anoCalendario}"` });
+    else if (/^\d{4}$/.test(anoDeclaracao) && Number(anoCalendario) >= Number(anoDeclaracao)) {
+      avisos.push({ linha: dmed.ordinal, texto: `Ano-calendário (${anoCalendario}) deveria ser anterior ao ano da declaração (${anoDeclaracao}).` });
+    }
+    if (!['S', 'N'].includes(retificadora)) avisos.push({ linha: dmed.ordinal, texto: `Indicador de declaração retificadora deveria ser "S" ou "N", encontrado "${retificadora}"` });
+  }
+
+  const respos = regs.filter((r) => r.tipo === 'RESPO');
+  if (respos.length !== 1) avisos.push({ linha: null, texto: `Esperado exatamente 1 registro "RESPO" (responsável pelo preenchimento), encontrado(s) ${respos.length}.` });
+  for (const r of respos) {
+    const [cpf, nome] = r.campos;
+    if (!/^\d{11}$/.test(cpf)) erros.push({ linha: r.ordinal, texto: `RESPO: CPF fora do formato (11 dígitos): "${cpf}"` });
+    else if (!validarCpf(cpf)) erros.push({ linha: r.ordinal, texto: `RESPO: CPF com dígito verificador inválido: "${cpf}"` });
+    if (!nome || !nome.trim()) avisos.push({ linha: r.ordinal, texto: 'RESPO: nome do responsável ausente.' });
+  }
+
+  const decpjs = regs.filter((r) => r.tipo === 'DECPJ');
+  if (decpjs.length === 0) erros.push({ linha: null, texto: 'Nenhum registro "DECPJ" (declarante PJ) encontrado.' });
+  for (const r of decpjs) {
+    const [cnpj, razaoSocial, tipoDeclarante, registroAns, cnes, cpfResponsavel] = r.campos;
+    if (!/^\d{14}$/.test(cnpj)) erros.push({ linha: r.ordinal, texto: `DECPJ: CNPJ fora do formato (14 dígitos): "${cnpj}"` });
+    else if (!validarCnpj(cnpj)) erros.push({ linha: r.ordinal, texto: `DECPJ: CNPJ com dígito verificador inválido: "${cnpj}"` });
+    if (!razaoSocial || !razaoSocial.trim()) avisos.push({ linha: r.ordinal, texto: 'DECPJ: razão social ausente.' });
+    if (!['1', '2', '3'].includes(tipoDeclarante)) {
+      erros.push({ linha: r.ordinal, texto: `DECPJ: "Tipo do declarante" deveria ser "1" (prestador), "2" (operadora) ou "3" (ambos), encontrado "${tipoDeclarante}"` });
+    }
+    if (cpfResponsavel && cpfResponsavel.trim() && !validarCpf(cpfResponsavel)) {
+      avisos.push({ linha: r.ordinal, texto: `DECPJ: CPF do responsável com dígito verificador inválido: "${cpfResponsavel}"` });
+    }
+
+    const ehPrestador = ['1', '3'].includes(tipoDeclarante);
+    const ehOperadora = ['2', '3'].includes(tipoDeclarante);
+    if (ehPrestador) {
+      if (!/^\d{7}$/.test(cnes)) avisos.push({ linha: r.ordinal, texto: `DECPJ: CNES fora do formato (7 dígitos) — esperado para declarante prestador: "${cnes}"` });
+      else if (ctx.cnesEncontrados && !ctx.cnesEncontrados.has(cnes)) avisos.push({ linha: r.ordinal, texto: `DECPJ: CNES "${cnes}" não encontrado na base CNES já carregada.` });
+    }
+    if (ehOperadora && registroAns && registroAns.trim() && !/^\d{6}$/.test(registroAns)) {
+      avisos.push({ linha: r.ordinal, texto: `DECPJ: Registro ANS fora do formato (6 dígitos) — esperado para declarante operadora: "${registroAns}"` });
+    }
+  }
+
+  // Ramo prestador — cada RPPSS deveria estar dentro de uma seção PSS, e a
+  // ordenação crescente por CPF dentro do bloco é regra documentada oficial
+  // (confirmada também no arquivo real de teste).
+  const rppssIdx = regs.map((r, i) => ({ r, i })).filter(({ r }) => r.tipo === 'RPPSS');
+  const cpfsRppss = [];
+  for (const { r } of rppssIdx) {
+    const [cpf, nome, valor] = r.campos;
+    if (!/^\d{11}$/.test(cpf)) erros.push({ linha: r.ordinal, texto: `RPPSS: CPF fora do formato (11 dígitos): "${cpf}"` });
+    else {
+      if (!validarCpf(cpf)) erros.push({ linha: r.ordinal, texto: `RPPSS: CPF com dígito verificador inválido: "${cpf}"` });
+      cpfsRppss.push(cpf);
+    }
+    if (!nome || !nome.trim()) avisos.push({ linha: r.ordinal, texto: 'RPPSS: nome do beneficiário ausente.' });
+    if (valor !== undefined && valor !== '' && !/^\d+$/.test(valor)) avisos.push({ linha: r.ordinal, texto: `RPPSS: valor fora do formato numérico esperado: "${valor}"` });
+  }
+  for (let i = 1; i < cpfsRppss.length; i++) {
+    if (cpfsRppss[i] < cpfsRppss[i - 1]) {
+      erros.push({ linha: rppssIdx[i].r.ordinal, texto: `RPPSS fora de ordem: CPF "${cpfsRppss[i]}" deveria vir antes de "${cpfsRppss[i - 1]}" (bloco exige ordenação crescente por CPF).` });
+      break; // um só aviso já indica o problema — evita repetir em cascata
+    }
+  }
+
+  const totalErros = erros.length;
+  const totalAvisos = avisos.length;
+  return {
+    nomeArquivo: analise.nomeArquivo,
+    totalRegistros: regs.length,
+    totalRppss: rppssIdx.length,
+    erros,
+    avisos,
+    totalErros,
+    totalAvisos,
+  };
+}
+
+async function dmedCrossCheck(analises) {
+  const codigosCnes = [...new Set(analises.flatMap((a) => (a.registros || []).filter((r) => r.tipo === 'DECPJ').map((r) => r.campos[4])).filter((c) => /^\d{7}$/.test(c)))];
+  const resp = codigosCnes.length
+    ? await fetch('/api/cnes/existe-lote', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigos: codigosCnes }) }).then((r) => r.json()).catch(() => [])
+    : [];
+  return { cnesEncontrados: new Set((Array.isArray(resp) ? resp : []).map((r) => r.codigo_cnes)) };
+}
+
+let dmedUltimoResultado = [];
+
+function dmedLinhaValidador(item) {
+  const icone = item.severidade === 'erro' ? '✘' : '⚠';
+  const classe = item.severidade === 'erro' ? 'erro' : 'aviso';
+  const prefixo = item.linha != null ? `Linha ${item.linha}: ` : '';
+  return `<div class="validador-linha ${classe}">${icone} ${escaparHtml(prefixo + item.texto)}</div>`;
+}
+
+function renderizarResultadoDmed(resultados) {
+  dmedUltimoResultado = resultados;
+  const dmedResultadoAreaEl = document.getElementById('dmed-resultado-area');
+
+  const html = resultados.map((r) => {
+    if (r.vazio) return `<div class="msg vazio">${escaparHtml(r.nomeArquivo)}: arquivo vazio.</div>`;
+
+    const statusHtml = r.totalErros > 0
+      ? '<span class="sigtap-badge sigtap-badge-erro">Com erros</span>'
+      : r.totalAvisos > 0
+        ? '<span class="sigtap-badge sigtap-badge-3">Com avisos</span>'
+        : '<span class="sigtap-badge">OK</span>';
+
+    const problemasHtml = [...r.erros.map((e) => ({ ...e, severidade: 'erro' })), ...r.avisos.map((a) => ({ ...a, severidade: 'aviso' }))]
+      .map(dmedLinhaValidador)
+      .join('');
+
+    return `
+      <div class="grupo grupo-principal" style="margin-bottom:16px;">
+        <div class="grupo-corpo" style="padding-top:14px;">
+          <div class="mp-header" style="margin:0 16px 10px;">
+            <h3 style="margin:0;">${escaparHtml(r.nomeArquivo)}</h3>
+            ${statusHtml}
+          </div>
+          <div style="margin:0 16px 10px; display:flex; gap:16px; flex-wrap:wrap; font-size:0.85rem; color:var(--ink-soft);">
+            <span>${r.totalRegistros} registro(s)</span><span>${r.totalRppss} beneficiário(s) (RPPSS)</span>
+            <span>${r.totalErros} erro(s)</span><span>${r.totalAvisos} aviso(s)</span>
+          </div>
+          ${
+            problemasHtml
+              ? `<div style="margin:14px 16px 0;">${problemasHtml}</div>`
+              : '<div class="msg vazio" style="margin:14px 16px 0;">Nenhum problema encontrado.</div>'
+          }
+          <div style="margin:14px 16px 0;">
+            <button type="button" class="acao-btn btn-dmed-exportar" data-arquivo="${escaparHtml(r.nomeArquivo)}">⬇ Exportar CSV dos problemas</button>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  dmedResultadoAreaEl.innerHTML = html;
+}
+
+function exportarDmedCsv(nomeArquivo) {
+  const r = dmedUltimoResultado.find((x) => x.nomeArquivo === nomeArquivo);
+  if (!r) return;
+  const linhas = [['Arquivo', 'Linha', 'Severidade', 'Problema']];
+  for (const e of r.erros) linhas.push([r.nomeArquivo, e.linha ?? '', 'erro', e.texto]);
+  for (const a of r.avisos) linhas.push([r.nomeArquivo, a.linha ?? '', 'aviso', a.texto]);
+  baixarCsv(`dmed-problemas-${nomeArquivo.replace(/\.[^.]+$/, '')}.csv`, linhas);
+}
+
+async function processarArquivosDmed(files) {
+  const dmedResultadoAreaEl = document.getElementById('dmed-resultado-area');
+  dmedResultadoAreaEl.innerHTML = '<div class="msg vazio">Analisando…</div>';
+  try {
+    const analises = [];
+    for (const file of files) {
+      const buffer = await file.arrayBuffer();
+      const texto = new TextDecoder('iso-8859-1').decode(new Uint8Array(buffer));
+      analises.push(analisarArquivoDmed(texto, file.name));
+    }
+    const ctx = await dmedCrossCheck(analises);
+    renderizarResultadoDmed(analises.map((analise) => dmedValidarArquivo(analise, ctx)));
+  } catch (err) {
+    console.error(err);
+    dmedResultadoAreaEl.innerHTML = `<div class="msg erro">Erro ao analisar arquivo(s): ${escaparHtml(err.message)}</div>`;
+  }
+}
+
+const dmedArquivoEl = document.getElementById('dmed-arquivo');
+if (dmedArquivoEl) {
+  dmedArquivoEl.addEventListener('change', () => {
+    if (dmedArquivoEl.files.length > 0) processarArquivosDmed(Array.from(dmedArquivoEl.files));
+  });
+}
+document.getElementById('dmed-resultado-area')?.addEventListener('click', (e) => {
+  const btnCsv = e.target.closest('.btn-dmed-exportar');
+  if (btnCsv) exportarDmedCsv(btnCsv.dataset.arquivo);
+});
+
 // ---------- Validador APAC (SIA/SUS) ----------
 // Layout oficial: "Layout da interface texto do APAC e do SIA - layout
 // INTERNO" (DATASUS/SIA, versão 08/07/2026). Cabeçalho (tipo 01, 137 bytes),
