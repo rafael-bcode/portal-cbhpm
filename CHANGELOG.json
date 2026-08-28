@@ -1,5 +1,15 @@
 [
   {
+    "versao": "2.13.0",
+    "data": "2026-08-28",
+    "mudancas": [
+      "Dúvidas frequentes: subaba 'Rejeição / Validação de arquivos' reagrupada em 3 seções — SUS/SIGTAP, Operadoras/Padrão TISS, e cadastros/registros que servem os dois lados — em vez de uma lista única misturando os dois tipos de faturamento.",
+      "Data da 'última revisão' do dicionário de causas de glosa (04/08/2026) exposta direto no Leitor de Demonstrativo de Glosa (DAC), com nota apontando pra aba Fontes.",
+      "Acessibilidade: aria-live nas áreas de resultado que atualizam via busca/consulta, e aria-label nos campos sem rótulo visível da aba Múltiplos procedimentos.",
+      "Passada de verificação mobile (375px): nenhuma correção necessária, portal já responsivo nas áreas checadas."
+    ]
+  },
+  {
     "versao": "2.12.1",
     "data": "2026-08-26",
     "mudancas": [
