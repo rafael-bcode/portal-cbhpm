@@ -635,30 +635,26 @@ implementação sem mais definição de escopo:
   - Sem decisão de escopo pendente — é só redigir o item (o rascunho acima
     já dá o conteúdo quase pronto) e publicar na subaba SUS do FAQ.
 
-- **[Média]** **Achado relacionado (a partir da pesquisa de OCI): tabela de
-  compatibilidade entre procedimentos já disponível localmente**: o manual
-  do PMAE confirma que o registro de secundário em APAC de OCI **depende
-  inteiramente** da tabela de compatibilidades do SIGTAP (Relatórios →
-  Compatibilidades) — é regra de bloqueio do SIA, não sugestão. O usuário
-  mostrou esse portal oficial (`sigtap.datasus.gov.br`), que lista pra cada
-  OCI principal os procedimentos secundários compatíveis/obrigatórios (com
-  tipo e quantidade permitida). O arquivo bruto equivalente,
-  `rl_procedimento_compativel.txt`, **já está no zip da Tabela Unificada
-  baixado** (`TabelaUnificada_202607_v2607101010.zip`, 452 KB, formato de
-  colunas fixas: procedimento principal + registro, procedimento
-  compatível + registro, tipo de compatibilidade, quantidade permitida,
-  competência — layout em `rl_procedimento_compativel_layout.txt`). É o
-  mesmo padrão de arquivo/importação já usado pro recurso de CID
-  (`rl_procedimento_cid.txt` → tabela `sigtap_procedimento_cid`), então dá
-  pra seguir o mesmo caminho: nova tabela
-  `sigtap_procedimento_compativel`, importador em `sigtap-atualizador.js`,
-  endpoint novo ou extensão do `/api/sigtap/buscar`. Não é sobre OCI
-  especificamente (a tabela cobre compatibilidade entre procedimentos SUS
-  em geral, tipo "Compatível"/"Obrigatória" como descrito acima), mas é o
-  dado que mais importa pra quem fatura OCI. **Agendado pra 04/09/2026** (1ª sexta
-  de setembro — é feature nova de verdade: tabela nova, importador novo, endpoint
-  novo, não extensão simples do que já existe; ver regra em "Calendário planejado"
-  mais abaixo).
+- ~~**Achado relacionado (a partir da pesquisa de OCI): tabela de
+  compatibilidade entre procedimentos**~~ — **✅ já implementado (achado em
+  28/08/2026, sem registro de quando exatamente foi ao ar)**: o manual do PMAE
+  confirma que o registro de secundário em APAC de OCI **depende inteiramente**
+  da tabela de compatibilidades do SIGTAP (Relatórios → Compatibilidades) — é
+  regra de bloqueio do SIA, não sugestão. O arquivo bruto,
+  `rl_procedimento_compativel.txt`, já estava no zip da Tabela Unificada
+  (`TabelaUnificada_202607_v2607101010.zip`) e foi importado (mesmo padrão do
+  CID, `rl_procedimento_cid.txt` → `sigtap_procedimento_cid`): tabelas
+  `sigtap_procedimento_compativel` (12.404 registros) e
+  `sigtap_excecao_compatibilidade` (5 registros), importador em
+  `sigtap-atualizador.js`, endpoint `/api/sigtap/compatibilidade` — já em
+  produção, `sigtap_metadata` mostra a competência 202608 importada em
+  19/08/2026. Já tem UI própria (aba Verificadores → "Compatibilidade entre
+  procedimentos") e está referenciado no FAQ e no Checklist pré-envio.
+  **Correção de rota**: este item ficou incorretamente listado como candidato
+  agendado pra 04/09/2026 por pelo menos 9 dias depois de já estar no ar —
+  inclusive sobreviveu à checagem de higiene de `proximosPassos` de 26/08/2026
+  (v2.12.1), que o re-adicionou como pendente em vez de notar que já existia.
+  Removido de "Em breve" nesta correção (28/08/2026).
 
 - **[Alta pro texto de FAQ / Baixa pro validador]** **Novo item de FAQ +
   candidato de feature: CIHA (Comunicação de
@@ -1108,27 +1104,16 @@ antes da entrega, pra não deixar nada de última hora) e **publicados em
 **04/09/2026 (1ª sexta de setembro) — features novas**:
 - Validador de arquivo CIHA (layout confirmado, arquivo real de teste disponível).
 - Validador de arquivo DMED (layout confirmado por arquivo real, ver acima).
-- Tabela de Compatibilidade entre Procedimentos SIGTAP (nova tabela no banco,
-  importador e endpoint — feature de verdade, não é extensão do que já existe).
-  **Fonte de dados confirmada em 21/08/2026**: dentro do zip oficial já baixado
-  (`TabelaUnificada_202607_v2607101010.zip`) existe `rl_procedimento_compativel.txt`
-  (12.226 registros, layout oficial documentado em
-  `rl_procedimento_compativel_layout.txt`: CO_PROCEDIMENTO_PRINCIPAL,
-  CO_REGISTRO_PRINCIPAL, CO_PROCEDIMENTO_COMPATIVEL, CO_REGISTRO_COMPATIVEL,
-  TP_COMPATIBILIDADE, QT_PERMITIDA, DT_COMPETENCIA) e também
-  `rl_excecao_compatibilidade.txt` (regra de exceção quando um terceiro procedimento
-  de restrição também está na guia). Achado de graça, sem precisar baixar nada novo —
-  reduz bastante o risco desta entrega, o importador já pode ser desenhado direto em
-  cima do layout real.
+- ~~Tabela de Compatibilidade entre Procedimentos SIGTAP~~ — **retirada desta data em
+  28/08/2026: já estava implementada e em produção desde 19/08/2026**, achado ao
+  auditar o pedido de "colocar em teste" desta semana (ver "Achado relacionado" na
+  seção de candidatos acima). Sobrava só higiene de roadmap/Em-breve, já feita.
 
-  ⚠️ **Sinal de atenção, não decisão fechada**: são 3 features de porte real no
-  mesmo dia (CIHA é esforço Alto, DMED é um validador completo novo, Compatibilidade
-  exige nova tabela+importador+endpoint) — pode não caber tudo com o mesmo padrão de
-  qualidade/teste que as liberações anteriores tiveram. Seguindo o princípio já
+  ⚠️ **Sinal de atenção, não decisão fechada**: restam 2 features de porte real
+  (CIHA é esforço Alto, DMED é um validador completo novo) — seguindo o princípio já
   estabelecido ("libera o que estiver pronto e testado, não força item sem
-  verificação pra caber numa cota"), o esperado é que pelo menos uma dessas três
-  escorregue pra 02/10/2026 (a sexta seguinte do padrão mensal) se não estiver
-  madura a tempo — decisão de qual, se for o caso, fica pra mais perto da data.
+  verificação pra caber numa cota"), se uma das duas não estiver madura a tempo ela
+  escorrega pra 02/10/2026 (a sexta seguinte do padrão mensal).
 
 **11/09/2026 (sexta de ajuste) — FAQ: NOTIVISA**: item novo de conteúdo transversal
 (decisão de 21/08/2026, ver seção "Frentes transversais de suporte a profissionais
