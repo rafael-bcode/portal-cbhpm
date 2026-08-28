@@ -7376,7 +7376,12 @@ function cihaLinhasRelatorio(nomeArquivo) {
       status: problema ? (problema.erros.length ? 'erro' : 'aviso') : 'ok',
       problemas: problema ? [...problema.erros, ...problema.avisos] : [],
       paciente: individualizado ? nomeBruto : undefined,
-      cns: individualizado ? c.nuCns : undefined,
+      // CNS ausente vem zerado no layout ("000...0"), não em branco — string
+      // não-vazia e truthy, então cai na chave de agrupamento por paciente
+      // (montarCorpoRelatorioPorPaciente: l.cns || l.cpf || l.paciente) e
+      // agrupa TODOS os pacientes sem CNS preenchido num único grupo. Só usa
+      // o CNS como chave quando ele é de verdade um identificador.
+      cns: individualizado && !cihaTodoZero(c.nuCns) ? c.nuCns : undefined,
     };
   });
 
@@ -7640,29 +7645,54 @@ function renderizarResultadoDmed(resultados) {
 // com aviso explícito de que a unidade (reais ou centavos) não pôde ser
 // confirmada — não temos o leiaute oficial em texto pra afirmar isso (ver
 // nota no topo do Validador DMED).
+// XXX.XXX.XXX-XX — só formatação visual, não muda o dado (11 dígitos já
+// validados pelo dígito verificador em dmedValidarArquivo).
+function dmedFormatarCpf(cpf) {
+  if (!/^\d{11}$/.test(cpf)) return cpf;
+  return `${cpf.slice(0, 3)}.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-${cpf.slice(9, 11)}`;
+}
+
+// O campo de valor do RPPSS não tem separador decimal no arquivo (ex:
+// "359450"). Sem o leiaute oficial em texto pra confirmar a unidade,
+// assumimos centavos — é o padrão mais comum em leiautes da Receita Federal
+// (SPED, DIRF, eSocial) e bate com a magnitude esperada nos valores reais da
+// amostra (RPPSS de R$ 19 mil/ano é plausível pra um médico; R$ 1,9 milhão
+// não seria). Ainda é uma inferência, não uma confirmação — mantido explícito
+// no aviso do relatório.
+function dmedFormatarValor(valorBruto) {
+  if (!/^\d+$/.test(valorBruto || '')) return null;
+  return Number(valorBruto) / 100;
+}
+
 function montarRelatorioDmedHtml(dados) {
   const qtdErros = dados.beneficiarios.filter((b) => b.status === 'erro').length;
   const qtdAvisos = dados.beneficiarios.filter((b) => b.status === 'aviso').length;
   const declarantesHtml = dados.declarantes.map((d) => `
     <span>Declarante: <b>${escaparHtml(d.razaoSocial || '—')}</b> — CNPJ ${escaparHtml(d.cnpj || '—')}${d.cnes ? ` — CNES ${escaparHtml(d.cnes)}` : ''}${d.registroAns ? ` — Registro ANS ${escaparHtml(d.registroAns)}` : ''}</span>`).join('');
 
-  const linhasHtml = dados.beneficiarios.map((b) => `
+  let total = 0;
+  const linhasHtml = dados.beneficiarios.map((b) => {
+    const valorReais = dmedFormatarValor(b.valorDeclarado);
+    if (valorReais !== null) total += valorReais;
+    return `
     <tr>
-      <td class="detail">${escaparHtml(b.cpf)}</td>
+      <td class="detail">${escaparHtml(dmedFormatarCpf(b.cpf))}</td>
       <td>${escaparHtml(b.nome || '—')}${b.problemas && b.problemas.length ? `<br><span class="detail">${b.problemas.map(escaparHtml).join(' · ')}</span>` : ''}</td>
-      <td class="detail">${escaparHtml(b.valorDeclarado ?? '—')}</td>
+      <td class="detail">${valorReais !== null ? fmtMoeda(valorReais) : escaparHtml(b.valorDeclarado ?? '—')}</td>
       <td>${RELATORIO_ROTULO_STATUS[b.status] || b.status}</td>
-    </tr>`).join('');
+    </tr>`;
+  }).join('');
 
   return `
     <div class="guia-doc-head">
       <h2>Relatório de conferência — Validador DMED</h2>
       <p class="guia-doc-aviso">
         Gerado localmente pelo portal a partir do arquivo informado — não é um documento oficial da Receita
-        Federal/PGD. O valor de cada beneficiário é exibido <strong>exatamente como declarado no arquivo</strong>
-        — a unidade (reais ou centavos) não pôde ser confirmada contra o leiaute oficial vigente (ADE Cofis nº
-        27/2025 não está disponível em texto extraível, só como imagem escaneada); confira contra o PGD antes de
-        usar este relatório como referência de valor.
+        Federal/PGD. O valor de cada beneficiário foi <strong>convertido de centavos para reais</strong> — é a
+        interpretação mais provável (padrão comum em leiautes da Receita Federal, compatível com a magnitude dos
+        valores reais da amostra), mas não é uma confirmação do leiaute oficial vigente (ADE Cofis nº 27/2025 não
+        está disponível em texto extraível, só como imagem escaneada); confira contra o PGD antes de usar este
+        relatório como referência de valor.
       </p>
       <div class="guia-doc-meta">
         <span>Arquivo: <b>${escaparHtml(dados.nomeArquivo)}</b></span>
@@ -7673,8 +7703,9 @@ function montarRelatorioDmedHtml(dados) {
       </div>
     </div>
     <table class="guia-doc-tabela guia-doc-tabela-itens">
-      <thead><tr><th>CPF</th><th>Nome</th><th>Valor declarado (bruto)</th><th>Status</th></tr></thead>
+      <thead><tr><th>CPF</th><th>Nome</th><th>Valor declarado</th><th>Status</th></tr></thead>
       <tbody>${linhasHtml}</tbody>
+      <tfoot><tr><td colspan="2">Total</td><td colspan="2">${fmtMoeda(total)}</td></tr></tfoot>
     </table>`;
 }
 
