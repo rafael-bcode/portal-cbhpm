@@ -686,6 +686,7 @@ async function carregarStatusCmed() {
     renderizarStatusCmed(status);
   } catch (err) {
     console.error(err);
+    cmedCompetenciaAreaEl.innerHTML = '<span class="sigtap-competencia-badge erro">Servidor indisponível</span>';
   }
 }
 
@@ -817,6 +818,7 @@ async function carregarStatusOperadoras() {
     renderizarStatusOperadoras(status);
   } catch (err) {
     console.error(err);
+    operadorasCompetenciaAreaEl.innerHTML = '<span class="sigtap-competencia-badge erro">Servidor indisponível</span>';
   }
 }
 
@@ -947,6 +949,7 @@ async function carregarStatusCnesTab() {
     renderizarStatusCnesTab(status);
   } catch (err) {
     console.error(err);
+    cnesCompetenciaAreaEl.innerHTML = '<span class="sigtap-competencia-badge erro">Servidor indisponível</span>';
   }
 }
 
@@ -1096,6 +1099,7 @@ async function carregarStatusOpme() {
     renderizarStatusOpme(status);
   } catch (err) {
     console.error(err);
+    opmeCompetenciaAreaEl.innerHTML = '<span class="sigtap-competencia-badge erro">Servidor indisponível</span>';
   }
 }
 
@@ -5110,6 +5114,7 @@ async function carregarStatusSigtap() {
     renderizarStatusSigtap(status);
   } catch (err) {
     console.error(err);
+    sigtapCompetenciaAreaEl.innerHTML = '<span class="sigtap-competencia-badge erro">Servidor indisponível</span>';
   }
 }
 
