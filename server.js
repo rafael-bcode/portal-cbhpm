@@ -23,7 +23,18 @@ app.use(express.static(path.join(__dirname, 'public'))); // serve os arquivos da
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
+  ssl: { rejectUnauthorized: false },
+  // Sem esses limites, uma conexão que trava a meio caminho (soluço de rede
+  // até o pooler do Supabase) fica presa "em uso" pro resto da vida do
+  // processo — o pg não desiste sozinho. Isso esgota o pool aos poucos até
+  // toda consulta nova ficar pendurada pra sempre (reproduzido em dev: todas
+  // as buscas param de funcionar e só um restart do processo resolve).
+  // connectionTimeoutMillis faz pool.connect() falhar rápido se não sobrar
+  // conexão livre; statement_timeout/query_timeout derrubam consulta lenta
+  // no servidor e no cliente antes que ela prenda a conexão indefinidamente.
+  connectionTimeoutMillis: 10000,
+  statement_timeout: 15000,
+  query_timeout: 15000,
 });
 
 // "Próximos passos" — lista curta e sem datas do que está sendo avaliado,
