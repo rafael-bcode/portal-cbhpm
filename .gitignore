@@ -2,6 +2,8 @@
 node_modules/
 .claude/
 server.log
+server-local.log
+server-local.pid
 logs/
 
 # Arquivos-fonte de importação (planilhas/PDFs oficiais e dumps intermediários).

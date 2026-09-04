@@ -486,6 +486,8 @@
   <div class="tabs subtabs">
     <button type="button" class="subtab-btn active" data-subtab="xml-tiss" data-subtab-group="validadores">Validador de XML TISS</button>
     <button type="button" class="subtab-btn" data-subtab="sus" data-subtab-group="validadores">Validador SUS</button>
+    <button type="button" class="subtab-btn" data-subtab="ciha" data-subtab-group="validadores">Validador CIHA</button>
+    <button type="button" class="subtab-btn" data-subtab="dmed" data-subtab-group="validadores">Validador DMED</button>
   </div>
 
   <div id="subtab-xml-tiss" class="subtab-panel" data-subtab-group="validadores">
@@ -693,6 +695,58 @@
   <section id="apac-resultado-area" aria-live="polite"></section>
 
   </div>
+
+  </div>
+
+  <div id="subtab-ciha" class="subtab-panel hidden" data-subtab-group="validadores">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Validador CIHA</h2>
+    </div>
+    <p class="ajustes-nota">
+      Confere um arquivo-texto do CIHA01 (Comunicação de Informação Hospitalar e Ambulatorial) —
+      <strong>só no seu navegador</strong> — contra o layout oficial vigente ("Layout - CIHA01", atualizado em
+      06/2024, DATASUS). Verifica a estrutura de cada linha (609 posições, largura fixa), a obrigatoriedade
+      condicional em cascata (por tipo de atendimento, fonte de remuneração, modalidade e desfecho), CNPJ e CID
+      (dígito verificador / formato), datas — e cruza o procedimento com a SIGTAP, o CID principal/secundário
+      com o CID-10 e a operadora com o cadastro ANS já carregados. O CIHA é só informação obrigatória ao
+      Ministério da Saúde (Portaria GM/MS 1.171/2011) — não é instrumento de faturamento, e este não é um
+      validador oficial do DATASUS.
+    </p>
+    <div class="field">
+      <label for="ciha-arquivo">Arquivo(s) de CIHA01 (.txt)</label>
+      <input type="file" id="ciha-arquivo" accept=".txt" multiple>
+    </div>
+  </section>
+
+  <section id="ciha-resultado-area" aria-live="polite"></section>
+
+  </div>
+
+  <div id="subtab-dmed" class="subtab-panel hidden" data-subtab-group="validadores">
+
+  <section class="search-panel">
+    <div class="mp-header">
+      <h2>Validador DMED</h2>
+    </div>
+    <p class="ajustes-nota">
+      Confere um arquivo-texto da Dmed (Declaração de Serviços Médicos e de Saúde, Receita Federal) —
+      <strong>só no seu navegador</strong>. Diferente do Validador CIHA, o leiaute oficial vigente (ADE Cofis nº
+      27/2025) não está disponível em texto extraível — só como imagem escaneada do Diário Oficial. Este
+      validador confere o que dá pra confirmar com segurança contra a estrutura documentada e o arquivo real de
+      teste: ordem e cardinalidade dos registros (Dmed → RESPO → DECPJ → PSS/RPPSS e/ou OPPAS/TOP/RTOP/DTOP/RDTOP
+      → FIMDmed), dígito verificador de CPF/CNPJ, CNES, e a ordenação crescente por CPF dentro de cada bloco. Não
+      valida o significado de negócio de todo campo opcional, e o ramo de operadora (OPPAS e seguintes) só teve a
+      hierarquia conferida contra a documentação — nenhum arquivo real desse ramo foi testado ainda.
+    </p>
+    <div class="field">
+      <label for="dmed-arquivo">Arquivo(s) de Dmed (.txt)</label>
+      <input type="file" id="dmed-arquivo" accept=".txt" multiple>
+    </div>
+  </section>
+
+  <section id="dmed-resultado-area" aria-live="polite"></section>
 
   </div>
 

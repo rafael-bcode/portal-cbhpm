@@ -1102,18 +1102,38 @@ antes da entrega, pra não deixar nada de última hora) e **publicados em
   sexta.
 
 **04/09/2026 (1ª sexta de setembro) — features novas**:
-- Validador de arquivo CIHA (layout confirmado, arquivo real de teste disponível).
-- Validador de arquivo DMED (layout confirmado por arquivo real, ver acima).
+- ~~Validador de arquivo CIHA~~ — **✅ implementado e testado em 28/08/2026**, uma
+  semana antes da entrega (mesmo padrão do pacote de 28/08). Layout confirmado contra
+  o PDF oficial vigente (`Layout_CIHA01_2024-06.pdf`, 38 campos, 609 posições) e
+  cross-validado campo a campo contra os 213 registros reais do Totvs GSH — inclusive
+  resolvendo uma ambiguidade que o próprio PDF tinha (NU_CNPJ: `Tamanho=014` mas
+  posição impressa 069-081, só 13 dígitos; os 170 CNPJs não-zerados da amostra só
+  batem no dígito verificador com a janela real 069-**082**). Estrutural (largura de
+  linha), obrigatoriedade condicional em cascata (por tipo de atendimento, fonte de
+  remuneração, modalidade, desfecho), CNPJ/CNS com dígito verificador, e cruzamento
+  com SIGTAP/CID-10/CNES/Operadoras ANS já carregados. Zero erros estruturais nos 213
+  registros reais; avisos batem com lacunas de dado reais da amostra (ex.: 4 de 44
+  registros de convênio privado sem beneficiário/prontuário informado). UI em
+  Validadores → Validador CIHA.
+- ~~Validador de arquivo DMED~~ — **✅ implementado e testado em 28/08/2026**, com
+  ressalva: **diferente do CIHA, não há PDF oficial vigente em texto extraível**
+  (ADE Cofis nº 27/2025 só existe como imagem escaneada do Diário Oficial) — a
+  estrutura foi confirmada só contra 1 arquivo real (12 registros, ramo prestador,
+  Tipo do declarante=1). O validador cobre o que dá pra confirmar com segurança:
+  ordem/cardinalidade dos registros (Dmed→RESPO→DECPJ→PSS/RPPSS→FIMDmed),
+  dígito verificador de CPF/CNPJ, CNES, e a ordenação crescente por CPF dentro do
+  bloco RPPSS (confirmada nos 9 CPFs reais da amostra). Testado contra o arquivo real
+  (0 erros/avisos) e contra 4 variantes quebradas de propósito (CPF com dígito
+  inválido, sem FIMDmed, RPPSS fora de ordem, tipo de registro desconhecido — as 4
+  detectadas corretamente). **O ramo operadora (OPPAS/TOP/RTOP/DTOP/RDTOP) só teve a
+  hierarquia conferida contra a documentação, sem nenhum arquivo real de teste** — se
+  o usuário tiver ou conseguir um arquivo real desse ramo, vale rodar a mesma
+  auditoria "arquivo real vale mais que documentação" antes de confiar nele tanto
+  quanto no ramo prestador. UI em Validadores → Validador DMED.
 - ~~Tabela de Compatibilidade entre Procedimentos SIGTAP~~ — **retirada desta data em
   28/08/2026: já estava implementada e em produção desde 19/08/2026**, achado ao
   auditar o pedido de "colocar em teste" desta semana (ver "Achado relacionado" na
   seção de candidatos acima). Sobrava só higiene de roadmap/Em-breve, já feita.
-
-  ⚠️ **Sinal de atenção, não decisão fechada**: restam 2 features de porte real
-  (CIHA é esforço Alto, DMED é um validador completo novo) — seguindo o princípio já
-  estabelecido ("libera o que estiver pronto e testado, não força item sem
-  verificação pra caber numa cota"), se uma das duas não estiver madura a tempo ela
-  escorrega pra 02/10/2026 (a sexta seguinte do padrão mensal).
 
 **11/09/2026 (sexta de ajuste) — FAQ: NOTIVISA**: item novo de conteúdo transversal
 (decisão de 21/08/2026, ver seção "Frentes transversais de suporte a profissionais
