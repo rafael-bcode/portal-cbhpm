@@ -1874,6 +1874,119 @@ protocolo clínico de execução, não referência regulatória, e foge do princ
 passo a passo detalhado quando aplicável, como Cirurgia Segura e UPP acima) — não um
 manual de técnica de enfermagem por conta própria.
 
+## Fase 12 — Nova direção estratégica: Nutrição Clínica — pesquisa feita em
+04/09/2026, entrega prevista 04/12/2026
+
+**Contexto**: o usuário pediu (04/09/2026) pra pensar num módulo de apoio a outras
+equipes multidisciplinares além de Farmácia e Enfermagem — citou especificamente
+**fonoaudiologia, nutrição e fisioterapia**, começando por **nutrição clínica**.
+Fono e fisio ficam registradas como próximas frentes da mesma expansão
+multiprofissional, sem pesquisa ainda — só nutrição foi investigada nesta sessão.
+Mesma régua de segurança já usada em Farmácia/Enfermagem: **conteúdo de referência
+oficial reproduzido, sem interpretação clínica própria** — nenhuma calculadora que
+produza um escore/diagnóstico pra um paciente real.
+
+**Data**: 04/12/2026 é a 1ª sexta-feira de dezembro — segue o mesmo padrão de
+Farmácia (02/10) e Enfermagem (06/11): cada nova frente profissional estreia numa
+1ª sexta do mês, como "Fase" própria, mesmo quando os itens individuais são só
+conteúdo (sem validador/tabela nova) — mantém previsível o ritmo de expansão
+multiprofissional e dá tempo de pesquisa adequado (3 meses, mesmo intervalo dado à
+Enfermagem).
+
+### 1. Atribuições legais do nutricionista em Nutrição Clínica — [Alta]
+
+Base legal:
+- **Lei nº 8.234/1991** (regulamenta a profissão) — [art. 4º](https://www.jusbrasil.com.br/legislacao/127968/lei-8234-91) lista as atividades
+  privativas do nutricionista: direção/coordenação de cursos de nutrição;
+  planejamento, organização, direção, supervisão e avaliação de serviços de
+  alimentação e nutrição; auditoria, consultoria e assessoria em nutrição e
+  dietética; assistência e educação nutricional a indivíduos ou coletividades,
+  sadios ou enfermos; e **assistência dietoterápica hospitalar, ambulatorial e em
+  consultório, prescrevendo, planejando, analisando, supervisionando e avaliando
+  dietas para enfermos** — o nutricionista não depende de prescrição médica pra
+  isso, mudança trazida pela própria lei.
+- **Resolução CFN nº 600/2018** (atualiza a 380/2005) — define Nutrição Clínica
+  como a atuação em hospitais, clínicas, ILPIs, ambulatórios/consultórios, bancos
+  de leite humano, lactários e centrais de terapia nutricional. Dentro dela, o
+  nutricionista pode **prescrever suplementos nutricionais, alimentos para fins
+  especiais e fitoterápicos** e **solicitar exames laboratoriais necessários ao
+  acompanhamento dietoterápico**, conforme protocolo preestabelecido pela Unidade
+  de Nutrição e Dietética — pontos que costumam gerar dúvida sobre limite de
+  atuação (mesmo tipo de linha jurídica sensível já tratado na Fase 11 de
+  Enfermagem). Atribuições detalhadas por área estão no Anexo II da resolução, não
+  confirmado literalmente ainda — conferir antes de publicar o FAQ.
+
+### 2. EMTN — Equipe Multiprofissional de Terapia Nutricional (compliance) — [Alta]
+
+O item com mais "cara" de CIHA desta fase: é obrigação real de estabelecimento,
+não só curiosidade de conteúdo.
+
+- **O que é**: grupo formal e **obrigatoriamente constituído por pelo menos um
+  profissional de cada categoria — médico, nutricionista, enfermeiro e
+  farmacêutico** —, podendo incluir outras categorias com treinamento específico
+  em Terapia Nutricional. Hospital que faz Terapia Nutricional Enteral (TNE) e/ou
+  Parenteral (TNP) individualizada é obrigado a ter EMTN.
+- **Base legal levantada** (fonte: [cartilha oficial do CRN-3, jul/2021](https://www.crn3.org.br/arquivos/e6db09442127da27ffee21bec6a527fe.pdf), cruzada com busca própria):
+  - **RDC ANVISA nº 503/2021** — requisitos mínimos pra Terapia de Nutrição
+    Enteral, vigente desde 01/07/2021. **Achado importante**: essa RDC **revoga a
+    RDC nº 63/2000** — a própria cartilha do CRN-3 (publicada em julho/2021, no mês
+    exato da transição) ainda cita a 63/2000 como referência corrente, o que mostra
+    como esse tipo de fonte secundária pode ficar desatualizada rápido; usar a
+    503/2021 como referência vigente no FAQ, não a 63/2000. Reforça que a TNE deve
+    ser indicada por médico, com avaliação nutricional repetida no máximo a cada
+    10 dias.
+  - **Portaria MS/SNVC nº 272/1998** — regulamento técnico pra Terapia de Nutrição
+    Parenteral (TNP), ainda vigente (não achada revogação).
+  - **Resolução CFN nº 222/1999** — participação do nutricionista em EMTN para
+    TNE especificamente.
+  - **Portaria MS nº 120/2009** — define Unidades de Assistência e Centros de
+    Referência de Alta Complexidade em Terapia Nutricional.
+  - RDC nº 21/2015 e nº 22/2015 — regulamento técnico de fórmulas/compostos de
+    nutrientes para nutrição enteral (mais técnico, contexto pra quem audita, não
+    pro usuário final do FAQ).
+- **Atribuições do nutricionista dentro da EMTN** (texto oficial da Resolução CFN
+  nº 600/2018, via cartilha do CRN-3): elaborar o diagnóstico de nutrição e a
+  prescrição dietética; registrar em prontuário a prescrição e a evolução
+  nutricional conforme protocolo; acompanhar a evolução nutricional; **formular a
+  Nutrição Enteral** (composição qualitativa/quantitativa, fracionamento,
+  apresentação); orientar na alta (estendendo a cuidadores/familiares);
+  estabelecer e supervisionar protocolos técnicos do serviço conforme legislação
+  Anvisa; especificar insumos na aquisição (fórmulas, material de consumo/
+  embalagem, suplementos); elaborar fichas técnicas de preparações artesanais; e
+  elaborar/manter o Manual de Boas Práticas e POPs do serviço.
+- **Risco de não conformidade**: não confirmado literalmente qual sanção específica
+  a norma prevê para hospital sem EMTN formal — vale confirmar antes de publicar
+  (mesmo cuidado já usado nas ressalvas do CIHA/DMED).
+
+### 3. Ponte com SIGTAP/TUSS já carregado no portal — [Média]
+
+Ideia equivalente à compatibilidade procedimento×CID (Fase 8): sinalizar, na busca
+de procedimentos que o portal já indexa, os códigos ligados a avaliação
+nutricional, terapia de nutrição enteral e terapia de nutrição parenteral — sem
+importar nenhuma fonte nova, só curadoria em cima do que já está carregado.
+**Pendência antes de fechar escopo**: levantar os códigos exatos (SIGTAP e/ou
+TUSS) que correspondem a esses procedimentos — não pesquisado ainda nesta sessão.
+
+### 4. Ferramentas de triagem nutricional (NRS-2002, ASG-PPP, MUST) — [Baixa, decisão de escopo pendente]
+
+Item citado na conversa, mas **ainda sem decisão de escopo fechada** — não entra
+no calendário até isso ser resolvido. O limite já estabelecido no portal (CID-10,
+Checklist pré-envio) é conteúdo de referência sem interpretação pra um paciente
+real: cabe **explicar o que é cada ferramenta e quando se usa** (texto de FAQ),
+mas **não** cabe implementar como calculadora que recebe dados de um paciente e
+devolve um escore/classificação de risco nutricional — isso seria decisão clínica
+de verdade, fora do que o portal faz hoje em qualquer outra área. Registrado como
+candidato de conteúdo (não de feature), sem pesquisa aprofundada ainda.
+
+### O que fica de fora (por ora)
+
+Prescrição dietética específica, cálculo de necessidade calórica/proteica de um
+paciente, ou qualquer ferramenta que produza uma recomendação nutricional
+individualizada **não** entram — é prática clínica em si, mesmo limite já aplicado
+a Farmácia (sem indicação de dose) e Enfermagem (sem técnica de procedimento). O
+portal cobre a **moldura legal e regulatória** (atribuições, EMTN, códigos de
+faturamento), não decisão clínica.
+
 ## Observação (não é candidato ainda): Carteira de Identidade Nacional (CIN)
 
 Pesquisa feita a pedido do usuário (14/08/2026) — **não é item de "Em
