@@ -6263,8 +6263,14 @@ async function bpaCrossCheckSigtapCid(linhas) {
   const codigosProc = [...new Set(linhas.map((l) => l.campos.procedimento).filter((c) => /^\d{10}$/.test(c)))];
   const codigosCid = [...new Set(linhas.filter((l) => l.tipo === 'I').map((l) => l.campos.cid.toUpperCase()).filter((c) => /^[A-Z]\d{2,3}$/.test(c)))];
 
+  // null (não []) sinaliza que a consulta falhou (rede/banco indisponível) —
+  // distinto de "consultamos e não achamos nada". Os pontos que checam
+  // ctx.cidValidos/ctx.sigtapPorCodigo já testam a presença desses mapas
+  // antes de acusar "código não encontrado", então null pula a checagem em
+  // vez de acusar falso-negativo pra todo código do arquivo.
   const postLote = (url, codigos) => codigos.length
-    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigos }) }).then((r) => r.json()).catch(() => [])
+    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigos }) })
+      .then((r) => { if (!r.ok) throw new Error('http'); return r.json(); }).catch(() => null)
     : Promise.resolve([]);
 
   const [sigtapResp, cidResp] = await Promise.all([
@@ -6273,15 +6279,31 @@ async function bpaCrossCheckSigtapCid(linhas) {
   ]);
 
   return {
-    sigtapPorCodigo: new Map((Array.isArray(sigtapResp) ? sigtapResp : []).map((r) => [r.codigo, r])),
-    cidValidos: new Set((Array.isArray(cidResp) ? cidResp : []).map((r) => r.codigo)),
+    sigtapPorCodigo: sigtapResp === null ? null : new Map(sigtapResp.map((r) => [r.codigo, r])),
+    cidValidos: cidResp === null ? null : new Set(cidResp.map((r) => r.codigo)),
+    cidPorCodigo: cidResp === null ? null : new Map(cidResp.map((r) => [r.codigo, r.nome])),
+    sigtapIndisponivel: sigtapResp === null,
+    cidIndisponivel: cidResp === null,
   };
+}
+
+// Aviso único de topo, por arquivo, quando alguma base de cruzamento não
+// respondeu (rede/banco indisponível) — evita que o silêncio da falha vire
+// um falso "código não encontrado" em cada linha/registro (ver comentário em
+// bpaCrossCheckSigtapCid) sem também deixar o usuário sem explicação alguma.
+function avisosIndisponibilidadeBase(ctx) {
+  const avisos = [];
+  if (ctx.sigtapIndisponivel) avisos.push({ severidade: 'aviso', texto: 'Não foi possível consultar a base SIGTAP agora (falha de rede ou banco) — as checagens de código de procedimento neste arquivo foram puladas. Tente novamente em instantes.' });
+  if (ctx.cidIndisponivel) avisos.push({ severidade: 'aviso', texto: 'Não foi possível consultar a base de CID-10 agora (falha de rede ou banco) — as checagens de diagnóstico neste arquivo foram puladas. Tente novamente em instantes.' });
+  if (ctx.cnesIndisponivel) avisos.push({ severidade: 'aviso', texto: 'Não foi possível consultar a base CNES agora (falha de rede ou banco) — as checagens de CNES neste arquivo foram puladas.' });
+  if (ctx.operadorasIndisponivel) avisos.push({ severidade: 'aviso', texto: 'Não foi possível consultar o cadastro de operadoras ANS agora (falha de rede ou banco) — as checagens de operadora neste arquivo foram puladas.' });
+  return avisos;
 }
 
 function bpaValidarArquivo(analise, ctx) {
   if (analise.semConteudo) return { nomeArquivo: analise.nomeArquivo, vazio: true };
 
-  const checksCabecalho = validarCabecalhoBpa(analise);
+  const checksCabecalho = [...validarCabecalhoBpa(analise), ...avisosIndisponibilidadeBase(ctx)];
   const continuidade = bpaChecarContinuidade(analise.linhas);
 
   const linhasComProblema = [];
@@ -6787,8 +6809,11 @@ async function aihCrossCheckSigtapCid(registros) {
     for (const o of r.ocorrencias) if (/^\d{10}$/.test(o.codProced) && o.codProced !== '0000000000') codigosProc.add(o.codProced);
   }
 
+  // null (não []) sinaliza que a consulta falhou — ver comentário equivalente
+  // em bpaCrossCheckSigtapCid.
   const postLote = (url, codigos) => codigos.length
-    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigos }) }).then((r) => r.json()).catch(() => [])
+    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigos }) })
+      .then((r) => { if (!r.ok) throw new Error('http'); return r.json(); }).catch(() => null)
     : Promise.resolve([]);
 
   const [sigtapResp, cidResp] = await Promise.all([
@@ -6797,8 +6822,11 @@ async function aihCrossCheckSigtapCid(registros) {
   ]);
 
   return {
-    sigtapPorCodigo: new Map((Array.isArray(sigtapResp) ? sigtapResp : []).map((r) => [r.codigo, r])),
-    cidValidos: new Set((Array.isArray(cidResp) ? cidResp : []).map((r) => r.codigo)),
+    sigtapPorCodigo: sigtapResp === null ? null : new Map(sigtapResp.map((r) => [r.codigo, r])),
+    cidValidos: cidResp === null ? null : new Set(cidResp.map((r) => r.codigo)),
+    cidPorCodigo: cidResp === null ? null : new Map(cidResp.map((r) => [r.codigo, r.nome])),
+    sigtapIndisponivel: sigtapResp === null,
+    cidIndisponivel: cidResp === null,
   };
 }
 
@@ -6806,7 +6834,7 @@ function aihValidarArquivo(analise, ctx) {
   if (analise.semConteudo) return { nomeArquivo: analise.nomeArquivo, vazio: true };
 
   const principais = analise.registros.filter((r) => r.tipo === '01' || r.tipo === '03' || r.tipo === '05');
-  const checksLote = aihChecarLotes(principais.length ? principais : analise.registros);
+  const checksLote = [...aihChecarLotes(principais.length ? principais : analise.registros), ...avisosIndisponibilidadeBase(ctx)];
 
   const registrosComProblema = [];
   for (const r of analise.registros) {
@@ -7238,8 +7266,11 @@ async function cihaCrossCheck(linhas) {
   const codigosCnes = [...new Set(linhas.map((l) => l.campos.coCnes).filter((c) => /^\d{7}$/.test(c)))];
   const codigosOperadora = [...new Set(linhas.filter((l) => l.campos.coFonteRemuneracao === '01').map((l) => l.campos.coOperadora).filter((c) => /^\d{6}$/.test(c)))];
 
+  // null (não []) sinaliza que a consulta falhou — ver comentário equivalente
+  // em bpaCrossCheckSigtapCid.
   const postLote = (url, body) => (Object.values(body)[0] || []).length
-    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then((r) => r.json()).catch(() => [])
+    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      .then((r) => { if (!r.ok) throw new Error('http'); return r.json(); }).catch(() => null)
     : Promise.resolve([]);
 
   const [sigtapResp, cidResp, cnesResp, operadorasResp] = await Promise.all([
@@ -7249,13 +7280,18 @@ async function cihaCrossCheck(linhas) {
     postLote('/api/operadoras/lote', { codigos: codigosOperadora }),
   ]);
 
-  const sigtapLista = Array.isArray(sigtapResp) ? sigtapResp : [];
+  const sigtapLista = sigtapResp || [];
   return {
-    sigtapPorCodigo: new Map(sigtapLista.map((r) => [r.codigo, r])),
-    cidValidos: new Set((Array.isArray(cidResp) ? cidResp : []).map((r) => r.codigo)),
-    cnesEncontrados: new Map((Array.isArray(cnesResp) ? cnesResp : []).map((r) => [r.codigo_cnes, r.razao_social])),
-    operadorasEncontradas: new Set((Array.isArray(operadorasResp) ? operadorasResp : []).map((r) => r.registro_ans)),
+    sigtapPorCodigo: sigtapResp === null ? null : new Map(sigtapLista.map((r) => [r.codigo, r])),
+    cidValidos: cidResp === null ? null : new Set(cidResp.map((r) => r.codigo)),
+    cidPorCodigo: cidResp === null ? null : new Map(cidResp.map((r) => [r.codigo, r.nome])),
+    cnesEncontrados: cnesResp === null ? null : new Map(cnesResp.map((r) => [r.codigo_cnes, r.razao_social])),
+    operadorasEncontradas: operadorasResp === null ? null : new Set(operadorasResp.map((r) => r.registro_ans)),
     procedimentosComCid: new Set(sigtapLista.filter((r) => r.tem_cid_vinculado).map((r) => r.codigo)),
+    sigtapIndisponivel: sigtapResp === null,
+    cidIndisponivel: cidResp === null,
+    cnesIndisponivel: cnesResp === null,
+    operadorasIndisponivel: operadorasResp === null,
   };
 }
 
@@ -7269,14 +7305,16 @@ function cihaValidarArquivo(analise, ctx) {
     if (erros.length || avisos.length) linhasComProblema.push({ ...l, erros, avisos });
   });
 
+  const avisosGerais = avisosIndisponibilidadeBase(ctx);
   const totalErros = linhasComProblema.reduce((s, l) => s + l.erros.length, 0);
-  const totalAvisos = linhasComProblema.reduce((s, l) => s + l.avisos.length, 0);
+  const totalAvisos = linhasComProblema.reduce((s, l) => s + l.avisos.length, 0) + avisosGerais.length;
   const totalIndividualizado = analise.linhas.filter((l) => l.campos.tpAtendimento === 'I').length;
   const totalConsolidado = analise.linhas.filter((l) => l.campos.tpAtendimento === 'C').length;
 
   return {
     nomeArquivo: analise.nomeArquivo,
     linhasComProblema,
+    avisosGerais,
     totalLinhas: analise.linhas.length,
     totalIndividualizado,
     totalConsolidado,
@@ -7339,6 +7377,7 @@ function renderizarResultadoCiha(resultados) {
             <span>${r.totalConsolidado} consolidada(s)</span>
             <span>${r.totalErros} erro(s)</span><span>${r.totalAvisos} aviso(s)</span>
           </div>
+          ${r.avisosGerais.length ? `<div style="margin:0 16px 10px;">${r.avisosGerais.map(cihaLinhaValidador).join('')}</div>` : ''}
           ${
             linhasHtml
               ? `<div style="margin:14px 16px 0;"><div class="ajustes-nota" style="margin-bottom:8px;"><strong>Linhas com problema (${r.linhasComProblema.length})</strong></div>${linhasHtml}${notaLimite}</div>`
@@ -7373,6 +7412,11 @@ function cihaLinhasRelatorio(nomeArquivo) {
     const problema = problemasPorOrdinal.get(l.ordinal);
     const individualizado = c.tpAtendimento === 'I';
     const nomeBruto = individualizado && analise.linhasBrutas ? cihaExtrairBruto(analise.linhasBrutas[i], 'noPaciente').trim() : '';
+    const cidPrincipal = c.coCidPrincipal.toUpperCase();
+    const cidSecundario = c.coCidSecundario.toUpperCase();
+    const cids = [];
+    if (/^[A-Z]\d{2,3}$/.test(cidPrincipal)) cids.push({ codigo: cidPrincipal, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(cidPrincipal) });
+    if (/^[A-Z]\d{2,3}$/.test(cidSecundario)) cids.push({ codigo: cidSecundario, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(cidSecundario) });
     return {
       chave: individualizado ? (nomeBruto || `linha ${l.ordinal}`) : `Consolidado (linha ${l.ordinal})`,
       tipo: individualizado ? 'CIHA-I' : 'CIHA-C', codigo: c.coProcedimento,
@@ -7381,6 +7425,7 @@ function cihaLinhasRelatorio(nomeArquivo) {
       status: problema ? (problema.erros.length ? 'erro' : 'aviso') : 'ok',
       problemas: problema ? [...problema.erros, ...problema.avisos] : [],
       paciente: individualizado ? nomeBruto : undefined,
+      cids: cids.length ? cids : undefined,
       // CNS ausente vem zerado no layout ("000...0"), não em branco — string
       // não-vazia e truthy, então cai na chave de agrupamento por paciente
       // (montarCorpoRelatorioPorPaciente: l.cns || l.cpf || l.paciente) e
@@ -8044,16 +8089,22 @@ async function apacCrossCheckSigtapCid(registros) {
       if (/^[A-Z]\d{2,3}$/.test(r.campos.apaCidsec.toUpperCase())) codigosCid.add(r.campos.apaCidsec.toUpperCase());
     }
   }
+  // null (não []) sinaliza que a consulta falhou — ver comentário equivalente
+  // em bpaCrossCheckSigtapCid.
   const postLote = (url, codigos) => codigos.length
-    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigos }) }).then((r) => r.json()).catch(() => [])
+    ? fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ codigos }) })
+      .then((r) => { if (!r.ok) throw new Error('http'); return r.json(); }).catch(() => null)
     : Promise.resolve([]);
   const [sigtapResp, cidResp] = await Promise.all([
     postLote('/api/sigtap/lote', [...codigosProc]),
     postLote('/api/cid10/lote', [...codigosCid]),
   ]);
   return {
-    sigtapPorCodigo: new Map((Array.isArray(sigtapResp) ? sigtapResp : []).map((r) => [r.codigo, r])),
-    cidValidos: new Set((Array.isArray(cidResp) ? cidResp : []).map((r) => r.codigo)),
+    sigtapPorCodigo: sigtapResp === null ? null : new Map(sigtapResp.map((r) => [r.codigo, r])),
+    cidValidos: cidResp === null ? null : new Set(cidResp.map((r) => r.codigo)),
+    cidPorCodigo: cidResp === null ? null : new Map(cidResp.map((r) => [r.codigo, r.nome])),
+    sigtapIndisponivel: sigtapResp === null,
+    cidIndisponivel: cidResp === null,
   };
 }
 
@@ -8068,7 +8119,7 @@ const APAC_ROTULO_TIPO = {
 function apacValidarArquivo(analise, ctx) {
   if (analise.semConteudo) return { nomeArquivo: analise.nomeArquivo, vazio: true };
 
-  const checksCabecalho = validarCabecalhoApac(analise);
+  const checksCabecalho = [...validarCabecalhoApac(analise), ...avisosIndisponibilidadeBase(ctx)];
 
   const registrosComProblema = [];
   for (const r of analise.registros) {
@@ -8223,13 +8274,14 @@ function fmtMoedaOuTraco(v) {
 
 const RELATORIO_ROTULO_STATUS = { erro: 'Erro', aviso: 'Aviso', ok: 'OK' };
 
-function montarTabelaLinhasRelatorio(linhas, colunaChave) {
+function montarTabelaLinhasRelatorio(linhas, colunaChave, mostrarCid) {
   const subtotal = linhas.reduce((s, l) => s + (l.valorTotal || 0), 0);
   return `
     <table class="guia-doc-tabela guia-doc-tabela-itens">
       <thead>
         <tr>
           <th>${escaparHtml(colunaChave)}</th><th>Tipo</th><th>Código</th><th>Descrição</th>
+          ${mostrarCid ? '<th>CID</th>' : ''}
           <th>Qtd.</th><th>Valor unit.</th><th>Valor total</th><th>Status</th>
         </tr>
       </thead>
@@ -8240,13 +8292,14 @@ function montarTabelaLinhasRelatorio(linhas, colunaChave) {
             <td>${escaparHtml(l.tipo)}</td>
             <td class="detail">${escaparHtml(l.codigo)}</td>
             <td>${escaparHtml(l.descricao)}${l.problemas && l.problemas.length ? `<br><span class="detail">${l.problemas.map(escaparHtml).join(' · ')}</span>` : ''}</td>
+            ${mostrarCid ? `<td class="detail">${l.cids && l.cids.length ? l.cids.map((c) => escaparHtml(c.nome ? `${c.codigo} — ${c.nome}` : c.codigo)).join('<br>') : ''}</td>` : ''}
             <td>${l.quantidade}</td>
             <td>${fmtMoedaOuTraco(l.valorUnit)}</td>
             <td>${fmtMoedaOuTraco(l.valorTotal)}</td>
             <td>${RELATORIO_ROTULO_STATUS[l.status] || l.status}</td>
           </tr>`).join('')}
       </tbody>
-      <tfoot><tr><td colspan="6">Subtotal</td><td>${fmtMoeda(subtotal)}</td><td></td></tr></tfoot>
+      <tfoot><tr><td colspan="${mostrarCid ? 7 : 6}">Subtotal</td><td>${fmtMoeda(subtotal)}</td><td></td></tr></tfoot>
     </table>`;
 }
 
@@ -8254,7 +8307,7 @@ function montarTabelaLinhasRelatorio(linhas, colunaChave) {
 // a conferência linha a linha pelo faturista. Linhas sem identificação de
 // paciente (ex.: BPA-C, que é consolidado/sem paciente) caem num grupo à
 // parte no fim do relatório.
-function montarCorpoRelatorioPorPaciente(linhas, colunaChave) {
+function montarCorpoRelatorioPorPaciente(linhas, colunaChave, mostrarCid) {
   const grupos = new Map();
   for (const l of linhas) {
     const chaveGrupo = l.cns || l.cpf || l.paciente || '__sem_identificacao__';
@@ -8270,7 +8323,7 @@ function montarCorpoRelatorioPorPaciente(linhas, colunaChave) {
     const idTexto = g.cns ? `CNS ${g.cns}` : g.cpf ? `CPF ${g.cpf}` : '';
     return `
       <h3 class="guia-doc-paciente">${escaparHtml(g.paciente || 'Sem identificação individual de paciente')}${idTexto ? ` — ${escaparHtml(idTexto)}` : ''}</h3>
-      ${montarTabelaLinhasRelatorio(g.linhas, colunaChave)}`;
+      ${montarTabelaLinhasRelatorio(g.linhas, colunaChave, mostrarCid)}`;
   }).join('');
 }
 
@@ -8279,9 +8332,10 @@ function montarRelatorioValidacaoHtml(dados) {
   const qtdErros = dados.linhas.filter((l) => l.status === 'erro').length;
   const qtdAvisos = dados.linhas.filter((l) => l.status === 'aviso').length;
 
+  const mostrarCid = dados.linhas.some((l) => l.cids && l.cids.length);
   const corpo = dados.agruparPorPaciente
-    ? montarCorpoRelatorioPorPaciente(dados.linhas, dados.colunaChave)
-    : montarTabelaLinhasRelatorio(dados.linhas, dados.colunaChave);
+    ? montarCorpoRelatorioPorPaciente(dados.linhas, dados.colunaChave, mostrarCid)
+    : montarTabelaLinhasRelatorio(dados.linhas, dados.colunaChave, mostrarCid);
 
   return `
     <div class="guia-doc-head">
@@ -8326,16 +8380,18 @@ function bpaLinhasRelatorio(nomeArquivo) {
     const qtd = Number(c.quantidade) || 0;
     const valorUnit = sig ? (Number(sig.vl_sa) || 0) + (Number(sig.vl_sp) || 0) : null;
     const problema = problemasPorOrdinal.get(l.ordinal);
+    const cidCod = l.tipo === 'I' ? c.cid.toUpperCase() : '';
     return {
       chave: `Folha ${c.folha}/Seq ${c.seq}`, tipo: `BPA-${l.tipo}`, codigo: c.procedimento,
       descricao: (sig && sig.nome) || '(não encontrado na SIGTAP)', quantidade: qtd,
       valorUnit, valorTotal: valorUnit !== null ? valorUnit * qtd : null,
       status: problema ? (problema.erros.length ? 'erro' : 'aviso') : 'ok',
       problemas: problema ? [...problema.erros, ...problema.avisos] : [],
-      // BPA-C é consolidado (sem paciente); só BPA-I traz nome/CNS/CPF.
+      // BPA-C é consolidado (sem paciente); só BPA-I traz nome/CNS/CPF/CID.
       paciente: l.tipo === 'I' ? c.nomePaciente.trim() : undefined,
       cns: l.tipo === 'I' ? c.cnsPaciente : undefined,
       cpf: l.tipo === 'I' ? c.cpfPaciente : undefined,
+      cids: cidCod ? [{ codigo: cidCod, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(cidCod) }] : undefined,
     };
   });
 
@@ -8387,11 +8443,15 @@ async function aihLinhasRelatorio(nomeArquivo) {
 
     const sigPrin = ctx.sigtapPorCodigo && ctx.sigtapPorCodigo.get(r.campos.procRealizado);
     const valorUnitPrin = sigPrin ? (Number(sigPrin.vl_sh) || 0) + (Number(sigPrin.vl_sp) || 0) : null;
+    const diagPrin = r.campos.diagPrin.toUpperCase();
+    const cids = [];
+    if (/^[A-Z]\d{2,3}$/.test(diagPrin)) cids.push({ codigo: diagPrin, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(diagPrin) });
+    for (const d of r.diagSec) cids.push({ codigo: d.cid, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(d.cid) });
     linhas.push({
       chave: r.campos.nuAih, tipo: 'Procedimento realizado', codigo: r.campos.procRealizado,
       descricao: (sigPrin && sigPrin.nome) || '(não encontrado na SIGTAP)', quantidade: 1,
       valorUnit: valorUnitPrin, valorTotal: valorUnitPrin, status: statusReg, problemas: problemasTexto,
-      paciente, cns,
+      paciente, cns, cids: cids.length ? cids : undefined,
     });
 
     r.ocorrencias.forEach((o, idx) => {
@@ -8446,19 +8506,27 @@ function apacLinhasRelatorio(nomeArquivo) {
     if (r.tipo === '14') {
       const sig = ctx.sigtapPorCodigo && ctx.sigtapPorCodigo.get(r.campos.apaCodprinc);
       const valorUnit = sig ? (Number(sig.vl_sa) || 0) + (Number(sig.vl_sp) || 0) : null;
+      const cidca = r.campos.apaCidca.toUpperCase();
+      const cids = /^[A-Z]\d{2,3}$/.test(cidca) ? [{ codigo: cidca, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(cidca) }] : undefined;
       linhas.push({
         chave: r.campos.apaNum, tipo: 'Procedimento principal', codigo: r.campos.apaCodprinc,
         descricao: (sig && sig.nome) || '(não encontrado na SIGTAP)', quantidade: 1,
-        valorUnit, valorTotal: valorUnit, status, problemas: problemasTexto, ...idPaciente,
+        valorUnit, valorTotal: valorUnit, status, problemas: problemasTexto, ...idPaciente, cids,
       });
     } else {
       const sig = ctx.sigtapPorCodigo && ctx.sigtapPorCodigo.get(r.campos.papCodproc);
       const qtd = Number(r.campos.papQtdprod) || 0;
       const valorUnit = sig ? (Number(sig.vl_sa) || 0) + (Number(sig.vl_sp) || 0) : null;
+      const cidp = r.campos.papCIDP.toUpperCase();
+      const cidSec = r.campos.papCIDS.toUpperCase();
+      const cids = [];
+      if (/^[A-Z]\d{2,3}$/.test(cidp)) cids.push({ codigo: cidp, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(cidp) });
+      if (/^[A-Z]\d{2,3}$/.test(cidSec)) cids.push({ codigo: cidSec, nome: ctx.cidPorCodigo && ctx.cidPorCodigo.get(cidSec) });
       linhas.push({
         chave: r.campos.papNum, tipo: 'Ação/procedimento', codigo: r.campos.papCodproc,
         descricao: (sig && sig.nome) || '(não encontrado na SIGTAP)', quantidade: qtd,
         valorUnit, valorTotal: valorUnit !== null ? valorUnit * qtd : null, status, problemas: problemasTexto, ...idPaciente,
+        cids: cids.length ? cids : undefined,
       });
     }
   }
