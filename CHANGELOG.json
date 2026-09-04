@@ -1,5 +1,15 @@
 [
   {
+    "versao": "2.14.0",
+    "data": "2026-09-04",
+    "mudancas": [
+      "Novo Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial): layout confirmado contra o PDF oficial vigente e cross-validado campo a campo contra 213 registros reais do Totvs GSH — checa largura de linha, obrigatoriedade condicional em cascata, dígito verificador de CNPJ/CNS e cruzamento com SIGTAP/CID-10/CNES/Operadoras ANS já carregados no portal. Aba Validadores → Validador CIHA.",
+      "Novo Validador de arquivo DMED (Declaração de Serviços Médicos e de Saúde): confere ordem/cardinalidade dos registros, dígito verificador de CPF/CNPJ, CNES e ordenação por CPF no bloco RPPSS. Ressalva: o ramo operadora (OPPAS/TOP/RTOP/DTOP/RDTOP) só teve a hierarquia conferida contra documentação, sem arquivo real de teste ainda. Aba Validadores → Validador DMED.",
+      "PDF de conferência (mesmo padrão do Validador SUS) disponível nos dois novos validadores, com agrupamento por paciente no CIHA.",
+      "CIHA e DMED adicionados à contagem de ferramentas da home institucional."
+    ]
+  },
+  {
     "versao": "2.13.1",
     "data": "2026-08-28",
     "mudancas": [

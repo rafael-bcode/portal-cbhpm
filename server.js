@@ -33,8 +33,7 @@ const pool = new Pool({
 // de entrega que pode não se confirmar. Atualizar aqui só quando algo
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
-  'Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial)',
-  'Validador de arquivo DMED (Declaração de Serviços Médicos e de Saúde)',
+  'Dúvidas frequentes: NOTIVISA (Sistema de Notificações em Vigilância Sanitária)',
 ];
 
 // Versão atual do portal, histórico de mudanças e o que está sendo avaliado
