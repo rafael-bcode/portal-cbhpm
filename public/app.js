@@ -127,14 +127,81 @@ document.querySelectorAll('.faq-portal-link').forEach((btn) => {
 });
 
 // ---------- Abas (sub-navegação) dentro do FAQ, por assunto ----------
+const faqBuscaEl = document.getElementById('faq-busca');
+const faqContagemEl = document.getElementById('faq-busca-contagem');
+
+// Remove só o estado deixado pela busca (item escondido + título de seção
+// injetado) — não mexe em qual subaba está com .hidden, isso é papel de
+// quem chama (a busca em si, ou o clique numa subaba).
+function limparFiltroFaq() {
+  document.querySelectorAll('.faq-item.hidden').forEach((item) => item.classList.remove('hidden'));
+  document.querySelectorAll('.faq-subtab-titulo-busca').forEach((el) => el.remove());
+  faqContagemEl?.classList.add('hidden');
+}
+
 document.querySelectorAll('.faq-subtab-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
+    if (faqBuscaEl) faqBuscaEl.value = '';
+    limparFiltroFaq();
     document.querySelectorAll('.faq-subtab-btn').forEach((b) => b.classList.remove('active'));
     document.querySelectorAll('.faq-subtab-panel').forEach((p) => p.classList.add('hidden'));
     btn.classList.add('active');
     document.getElementById(`faqtab-${btn.dataset.faqtab}`).classList.remove('hidden');
   });
 });
+
+// ---------- Busca cruzando todas as subabas do FAQ ----------
+// Client-side (as 83 perguntas já estão no DOM) — mesmo padrão de busca com
+// debounce usado em CID-10/SIGTAP, só que filtrando o que já existe na
+// página em vez de consultar o servidor.
+function normalizarBuscaFaq(s) {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+function filtrarFaq(termoBruto) {
+  const termo = normalizarBuscaFaq(termoBruto.trim());
+  limparFiltroFaq();
+
+  if (termo.length < 2) {
+    const ativo = document.querySelector('.faq-subtab-btn.active');
+    document.querySelectorAll('.faq-subtab-panel').forEach((p) => p.classList.add('hidden'));
+    if (ativo) document.getElementById(`faqtab-${ativo.dataset.faqtab}`)?.classList.remove('hidden');
+    return;
+  }
+
+  let totalVisivel = 0;
+  document.querySelectorAll('.faq-subtab-panel').forEach((painel) => {
+    let algumVisivel = false;
+    painel.querySelectorAll('.faq-item').forEach((item) => {
+      const bate = normalizarBuscaFaq(item.textContent).includes(termo);
+      item.classList.toggle('hidden', !bate);
+      if (bate) { algumVisivel = true; totalVisivel += 1; }
+    });
+    painel.classList.toggle('hidden', !algumVisivel);
+    if (algumVisivel) {
+      const btn = document.querySelector(`.faq-subtab-btn[data-faqtab="${painel.id.replace('faqtab-', '')}"]`);
+      const titulo = document.createElement('div');
+      titulo.className = 'faq-subtab-titulo-busca';
+      titulo.textContent = btn?.textContent.trim() || '';
+      painel.prepend(titulo);
+    }
+  });
+
+  if (faqContagemEl) {
+    faqContagemEl.textContent = totalVisivel === 0
+      ? `Nenhuma pergunta encontrada para "${termoBruto.trim()}".`
+      : `${totalVisivel} pergunta(s) encontrada(s) para "${termoBruto.trim()}".`;
+    faqContagemEl.classList.remove('hidden');
+  }
+}
+
+let debounceTimerFaq = null;
+if (faqBuscaEl) {
+  faqBuscaEl.addEventListener('input', () => {
+    clearTimeout(debounceTimerFaq);
+    debounceTimerFaq = setTimeout(() => filtrarFaq(faqBuscaEl.value), 150);
+  });
+}
 
 // ---------- Indicadores hospitalares (benchmark ANAHP, informado pelo usuário) ----------
 // Nomes e definições dos indicadores seguem terminologia padrão do setor (a mesma usada por

@@ -1653,12 +1653,28 @@ body > * {
 .faq-subtab-btn.active { color: var(--teal-dark); border-bottom-color: var(--teal); }
 .faq-subtab-panel.hidden { display: none; }
 
+/* Título de seção inserido na frente de cada subaba com resultado, só
+   durante a busca cruzada — sem ele, ao mostrar várias subabas juntas fica
+   impossível saber de qual assunto cada pergunta veio. */
+.faq-subtab-titulo-busca {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  margin: 18px 0 8px;
+}
+.faq-subtab-titulo-busca:first-child { margin-top: 0; }
+#faq-busca-contagem.hidden { display: none; }
+#faq-busca-contagem { margin: -8px 0 16px; }
+
 .faq-item {
   border: 1px solid var(--border);
   border-radius: var(--radius);
   margin-bottom: 10px;
   overflow: hidden;
 }
+.faq-item.hidden { display: none; }
 .faq-pergunta {
   list-style: none;
   cursor: pointer;
