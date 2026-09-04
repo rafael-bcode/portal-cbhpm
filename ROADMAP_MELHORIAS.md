@@ -380,6 +380,64 @@ pode não se confirmar. Atualizar essa lista só com itens realmente em
 avaliação — lista vazia é melhor que item furado (o array já suporta
 ficar vazio, a seção some da tela nesse caso).
 
+### Fluxo das 3 sextas (oficializado em 26/08/2026)
+
+Processo proposto pelo usuário em 26/08/2026 pra dar visibilidade de 3 sextas à
+frente em vez de organizar tudo em cima da hora. Toda sexta-feira de release, três
+ações rodam juntas, cada uma mirando uma semana diferente do calendário:
+
+1. **Subir (deploy)** o que está programado no "Calendário planejado" pra **esta
+   sexta** (a mais próxima) — **e atualizar `proximosPassos` em `server.js`** (a
+   seção "Em breve" do modal de versão) no mesmo commit: remover os itens que
+   acabaram de ir pro ar, e conferir se algum candidato com escopo já fechado pra
+   uma sexta próxima (mesmo critério já usado pro CIHA — "não é Baixa prioridade,
+   tem escopo fechado") ainda não está listado.
+2. **Colocar em teste** o que está programado pra **daqui a 1 semana** (a próxima
+   sexta) — só é possível pros itens que já estão com escopo fechado e código
+   pronto pra essa etapa; segue o mesmo padrão já usado no pacote de 28/08
+   (implementado e testado com uma semana de antecedência).
+3. **Pesquisar novidade** sobre o que está programado pra **daqui a 2 semanas** (a
+   sexta seguinte) — só relevante pra item que **já tem pesquisa-base registrada**
+   no roadmap (ex.: assinatura digital, glosa estrutural, CIHA); pra candidato sem
+   nenhuma pesquisa prévia, essa etapa vira "primeira pesquisa" em vez de
+   "atualização", e normalmente já deveria ter sido feita antes de virar candidato.
+
+**Exemplo de aplicação (sexta 28/08/2026)**:
+1. Sobe o pacote já pronto de 28/08 (sub-abas SUS/ANS, passada mobile, data do
+   dicionário de glosas, acessibilidade).
+2. Coloca em teste o pacote de 04/09 (CIHA, DMED, Compatibilidade SIGTAP).
+3. Pesquisa se surgiu algo novo sobre os itens de 11/09 (NOTIVISA, assinatura
+   digital, CodeQL).
+
+**Why:** o fluxo evita duas armadilhas já discutidas no roadmap — item chegando
+sem teste numa sexta (pressão de calendário, ver "Sem cota fixa" acima) e pesquisa
+desatualizada virando texto publicado sem checar se a norma mudou (ver o próprio
+caso de assinatura digital, onde a versão de maio/2026 do TISS trouxe mudança
+recente que só apareceu porque a pesquisa foi feita perto da implementação).
+Formaliza como rotina o que já vinha acontecendo de forma pontual.
+
+**Achado concreto que motivou incluir `proximosPassos` no passo 1 (26/08/2026)**:
+numa checagem pedida pelo usuário, achei duas falhas na lista "Em breve" — o item
+"Ajustes de exibição em telas menores" continuava listado mesmo depois da
+investigação de 21/08/2026 ter concluído que **nenhuma correção era necessária**
+(nada ia realmente mudar pro usuário quando 28/08 subisse), e DMED/Compatibilidade
+SIGTAP (ambos com escopo fechado, agendados pra 04/09, mesmo critério já usado pro
+CIHA) **não estavam** na lista — pura omissão. Corrigido nesta mesma sessão. Sem um
+passo formal de "atualizar a lista ao subir", esse tipo de esquecimento tende a se
+repetir a cada sexta.
+
+**How to apply:**
+- Ao preparar a pauta de qualquer sexta, verificar as três janelas (esta semana,
+  +1 semana, +2 semanas) antes de decidir o que fazer no dia.
+- Item sem escopo fechado não entra na etapa 2 (teste) mesmo que a data esteja
+  próxima — só entra quando o escopo fechar, ainda que isso empurre a data.
+- No passo 1 (subir), sempre revisar `proximosPassos`: remover o que acabou de ir
+  pro ar, remover item cuja investigação concluiu "sem correção necessária" (não
+  promete algo que não vai acontecer), e adicionar candidato novo com escopo
+  fechado pra sexta próxima que ainda não esteja listado.
+- Item sem pesquisa-base não entra na etapa 3 como "atualização" — some da lista
+  até ter uma primeira pesquisa registrada como candidato.
+
 ### Mapeamento pra próxima sexta (21/08/2026) — feito em 14/08/2026
 
 Os dois itens da pauta inicial já foram resolvidos na própria sessão de
@@ -577,30 +635,26 @@ implementação sem mais definição de escopo:
   - Sem decisão de escopo pendente — é só redigir o item (o rascunho acima
     já dá o conteúdo quase pronto) e publicar na subaba SUS do FAQ.
 
-- **[Média]** **Achado relacionado (a partir da pesquisa de OCI): tabela de
-  compatibilidade entre procedimentos já disponível localmente**: o manual
-  do PMAE confirma que o registro de secundário em APAC de OCI **depende
-  inteiramente** da tabela de compatibilidades do SIGTAP (Relatórios →
-  Compatibilidades) — é regra de bloqueio do SIA, não sugestão. O usuário
-  mostrou esse portal oficial (`sigtap.datasus.gov.br`), que lista pra cada
-  OCI principal os procedimentos secundários compatíveis/obrigatórios (com
-  tipo e quantidade permitida). O arquivo bruto equivalente,
-  `rl_procedimento_compativel.txt`, **já está no zip da Tabela Unificada
-  baixado** (`TabelaUnificada_202607_v2607101010.zip`, 452 KB, formato de
-  colunas fixas: procedimento principal + registro, procedimento
-  compatível + registro, tipo de compatibilidade, quantidade permitida,
-  competência — layout em `rl_procedimento_compativel_layout.txt`). É o
-  mesmo padrão de arquivo/importação já usado pro recurso de CID
-  (`rl_procedimento_cid.txt` → tabela `sigtap_procedimento_cid`), então dá
-  pra seguir o mesmo caminho: nova tabela
-  `sigtap_procedimento_compativel`, importador em `sigtap-atualizador.js`,
-  endpoint novo ou extensão do `/api/sigtap/buscar`. Não é sobre OCI
-  especificamente (a tabela cobre compatibilidade entre procedimentos SUS
-  em geral, tipo "Compatível"/"Obrigatória" como descrito acima), mas é o
-  dado que mais importa pra quem fatura OCI. **Agendado pra 04/09/2026** (1ª sexta
-  de setembro — é feature nova de verdade: tabela nova, importador novo, endpoint
-  novo, não extensão simples do que já existe; ver regra em "Calendário planejado"
-  mais abaixo).
+- ~~**Achado relacionado (a partir da pesquisa de OCI): tabela de
+  compatibilidade entre procedimentos**~~ — **✅ já implementado (achado em
+  28/08/2026, sem registro de quando exatamente foi ao ar)**: o manual do PMAE
+  confirma que o registro de secundário em APAC de OCI **depende inteiramente**
+  da tabela de compatibilidades do SIGTAP (Relatórios → Compatibilidades) — é
+  regra de bloqueio do SIA, não sugestão. O arquivo bruto,
+  `rl_procedimento_compativel.txt`, já estava no zip da Tabela Unificada
+  (`TabelaUnificada_202607_v2607101010.zip`) e foi importado (mesmo padrão do
+  CID, `rl_procedimento_cid.txt` → `sigtap_procedimento_cid`): tabelas
+  `sigtap_procedimento_compativel` (12.404 registros) e
+  `sigtap_excecao_compatibilidade` (5 registros), importador em
+  `sigtap-atualizador.js`, endpoint `/api/sigtap/compatibilidade` — já em
+  produção, `sigtap_metadata` mostra a competência 202608 importada em
+  19/08/2026. Já tem UI própria (aba Verificadores → "Compatibilidade entre
+  procedimentos") e está referenciado no FAQ e no Checklist pré-envio.
+  **Correção de rota**: este item ficou incorretamente listado como candidato
+  agendado pra 04/09/2026 por pelo menos 9 dias depois de já estar no ar —
+  inclusive sobreviveu à checagem de higiene de `proximosPassos` de 26/08/2026
+  (v2.12.1), que o re-adicionou como pendente em vez de notar que já existia.
+  Removido de "Em breve" nesta correção (28/08/2026).
 
 - **[Alta pro texto de FAQ / Baixa pro validador]** **Novo item de FAQ +
   candidato de feature: CIHA (Comunicação de
@@ -1005,11 +1059,12 @@ mês por definição, não por falta de prontidão.
 acima**: menu Validadores, reformatação de listas do FAQ, FAQ de OCI/CIHA(texto)/
 Portaria 344-98, FAQ de DMED.
 
-**28/08/2026 (sexta) — ajustes/melhorias de funcionalidade existente**:
+**28/08/2026 (sexta) — ajustes/melhorias de funcionalidade existente — ✅ no ar
+(v2.13.0)**:
 
 Todos os 4 itens abaixo foram **implementados e testados em 21/08/2026** (uma semana
-antes da entrega, pra não deixar nada de última hora) — ficam prontos no servidor
-local, aguardando só a decisão de subir junto com a liberação de 28/08.
+antes da entrega, pra não deixar nada de última hora) e **publicados em
+28/08/2026** junto com a liberação da semana.
 
 - ~~Sub-abas separando SUS de ANS/TISS em "Rejeição/Validação de arquivos"~~ — **✅
   implementado**: reagrupado com cabeçalho de seção dentro da própria subaba (3
@@ -1047,35 +1102,159 @@ local, aguardando só a decisão de subir junto com a liberação de 28/08.
   sexta.
 
 **04/09/2026 (1ª sexta de setembro) — features novas**:
-- Validador de arquivo CIHA (layout confirmado, arquivo real de teste disponível).
-- Validador de arquivo DMED (layout confirmado por arquivo real, ver acima).
-- Tabela de Compatibilidade entre Procedimentos SIGTAP (nova tabela no banco,
-  importador e endpoint — feature de verdade, não é extensão do que já existe).
-  **Fonte de dados confirmada em 21/08/2026**: dentro do zip oficial já baixado
-  (`TabelaUnificada_202607_v2607101010.zip`) existe `rl_procedimento_compativel.txt`
-  (12.226 registros, layout oficial documentado em
-  `rl_procedimento_compativel_layout.txt`: CO_PROCEDIMENTO_PRINCIPAL,
-  CO_REGISTRO_PRINCIPAL, CO_PROCEDIMENTO_COMPATIVEL, CO_REGISTRO_COMPATIVEL,
-  TP_COMPATIBILIDADE, QT_PERMITIDA, DT_COMPETENCIA) e também
-  `rl_excecao_compatibilidade.txt` (regra de exceção quando um terceiro procedimento
-  de restrição também está na guia). Achado de graça, sem precisar baixar nada novo —
-  reduz bastante o risco desta entrega, o importador já pode ser desenhado direto em
-  cima do layout real.
-
-  ⚠️ **Sinal de atenção, não decisão fechada**: são 3 features de porte real no
-  mesmo dia (CIHA é esforço Alto, DMED é um validador completo novo, Compatibilidade
-  exige nova tabela+importador+endpoint) — pode não caber tudo com o mesmo padrão de
-  qualidade/teste que as liberações anteriores tiveram. Seguindo o princípio já
-  estabelecido ("libera o que estiver pronto e testado, não força item sem
-  verificação pra caber numa cota"), o esperado é que pelo menos uma dessas três
-  escorregue pra 02/10/2026 (a sexta seguinte do padrão mensal) se não estiver
-  madura a tempo — decisão de qual, se for o caso, fica pra mais perto da data.
+- ~~Validador de arquivo CIHA~~ — **✅ implementado e testado em 28/08/2026**, uma
+  semana antes da entrega (mesmo padrão do pacote de 28/08). Layout confirmado contra
+  o PDF oficial vigente (`Layout_CIHA01_2024-06.pdf`, 38 campos, 609 posições) e
+  cross-validado campo a campo contra os 213 registros reais do Totvs GSH — inclusive
+  resolvendo uma ambiguidade que o próprio PDF tinha (NU_CNPJ: `Tamanho=014` mas
+  posição impressa 069-081, só 13 dígitos; os 170 CNPJs não-zerados da amostra só
+  batem no dígito verificador com a janela real 069-**082**). Estrutural (largura de
+  linha), obrigatoriedade condicional em cascata (por tipo de atendimento, fonte de
+  remuneração, modalidade, desfecho), CNPJ/CNS com dígito verificador, e cruzamento
+  com SIGTAP/CID-10/CNES/Operadoras ANS já carregados. Zero erros estruturais nos 213
+  registros reais; avisos batem com lacunas de dado reais da amostra (ex.: 4 de 44
+  registros de convênio privado sem beneficiário/prontuário informado). UI em
+  Validadores → Validador CIHA.
+- ~~Validador de arquivo DMED~~ — **✅ implementado e testado em 28/08/2026**, com
+  ressalva: **diferente do CIHA, não há PDF oficial vigente em texto extraível**
+  (ADE Cofis nº 27/2025 só existe como imagem escaneada do Diário Oficial) — a
+  estrutura foi confirmada só contra 1 arquivo real (12 registros, ramo prestador,
+  Tipo do declarante=1). O validador cobre o que dá pra confirmar com segurança:
+  ordem/cardinalidade dos registros (Dmed→RESPO→DECPJ→PSS/RPPSS→FIMDmed),
+  dígito verificador de CPF/CNPJ, CNES, e a ordenação crescente por CPF dentro do
+  bloco RPPSS (confirmada nos 9 CPFs reais da amostra). Testado contra o arquivo real
+  (0 erros/avisos) e contra 4 variantes quebradas de propósito (CPF com dígito
+  inválido, sem FIMDmed, RPPSS fora de ordem, tipo de registro desconhecido — as 4
+  detectadas corretamente). **O ramo operadora (OPPAS/TOP/RTOP/DTOP/RDTOP) só teve a
+  hierarquia conferida contra a documentação, sem nenhum arquivo real de teste** — se
+  o usuário tiver ou conseguir um arquivo real desse ramo, vale rodar a mesma
+  auditoria "arquivo real vale mais que documentação" antes de confiar nele tanto
+  quanto no ramo prestador. UI em Validadores → Validador DMED.
+- ~~Tabela de Compatibilidade entre Procedimentos SIGTAP~~ — **retirada desta data em
+  28/08/2026: já estava implementada e em produção desde 19/08/2026**, achado ao
+  auditar o pedido de "colocar em teste" desta semana (ver "Achado relacionado" na
+  seção de candidatos acima). Sobrava só higiene de roadmap/Em-breve, já feita.
 
 **11/09/2026 (sexta de ajuste) — FAQ: NOTIVISA**: item novo de conteúdo transversal
 (decisão de 21/08/2026, ver seção "Frentes transversais de suporte a profissionais
 de saúde" abaixo) — pesquisa já concluída, só falta escrever/publicar o item de FAQ.
 Esforço baixo, sem dependência de outro item; primeira sexta de ajuste livre depois
 do pacote de 04/09.
+
+**Também em 11/09/2026 — FAQ: assinatura digital vs. assinatura eletrônica** — **✅
+implementado e testado em 04/09/2026**, junto com a checagem semanal do pacote de
+11/09 (fluxo das 3 sextas: "colocar em teste" o que vem daqui a 1 semana). Item
+pedido pelo usuário (26/08/2026, "acha válido falar sobre assinatura digital no
+FAQ?") — avaliação: **válido e direto ligado ao core do portal** (TISS exige
+assinatura nas guias/documentos trocados), diferente de atestado/receituário/"lei do
+atestado", que ficam fora por serem prática clínica em si, fora do escopo de
+conferência de faturamento (mesmo critério da expansão farmácia/enfermagem: conteúdo
+de referência, não orientação clínica/legal de terceiros). Publicado na sub-aba TISS
+/ TUSS do FAQ (`faqtab-tiss`), testado com Playwright (item aparece, expande, sem
+erro de console). Mesma categoria que o item NOTIVISA acima (conteúdo transversal,
+cabe numa sexta de ajuste comum, não precisa esperar a 1ª sexta do mês).
+
+- Vai na sub-aba **TISS / TUSS** do FAQ (`faqtab-tiss`), que já tem o padrão de item
+  com `faq-portal-link` apontando pro Validador de XML TISS.
+- **Pesquisa (26/08/2026)**, fontes primárias — Medida Provisória 2.200-2/2001 (cria a
+  ICP-Brasil), Lei 14.063/2020 e o Padrão TISS — Componente Organizacional (versão
+  maio/2026, baixado de gov.br/ans):
+  - **Assinatura eletrônica** é o termo genérico (Lei 14.063/2020): três tipos com
+    validade jurídica — simples, avançada e qualificada — variando o grau de certeza
+    sobre a identidade de quem assina.
+  - **Assinatura digital ICP-Brasil** é o tipo qualificado: usa certificado emitido
+    por Autoridade Certificadora credenciada à ICP-Brasil (MP 2.200-2/2001),
+    criptografia assimétrica, presunção legal de autenticidade (art. 10 da MP).
+  - **No TISS não é qualquer assinatura eletrônica que vale** — o Componente
+    Organizacional (itens 23-24) veda a operadora aceitar substituto em papel do que
+    é trocado eletronicamente com certificado ICP-Brasil, e exige que esse
+    certificado seja do tipo **e-CNPJ** (instituição) ou **e-CPF** (quando o agente
+    atua como pessoa física) — não serve assinatura eletrônica simples/avançada.
+  - **Achado novo, versão maio/2026** (mudança recente, vale destacar no FAQ): a
+    assinatura da mensagem "Envio de Documentos" passou de **Condicionado** (só
+    quando o tipo de documento exigia, conforme Tabela de Domínio 81) para
+    **Obrigatório**, independente do tipo de documento — reforça que o padrão está
+    ficando mais rígido nesse ponto, não mais permissivo.
+  - **Requisitos técnicos** (contexto pra quem desenvolve/audita o gerador de XML,
+    não pro usuário final): padrão XAdES formato "Enveloped", política AD-RB
+    (DOC-ICP-15.03 v6.1), certificado ICP-Brasil de assinatura tipo A1 a A4,
+    propriedade XMLDSIG/XAdES `SigningTime`, validação de cadeia de certificação e
+    estado de revogação (LCR ou OCSP) na geração e na recepção.
+  - **Conexão com o que o portal já faz**: os 6 XSDs oficiais usados na validação
+    estrutural (Fase 6c) incluem `tissAssinaturaDigital_v1.01.xsd` e
+    `xmldsig-core-schema.xsd` — o Validador de XML TISS já confere a **estrutura**
+    do bloco de assinatura quando presente no arquivo. Precisa deixar explícito no
+    FAQ (mesmo padrão de ressalva usado no resto do portal) que isso **não é**
+    verificação da validade criptográfica da assinatura em si (exigiria acesso à
+    chave privada/cadeia de certificação, que o navegador não tem) — não substitui a
+    validação feita pela operadora receptora.
+  - Fontes: [MP 2.200-2/2001](https://www.planalto.gov.br/ccivil_03/mpv/antigas_2001/2200-2.htm),
+    Lei 14.063/2020, [Padrão TISS — Componente Organizacional, maio/2026](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/PadroTISS_ComponenteOrganizacional_202605.pdf)
+    (itens 23-24, 146-149, mudanças 8.25/8.27/8.31/8.32 do changelog da própria
+    versão).
+- **Fora do escopo, por decisão de critério (não é indecisão, é corte
+  deliberado)**: atestado médico/"lei do atestado", receituário — são prática
+  clínica/legal de terceiros, não faturamento; entrariam em conflito com o critério
+  já fixado de "referência, sem interpretação" da expansão farmácia/enfermagem.
+
+**Também em 11/09/2026 — infra: ativar CodeQL** (decisão do usuário, 21/08/2026):
+varredura automática de segurança de código, programada pra exatamente uma semana
+depois da entrega de CIHA/DMED (04/09) — código novo de parsing de arquivo de
+terceiros é justamente o que mais se beneficia da varredura. É ativação de
+ferramenta (Settings → Security → Code scanning → Default setup), não
+desenvolvimento; não compete com o item de FAQ do mesmo dia. Tracking:
+[Issue #12](https://github.com/rafael-bcode/portal-cbhpm/issues/12), milestone
+"11/09 — FAQ NOTIVISA".
+
+**18/09/2026 (sexta de ajuste) — Sinalização de risco de glosa estrutural no
+Validador de XML TISS**: pedido do usuário (26/08/2026, "vamos mapear tudo que possa
+auxiliar o faturista a identificar possíveis glosas que não estejam relacionadas a
+contrato") — escopo explicitamente fechado pelo usuário: só **estrutura,
+compatibilidade e falta de informação** derivável do próprio XML TISS padrão ANS +
+bases que o portal já tem; nada de tabela negociada/contrato prestador-operadora
+(decisão já fixada na Fase 3) nem pertinência clínica (julgamento médico, fora do
+critério de "referência, sem interpretação" adotado na expansão farmácia/enfermagem).
+Só ANS/TISS por ora — SUS fica de fora desta rodada, mas o mesmo raciocínio pode valer
+pros validadores BPA/AIH/APAC depois, como frente separada.
+
+É **ajuste do Validador de XML TISS que já existe** (não feature nova — não cria
+validador novo nem tabela nova), então não precisa esperar a 1ª sexta do mês. Marca
+cada achado como **⚠ "possível risco de glosa"**, nunca como erro certo — mesmo
+padrão de linguagem cautelosa já usado no resto do validador — porque sempre existe
+caso legítimo de exceção (ex.: "Consultor" numa cirurgia complexa é válido).
+
+- **[Alta] Consistência interna do próprio XML** (sem depender de nenhuma base
+  externa nova, só reforçar o parsing que já existe):
+  - Datas incoerentes: execução fora do intervalo admissão→alta; autorização
+    posterior à execução; alta anterior à admissão.
+  - Duplicidade de item: mesmo código + mesma data + mesma via de acesso/lateralidade
+    repetido na guia sem diferença aparente.
+  - Quantidade de diária maior que os dias entre admissão e alta.
+  - Mais de um grau "Cirurgião" (00) no mesmo procedimento (só pode haver um pela
+    norma — os demais deveriam ser Auxiliar).
+  - Taxa/diária de sala ou centro cirúrgico sem nenhum procedimento cirúrgico na
+    mesma guia.
+- **[Média] Grau de participação × natureza cirúrgica do procedimento** (o exemplo
+  que motivou o item): cruza o grau de participação (Tabela de Domínio 35) de cada
+  profissional do item contra `valores_procedimento` (mesma base que já alimenta a
+  calculadora de Múltiplos Procedimentos) — **regra validada em 26/08/2026 direto no
+  banco de produção**: `porte_anestesico IS NOT NULL AND porte_anestesico <> '0'` OU
+  `numero_auxiliares > 0` separa corretamente os ~2.476 códigos genuinamente
+  cirúrgicos (ex.: 30205069 Amigdalectomia lingual, 30731208 Tenotomia) dos ~2.401
+  não-cirúrgicos (ex.: 10102027 Visita/consulta hospitalar, 10106170 Consulta
+  ocupacional — ambos com `porte_anestesico null` e `numero_auxiliares 0`). Sinaliza
+  quando um procedimento cirúrgico não tem nenhum profissional em grau "Cirurgião"
+  (00), ou quando um procedimento sem porte cirúrgico/anestésico tem alguém em grau
+  "Cirurgião" lançado. Esforço médio: a lógica em si é simples, o cuidado maior é
+  redigir o texto de alerta pra não soar como acusação de erro certo.
+- **Pesquisado e não localizado (26/08/2026) — não é candidato por ora**:
+  compatibilidade procedimento×CID e procedimento×OPME do lado TUSS/ANS, equivalente
+  ao que o SIGTAP tem (`rl_procedimento_cid`, `rl_procedimento_compativel`, já usados
+  nas Fases 8 e no candidato de 04/09). Busca não achou uma tabela pública
+  estruturada nesse sentido — só a "Tabela de Compatibilização TUSS-SIP", que serve
+  outro propósito (mapear código TUSS pro item de envio obrigatório ao SIP da ANS,
+  não compatibilidade clínica procedimento-CID). Fica de fora até aparecer fonte
+  melhor — revisitar se o usuário achar/tiver acesso a algo assim futuramente.
 
 **02/10/2026 (1ª sexta de outubro) — Fase 10: Farmácia (segurança do paciente e do
 trabalhador)**: **decisão do usuário em 20/08/2026** — data fechada pra essa entrega
@@ -1734,3 +1913,69 @@ validar esse campo. Vale checar o changelog do Padrão TISS (ANS) nas
 próximas rodadas de revisão.
 
 Fontes: [Gazeta do Povo — Nova Carteira de Identidade (CIN)](https://www.gazetadopovo.com.br/brasil/cin-obrigatoria-saiba-como-emitir-e-o-que-muda-na-sua-identificacao/), [Alerta Gov — cronograma de transição CIN até 2032](https://alertagov.com.br/2026/04/ate-2032-todos-os-brasileiros-deverao-possuir-a-cin-veja-o-cronograma-de-transicao/), [Correio do Pantanal — CPF substitui número do Cartão SUS](https://correiodopantanal.com.br/cpf-substitui-numero-do-cartao-sus-e-passa-a-ser-identificador-unico-dos-usuarios-da-saude-publica/), [ANS — Cartão Nacional de Saúde](https://www.ans.gov.br/index.php/a-ans/sala-de-noticias-ans/consumidor/1819-cartao-nacional-de-saude-uma-realidade-para-todos-os-brasileiros), [M3BS Advogados — ANS divulga nova versão do Padrão TISS (jan/2026)](https://m3bs.com.br/ans-divulga-nova-versao-do-padrao-tiss-janeiro-2026/), [Padrão TISS — Julho/2026 (gov.br/ans)](https://www.gov.br/ans/pt-br/assuntos/prestadores/padrao-para-troca-de-informacao-de-saude-suplementar-2013-tiss/padrao-tiss-julho-2026)
+
+## Observação (sem previsão de entrega): Logo da operadora na busca de Operadoras ANS
+
+Pedido do usuário (27/08/2026): na tela de busca de Operadoras ANS (aba
+Verificadores), trazer a logo da operadora pra download junto do card de
+resultado (registro, razão social, CNPJ, endereço, contato).
+
+**Verificado no mesmo dia**: a fonte oficial usada por essa tela
+(`Relatorio_cadop.csv` da ANS, ver [create-tabela-operadoras-ans.sql](create-tabela-operadoras-ans.sql)
+e [operadoras-atualizador.js](operadoras-atualizador.js)) não tem campo de
+logo — só dado cadastral (CNPJ, razão social, endereço, contato). Não existe
+API pública da ANS que sirva logo de operadora.
+
+**Único caminho encontrado, e por que não é candidato ainda**: heurística de
+extrair o domínio do e-mail cadastrado e buscar o favicon via serviço de
+terceiro (ex.: `google.com/s2/favicons`) — sem custo, mas com dois problemas
+que travam a decisão: (1) cobertura desigual, muita operadora pequena/
+cooperativa não tem e-mail com domínio próprio identificável; (2) um botão de
+**download** redistribui a marca de ~1.100 empresas privadas sem autorização
+— questão de marca registrada, diferente de só exibir o ícone. Precisaria de
+uma etapa de pesquisa antes (checar % de cobertura real e decidir "exibir" vs
+"baixar") — mesmo padrão já usado antes de CIHA/DMED virarem candidato de
+verdade.
+
+**Decisão do usuário (27/08/2026)**: registrar a solicitação e deixar de lado
+por ora, sem entrar no calendário planejado nem na lista "Em breve" do
+portal.
+
+**O que observar pra virar candidato de verdade**: alguém rodar a pesquisa de
+cobertura (quantas das ~1.115 operadoras têm e-mail com domínio próprio
+utilizável) e uma decisão de escopo entre "exibir" (mais defensável) e
+"baixar" (redistribuição, mais exposto).
+
+## Observação (sem previsão de entrega): Status de deploy do Render visível no GitHub
+
+Pergunta do usuário (27/08/2026), depois de configurar acesso de leitura à API do
+Render (ver [[project_deploy_render]]): dá pra centralizar no GitHub a informação de
+"qual deploy foi feito, de qual commit/PR, com qual status" em vez de precisar
+perguntar?
+
+**Verificado no mesmo dia, direto na API do Render**
+(`GET /v1/services/srv-d9qrns1t0dsc738jmqcg`): o Render **não** escreve
+status/check de volta pro GitHub pra esse tipo de serviço (web service comum) — só
+faz isso pra "Preview Environments" de PR (`pullRequestPreviewsEnabled`), que está
+desligado nesse serviço. Não é limitação de acesso — a plataforma simplesmente não
+tem esse retorno automático pra web service fora do fluxo de preview.
+
+**Duas opções levantadas**:
+1. **Sem construir nada** (❤ escolhida em 27/08/2026, ver decisão abaixo): o Render
+   já marca cada deploy com o SHA exato do commit — como já existe acesso de leitura
+   à API (`GET /v1/services/{id}/deploys`), a informação já pode ser consultada e
+   cruzada com o `git log`/número da PR a qualquer momento, sob demanda. Zero
+   manutenção, zero peça nova.
+2. **GitHub Deployments de verdade**: um workflow do GitHub Actions, disparado a
+   cada push em `main`, que consulta a API do Render e cria um GitHub Deployment
+   (apareceria na aba "Environments" do repo e como link "View deployment" na
+   própria PR). Exigiria: `RENDER_API_KEY` como GitHub Secret (separado do `.env`
+   local), um workflow novo, e manutenção contínua — mais uma peça que pode quebrar.
+
+**Decisão do usuário (27/08/2026)**: manter a opção 1 por ora (consulta sob demanda,
+sem nada novo no GitHub). Registrar a opção 2 documentada, caso o usuário queira
+visibilidade direto na tela do GitHub/PR no futuro sem precisar perguntar.
+
+**O que observar pra reconsiderar**: se a consulta sob demanda começar a incomodar
+(esquecimento de checar, ou querer ver isso de relance sem perguntar), a opção 2 já
+está especificada acima, pronta pra implementar sem pesquisa adicional.

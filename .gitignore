@@ -2,23 +2,30 @@
 node_modules/
 .claude/
 server.log
+server-local.log
+server-local.pid
+logs/
 
 # Arquivos-fonte de importação (planilhas/PDFs oficiais e dumps intermediários).
 # São insumos únicos para popular o banco (Supabase) — a aplicação em si nunca
 # lê esses arquivos em runtime, então não precisam ficar no controle de versão.
 *.xlsx
 *.pdf
+*.csv
+*.zip
+*.docx
 *_dados.json
 resultado-teste.json
+sigtap_procedimentos.json
+rl_procedimento_*.txt
+tb_*.txt
+BPAI_REL.TXT
 
-# Amostras reais de arquivo CIHA (Totvs GSH) usadas pra mapear o layout —
-# contêm dado real de paciente (nome, nascimento, endereço, CNS). Nunca commitar.
-2085569202505.txt
-2221772202607.txt
-
-# Amostra real de arquivo DMED usada pra mapear o layout — contém CPF, nome
-# completo e valores reais de pagamento. Nunca commitar.
-DMED_1_Unidade de Faturamento.txt
+# Amostras reais de arquivo de faturamento (TISS/CIHA/DMED/SUS/BPA-APAC, Totvs
+# GSH) usadas pra mapear layout — contêm dado real de paciente (nome, CNS, CPF,
+# nascimento, endereço) ou de pagamento. Pasta dedicada só pra isso — nunca
+# commitar nem espalhar arquivo novo desse tipo fora dela.
+amostras-reais-faturamento/
 
 # Documentos-fonte pra pesquisa das Fases 10 (Farmácia) e 11 (Enfermagem) — leis,
 # protocolos oficiais e boletins baixados de terceiros (ISMP Brasil, MTE, COFEN,
@@ -26,3 +33,8 @@ DMED_1_Unidade de Faturamento.txt
 # autorais de terceiro (ex: boletins ISMP). Nunca commitar.
 fontes-farmacia/
 fontes-enfermagem/
+
+# Material descontinuado mantido só por precaução (nada aqui é referenciado
+# pelo app nem tem equivalente em controle de versão) — pode ser removido de
+# vez sem perda quando alguém confirmar que não precisa mais.
+_arquivo-obsoleto/

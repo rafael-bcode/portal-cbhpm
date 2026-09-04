@@ -20,6 +20,16 @@
     "descricao": "Confere arquivos-texto de BPA, AIH e APAC contra o layout oficial do DATASUS, cruzando com SIGTAP e CID-10 — tudo no seu navegador."
   },
   {
+    "tag": "CIHA",
+    "titulo": "Validador CIHA",
+    "descricao": "Confere o arquivo de Comunicação de Informação Hospitalar e Ambulatorial contra o layout oficial vigente, cruzando com SIGTAP, CID-10, CNES e Operadoras ANS — tudo no seu navegador."
+  },
+  {
+    "tag": "DMED",
+    "titulo": "Validador DMED",
+    "descricao": "Confere a estrutura do arquivo de Declaração de Serviços Médicos e de Saúde — ordem dos registros, CPF/CNPJ e CNES — antes de importar no PGD da Receita Federal."
+  },
+  {
     "tag": "SUS",
     "titulo": "SIGTAP",
     "descricao": "Valores de repasse, permanência máxima, idade e sexo permitidos — tudo que o procedimento exige pra ser faturado ao SUS."

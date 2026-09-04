@@ -33,10 +33,7 @@ const pool = new Pool({
 // de entrega que pode não se confirmar. Atualizar aqui só quando algo
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
-  'Organização por tipo de faturamento (SUS x operadoras) nas perguntas de rejeição/validação',
-  'Ajustes de exibição em telas menores (celular/tablet)',
-  'Mais transparência sobre quando cada base de dados foi verificada pela última vez',
-  'Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial)',
+  'Dúvidas frequentes: NOTIVISA (Sistema de Notificações em Vigilância Sanitária)',
 ];
 
 // Versão atual do portal, histórico de mudanças e o que está sendo avaliado
@@ -1165,7 +1162,9 @@ app.post('/api/sigtap/lote', async (req, res) => {
     const codigos = Array.isArray(req.body.codigos) ? [...new Set(req.body.codigos.map(String))] : [];
     if (codigos.length === 0) return res.json([]);
     const { rows } = await pool.query(
-      'SELECT codigo, nome, sexo, vl_sh, vl_sa, vl_sp FROM sigtap_procedimentos WHERE codigo = ANY($1)',
+      `SELECT sp.codigo, sp.nome, sp.sexo, sp.vl_sh, sp.vl_sa, sp.vl_sp,
+              EXISTS(SELECT 1 FROM sigtap_procedimento_cid spc WHERE spc.codigo_procedimento = sp.codigo) AS tem_cid_vinculado
+       FROM sigtap_procedimentos sp WHERE sp.codigo = ANY($1)`,
       [codigos]
     );
     res.json(rows);
@@ -1236,6 +1235,41 @@ app.post('/api/cnes/lote', async (req, res) => {
   } catch (err) {
     console.error('Erro na busca em lote CNES:', err);
     res.status(500).json({ erro: 'Erro ao buscar estabelecimentos CNES em lote.' });
+  }
+});
+
+// Verifica só a existência do CNES na nossa base local (cadastro CNES já
+// carregado) — diferente do /api/cnes/lote acima, que raspa o CNESNet do
+// DATASUS pra achar o nome (usado pelo Validador AIH, que só tem código +
+// município, sem nome do estabelecimento). Usado pelo Validador CIHA.
+app.post('/api/cnes/existe-lote', async (req, res) => {
+  try {
+    const codigos = Array.isArray(req.body.codigos) ? [...new Set(req.body.codigos.map(String))] : [];
+    if (codigos.length === 0) return res.json([]);
+    const { rows } = await pool.query(
+      'SELECT codigo_cnes, razao_social FROM cnes_estabelecimentos WHERE codigo_cnes = ANY($1)',
+      [codigos]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro ao verificar CNES em lote:', err);
+    res.status(500).json({ erro: 'Erro ao verificar estabelecimentos CNES em lote.' });
+  }
+});
+
+// Idem para Operadoras ANS, usado pelo Validador CIHA (campo CO_OPERADORA).
+app.post('/api/operadoras/lote', async (req, res) => {
+  try {
+    const codigos = Array.isArray(req.body.codigos) ? [...new Set(req.body.codigos.map(String))] : [];
+    if (codigos.length === 0) return res.json([]);
+    const { rows } = await pool.query(
+      'SELECT registro_ans, razao_social FROM operadoras_ans WHERE registro_ans = ANY($1)',
+      [codigos]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro na busca em lote de Operadoras ANS:', err);
+    res.status(500).json({ erro: 'Erro ao buscar operadoras ANS em lote.' });
   }
 });
 

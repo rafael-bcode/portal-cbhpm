@@ -43,7 +43,6 @@ async function importarTabelasReferencia() {
     }
 
     // A linha 1 (segunda linha) traz os subtítulos: Porte AN | Valor | Porte | Valor
-    const subCabecalho = linhas[1];
     const colPorteAN = colInicio;       // Porte AN
     const colValorAN = colInicio + 1;   // Valor (do Porte AN)
     const colPorte = colInicio + 2;     // Porte

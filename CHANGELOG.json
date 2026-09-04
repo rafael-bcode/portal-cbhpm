@@ -1,5 +1,39 @@
 [
   {
+    "versao": "2.14.0",
+    "data": "2026-09-04",
+    "mudancas": [
+      "Novo Validador de arquivo CIHA (Comunicação de Informação Hospitalar e Ambulatorial): layout confirmado contra o PDF oficial vigente e cross-validado campo a campo contra 213 registros reais de sistema homologado — checa largura de linha, obrigatoriedade condicional em cascata, dígito verificador de CNPJ/CNS e cruzamento com SIGTAP/CID-10/CNES/Operadoras ANS já carregados no portal. Aba Validadores → Validador CIHA.",
+      "Novo Validador de arquivo DMED (Declaração de Serviços Médicos e de Saúde): confere ordem/cardinalidade dos registros, dígito verificador de CPF/CNPJ, CNES e ordenação por CPF no bloco RPPSS. Ressalva: o ramo operadora (OPPAS/TOP/RTOP/DTOP/RDTOP) só teve a hierarquia conferida contra documentação, sem arquivo real de teste ainda. Aba Validadores → Validador DMED.",
+      "PDF de conferência (mesmo padrão do Validador SUS) disponível nos dois novos validadores, com agrupamento por paciente no CIHA.",
+      "CIHA e DMED adicionados à contagem de ferramentas da home institucional."
+    ]
+  },
+  {
+    "versao": "2.13.1",
+    "data": "2026-08-28",
+    "mudancas": [
+      "Corrige a seção 'Em breve' do modal de versão: remove 'Tabela de Compatibilidade entre Procedimentos SIGTAP' — auditoria encontrou que a feature já estava implementada e em produção desde 19/08/2026 (endpoint /api/sigtap/compatibilidade, aba Verificadores), só o roadmap/Em-breve não refletiam isso."
+    ]
+  },
+  {
+    "versao": "2.13.0",
+    "data": "2026-08-28",
+    "mudancas": [
+      "Dúvidas frequentes: subaba 'Rejeição / Validação de arquivos' reagrupada em 3 seções — SUS/SIGTAP, Operadoras/Padrão TISS, e cadastros/registros que servem os dois lados — em vez de uma lista única misturando os dois tipos de faturamento.",
+      "Data da 'última revisão' do dicionário de causas de glosa (04/08/2026) exposta direto no Leitor de Demonstrativo de Glosa (DAC), com nota apontando pra aba Fontes.",
+      "Acessibilidade: aria-live nas áreas de resultado que atualizam via busca/consulta, e aria-label nos campos sem rótulo visível da aba Múltiplos procedimentos.",
+      "Passada de verificação mobile (375px): nenhuma correção necessária, portal já responsivo nas áreas checadas."
+    ]
+  },
+  {
+    "versao": "2.12.1",
+    "data": "2026-08-26",
+    "mudancas": [
+      "Corrige a seção 'Em breve' do modal de versão: remove 'Ajustes de exibição em telas menores (celular/tablet)' (a investigação de 21/08/2026 concluiu que nenhuma correção era necessária) e adiciona 'Validador de arquivo DMED' e 'Tabela de Compatibilidade entre Procedimentos SIGTAP' (ambos já com escopo fechado e agendados pra 04/09/2026, mesmo critério já usado pro CIHA)."
+    ]
+  },
+  {
     "versao": "2.12.0",
     "data": "2026-08-21",
     "mudancas": [
