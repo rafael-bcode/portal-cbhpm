@@ -1336,6 +1336,32 @@
         </div>
       </details>
 
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual a diferença entre assinatura digital e assinatura eletrônica, e qual vale no TISS?</summary>
+        <div class="faq-resposta">
+          <p><strong>Assinatura eletrônica</strong> é o termo genérico (Lei 14.063/2020): existem três tipos com
+          validade jurídica — simples, avançada e qualificada — que variam no grau de certeza sobre a identidade
+          de quem assinou. <strong>Assinatura digital ICP-Brasil</strong> é o tipo qualificado: usa certificado
+          emitido por uma Autoridade Certificadora credenciada à ICP-Brasil (Medida Provisória 2.200-2/2001), com
+          criptografia assimétrica e presunção legal de autenticidade.</p>
+          <p>No Padrão TISS <strong>não vale qualquer assinatura eletrônica</strong> — o Componente Organizacional
+          exige que os documentos trocados eletronicamente com certificado ICP-Brasil sejam assinados com
+          certificado do tipo <strong>e-CNPJ</strong> (para a instituição) ou <strong>e-CPF</strong> (quando o
+          agente atua como pessoa física); assinatura eletrônica simples ou avançada não substitui isso.</p>
+          <p><strong>Mudança recente (versão maio/2026 do TISS)</strong>: a assinatura da mensagem "Envio de
+          Documentos" deixou de ser condicionada ao tipo de documento e passou a ser <strong>obrigatória</strong>
+          em todos os casos — o padrão está ficando mais rígido nesse ponto, não mais permissivo.</p>
+          <p>O Validador de XML TISS do portal já confere a <strong>estrutura</strong> do bloco de assinatura
+          (contra o XSD oficial <code>tissAssinaturaDigital_v1.01.xsd</code>) quando presente no arquivo — mas
+          isso <strong>não é</strong> verificação da validade criptográfica da assinatura em si (exigiria acesso à
+          chave privada/cadeia de certificação, que o navegador não tem) e não substitui a validação feita pela
+          operadora receptora.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">✅ Abrir o Validador de XML TISS →</button>
+          <p class="faq-fonte">Fontes: Medida Provisória 2.200-2/2001, Lei 14.063/2020, Padrão TISS — Componente
+          Organizacional (<a href="https://www.gov.br/ans/pt-br" target="_blank" rel="noopener">gov.br/ans</a>)</p>
+        </div>
+      </details>
+
     </div>
 
     <div id="faqtab-particular" class="faq-subtab-panel hidden">
