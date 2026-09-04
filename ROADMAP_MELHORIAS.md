@@ -1141,16 +1141,18 @@ de saúde" abaixo) — pesquisa já concluída, só falta escrever/publicar o it
 Esforço baixo, sem dependência de outro item; primeira sexta de ajuste livre depois
 do pacote de 04/09.
 
-**Também em 11/09/2026 — FAQ: assinatura digital vs. assinatura eletrônica**: item
-novo de conteúdo, pedido do usuário (26/08/2026, "acha válido falar sobre assinatura
-digital no FAQ?") — avaliação: **válido e direto ligado ao core do portal** (TISS
-exige assinatura nas guias/documentos trocados), diferente de atestado/receituário/
-"lei do atestado", que ficam fora por serem prática clínica em si, fora do escopo de
+**Também em 11/09/2026 — FAQ: assinatura digital vs. assinatura eletrônica** — **✅
+implementado e testado em 04/09/2026**, junto com a checagem semanal do pacote de
+11/09 (fluxo das 3 sextas: "colocar em teste" o que vem daqui a 1 semana). Item
+pedido pelo usuário (26/08/2026, "acha válido falar sobre assinatura digital no
+FAQ?") — avaliação: **válido e direto ligado ao core do portal** (TISS exige
+assinatura nas guias/documentos trocados), diferente de atestado/receituário/"lei do
+atestado", que ficam fora por serem prática clínica em si, fora do escopo de
 conferência de faturamento (mesmo critério da expansão farmácia/enfermagem: conteúdo
-de referência, não orientação clínica/legal de terceiros). **[Alta]** — esforço baixo
-(só texto, sem feature nova), pesquisa já concluída, sem decisão de escopo pendente.
-Mesma categoria que o item NOTIVISA acima (conteúdo transversal, cabe numa sexta de
-ajuste comum, não precisa esperar a 1ª sexta do mês).
+de referência, não orientação clínica/legal de terceiros). Publicado na sub-aba TISS
+/ TUSS do FAQ (`faqtab-tiss`), testado com Playwright (item aparece, expande, sem
+erro de console). Mesma categoria que o item NOTIVISA acima (conteúdo transversal,
+cabe numa sexta de ajuste comum, não precisa esperar a 1ª sexta do mês).
 
 - Vai na sub-aba **TISS / TUSS** do FAQ (`faqtab-tiss`), que já tem o padrão de item
   com `faq-portal-link` apontando pro Validador de XML TISS.
