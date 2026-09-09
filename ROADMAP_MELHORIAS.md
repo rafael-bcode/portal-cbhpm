@@ -1987,6 +1987,36 @@ a Farmácia (sem indicação de dose) e Enfermagem (sem técnica de procedimento
 portal cobre a **moldura legal e regulatória** (atribuições, EMTN, códigos de
 faturamento), não decisão clínica.
 
+## Candidato [Média]: Guia/Fatura simulada — detalhar Equipe por papel
+
+Achado em 09/09/2026, investigando um print do usuário (campo "Edição a
+faturar" aparecendo vazio na Guia/Fatura de Múltiplos Procedimentos — bug à
+parte, já corrigido, ver PR #32). Na mesma investigação, dois achados
+relacionados:
+
+1. **Bug de cálculo corrigido no mesmo dia** (PR #33): o total de "Equipe"
+   somava os 6 papéis configurados (1º-4º Auxiliar, Instrumentador, Auxiliar
+   de Anestesista) mesmo quando o procedimento só admite menos auxiliares
+   (`vp.numero_auxiliares`) — um código com `numero_auxiliares=1` cobrava
+   também 2º/3º/4º Auxiliar. Corrigido: agora 1º-4º Auxiliar são limitados
+   pelo `numero_auxiliares` do procedimento (na sessão de múltiplos, pelo
+   maior valor entre os procedimentos — mesma lógica já usada pro
+   anestesista).
+2. **Este candidato**: o documento impresso de Guia/Fatura (`gerarGuiaConsulta`
+   e `gerarGuiaMultiplos` em `app.js`) mostra "Equipe" como **uma única linha
+   com o total agregado**, sem abrir por papel — diferente da tela de
+   resultado e do Excel exportado, que já detalham por papel (1º Auxiliar,
+   2º Auxiliar etc., cada um com seu valor, incluindo os zerados agora que o
+   bug acima foi corrigido). Pra quem recebe o documento impresso, fica
+   opaco quais papéis compuseram o total.
+
+**Proposta**: reaproveitar `s.equipe.papeis` (já existe, já filtrado pelo fix
+acima) também na montagem do documento de guia — uma linha por papel com
+valor > 0, no lugar da linha única "Equipe". É ajuste de funcionalidade que
+já existe (documento já existe, só muda o nível de detalhe), não feature
+nova — cabe em qualquer sexta de ajuste, não precisa esperar 1ª sexta do
+mês. Esforço baixo (mesmo padrão já usado em `exportarMultiplosCsv`).
+
 ## Observação (não é candidato ainda): Carteira de Identidade Nacional (CIN)
 
 Pesquisa feita a pedido do usuário (14/08/2026) — **não é item de "Em
