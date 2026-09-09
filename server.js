@@ -225,18 +225,27 @@ app.post('/api/consultar-procedimento', async (req, res) => {
 
       // Equipe (auxiliares/instrumentador): percentual configurável sobre o
       // valor unitário do porte do cirurgião (base sem ajuste de %), também
-      // nunca somado ao valor do procedimento.
+      // nunca somado ao valor do procedimento. 1º-4º Auxiliar só contam até
+      // o número de auxiliares que o próprio procedimento admite
+      // (vp.numero_auxiliares, ex.: procedimento com numero_auxiliares=1 não
+      // paga 2º/3º/4º Auxiliar) — Instrumentador e Auxiliar de Anestesista
+      // são papéis à parte, fora dessa contagem, e não são limitados por ela.
+      const qtdAuxiliares = Number(r.numero_auxiliares) || 0;
       const papeis = [
-        { papel: '1º Auxiliar', percentual: pct1Auxiliar },
-        { papel: '2º Auxiliar', percentual: pct2Auxiliar },
-        { papel: '3º Auxiliar', percentual: pct3Auxiliar },
-        { papel: '4º Auxiliar', percentual: pct4Auxiliar },
+        { papel: '1º Auxiliar', percentual: pct1Auxiliar, ordemAuxiliar: 1 },
+        { papel: '2º Auxiliar', percentual: pct2Auxiliar, ordemAuxiliar: 2 },
+        { papel: '3º Auxiliar', percentual: pct3Auxiliar, ordemAuxiliar: 3 },
+        { papel: '4º Auxiliar', percentual: pct4Auxiliar, ordemAuxiliar: 4 },
         { papel: 'Instrumentador', percentual: pctInstrumentador },
         { papel: 'Auxiliar de Anestesista', percentual: pctAuxAnestesista },
-      ].map((p) => ({
-        ...p,
-        total: Number(((valorPorte * p.percentual) / 100).toFixed(2)),
-      }));
+      ].map((p) => {
+        const aplicavel = !p.ordemAuxiliar || p.ordemAuxiliar <= qtdAuxiliares;
+        return {
+          papel: p.papel,
+          percentual: p.percentual,
+          total: aplicavel ? Number(((valorPorte * p.percentual) / 100).toFixed(2)) : 0,
+        };
+      });
       const totalEquipe = papeis.reduce((soma, p) => soma + p.total, 0);
 
       return {
@@ -391,6 +400,7 @@ app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
     let maiorPorteAnestesico = 0;
     let anestesistaAplicavel = false;
     let equipeAplicavel = false;
+    let maiorNumeroAuxiliares = 0;
 
     const procedimentosCalculados = procedimentos.map((p) => {
       const r = porCodigo.get(Number(p.codigo));
@@ -428,7 +438,9 @@ app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
         anestesistaAplicavel = true;
         if (totalPorteAN > maiorPorteAnestesico) maiorPorteAnestesico = totalPorteAN;
       }
-      if (Number(r.numero_auxiliares) > 0) equipeAplicavel = true;
+      const numAuxiliares = Number(r.numero_auxiliares) || 0;
+      if (numAuxiliares > 0) equipeAplicavel = true;
+      if (numAuxiliares > maiorNumeroAuxiliares) maiorNumeroAuxiliares = numAuxiliares;
 
       return {
         codigo: Number(p.codigo),
@@ -450,14 +462,26 @@ app.post('/api/consultar-multiplos-procedimentos', async (req, res) => {
       };
     });
 
+    // 1º-4º Auxiliar só contam até o maior numero_auxiliares entre os
+    // procedimentos da sessão (mesma lógica do anestesista: um único time
+    // atende a sessão toda, dimensionado pelo procedimento mais exigente,
+    // não pela soma de todos). Instrumentador e Auxiliar de Anestesista
+    // ficam fora dessa contagem — ver nota em /api/consultar.
     const papeis = [
-      { papel: '1º Auxiliar', percentual: pct1Auxiliar },
-      { papel: '2º Auxiliar', percentual: pct2Auxiliar },
-      { papel: '3º Auxiliar', percentual: pct3Auxiliar },
-      { papel: '4º Auxiliar', percentual: pct4Auxiliar },
+      { papel: '1º Auxiliar', percentual: pct1Auxiliar, ordemAuxiliar: 1 },
+      { papel: '2º Auxiliar', percentual: pct2Auxiliar, ordemAuxiliar: 2 },
+      { papel: '3º Auxiliar', percentual: pct3Auxiliar, ordemAuxiliar: 3 },
+      { papel: '4º Auxiliar', percentual: pct4Auxiliar, ordemAuxiliar: 4 },
       { papel: 'Instrumentador', percentual: pctInstrumentador },
       { papel: 'Auxiliar de Anestesista', percentual: pctAuxAnestesista },
-    ].map((p) => ({ ...p, total: Number(((baseEquipeSessao * p.percentual) / 100).toFixed(2)) }));
+    ].map((p) => {
+      const aplicavel = !p.ordemAuxiliar || p.ordemAuxiliar <= maiorNumeroAuxiliares;
+      return {
+        papel: p.papel,
+        percentual: p.percentual,
+        total: aplicavel ? Number(((baseEquipeSessao * p.percentual) / 100).toFixed(2)) : 0,
+      };
+    });
     const totalEquipe = papeis.reduce((soma, p) => soma + p.total, 0);
 
     res.json({
