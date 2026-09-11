@@ -2122,3 +2122,47 @@ visibilidade direto na tela do GitHub/PR no futuro sem precisar perguntar.
 **O que observar pra reconsiderar**: se a consulta sob demanda começar a incomodar
 (esquecimento de checar, ou querer ver isso de relance sem perguntar), a opção 2 já
 está especificada acima, pronta pra implementar sem pesquisa adicional.
+
+## Candidato [Alta]: Corrigir XSS potencial apontado pelo CodeQL em `public/app.js`
+
+Achado em 11/09/2026, no primeiro scan depois de ativar o CodeQL (issue #12,
+default setup, `js/xss-through-dom` e `js/xss-through-exception`). 5 alertas:
+
+- Alertas #25 (linha 2045), #26 (linha 2967), #27 (linhas 4321-4333), #28
+  (linha 4834): "DOM text is reinterpreted as HTML without escaping
+  meta-characters" — texto vindo de alguma fonte (provavelmente resposta de
+  `fetch` ou input do usuário) é inserido via `innerHTML`/equivalente sem
+  escapar `<`, `>`, `&` etc.
+- Alerta #29 (linha 4459): mesmo padrão, mas a fonte é texto de exceção
+  (`error.message` ou similar) — se um erro alguma vez incluir texto vindo do
+  usuário/servidor, vira o mesmo vetor.
+
+**Não investigado a fundo ainda** — precisa confirmar, alerta por alerta, se a
+fonte do texto é controlável por um usuário malicioso (XSS real) ou só dado
+interno confiável (falso positivo do CodeQL, e nesse caso caberia
+"dismissed: false positive" em vez de fix). Ver detalhes completos em
+`https://github.com/rafael-bcode/portal-cbhpm/security/code-scanning`
+(alertas #25-#29).
+
+É ajuste de código existente (não muda comportamento visível, só a forma de
+inserir o texto no DOM) — cabe em qualquer sexta de ajuste, não precisa
+esperar 1ª sexta do mês. Prioridade alta pela natureza do risco (XSS), mesmo
+sem confirmação ainda de exploração real.
+
+## Candidato [Média]: Rate limiting nos endpoints de `server.js`
+
+Achado em 11/09/2026, mesmo scan (`js/missing-rate-limiting`, 21 alertas,
+de #4 a #24) — todas as rotas que fazem acesso a banco em `server.js` hoje não
+têm limite de requisições por IP/janela de tempo, o que abre espaço pra abuso
+(scraping agressivo, tentativa de sobrecarregar o Postgres, força bruta em
+rotas de busca).
+
+**Decisão de escopo em aberto**: qual biblioteca (`express-rate-limit` é o
+padrão mais simples), limites por rota (buscas públicas toleram mais volume
+que rotas de upload/parse de arquivo), e se roda em memória (simples, mas
+zera a cada redeploy do Render) ou precisa de store compartilhado (sem
+necessidade aparente hoje — é um único processo/instância no Render).
+
+É capacidade nova que o portal ainda não tem (rate limiting), não ajuste do
+que já existe — pela regra de cadência, só entra na 1ª sexta do mês, depois
+de fechar o escopo acima.
