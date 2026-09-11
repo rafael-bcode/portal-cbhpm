@@ -3118,6 +3118,45 @@ async function validarArquivoTiss(file) {
     }
   }
 
+  // [Média] Grau de participação × natureza cirúrgica do procedimento —
+  // depende de consulta ao banco (mapeamento_amb_tuss + valores_procedimento),
+  // por isso roda em lote depois do parsing local de todas as guias, à parte
+  // das checagens síncronas de detectarRiscosGlosaEstrutural. `null` (em vez
+  // de resposta vazia) sinaliza falha de rede/banco — nesse caso a checagem é
+  // pulada em silêncio, mesmo padrão já usado nos Validadores SUS pra não
+  // acusar falso risco quando a consulta simplesmente não rodou.
+  const codigosParaNatureza = new Set();
+  resultado.guias.forEach((g) => {
+    g.itens.forEach((it) => {
+      if (it.codigoProcedimento && !it.codigoDespesa) codigosParaNatureza.add(it.codigoProcedimento);
+    });
+  });
+  if (codigosParaNatureza.size > 0) {
+    const naturezaResp = await fetch('/api/natureza-procedimento/lote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codigos: [...codigosParaNatureza] }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+
+    if (naturezaResp) {
+      const cirurgicoPorCodigo = new Map(naturezaResp.map((r) => [r.codigoTuss, r.cirurgico]));
+      resultado.guias.forEach((g) => {
+        g.itens.forEach((it) => {
+          if (!it.codigoProcedimento || it.codigoDespesa || !cirurgicoPorCodigo.has(it.codigoProcedimento)) return;
+          const cirurgico = cirurgicoPorCodigo.get(it.codigoProcedimento);
+          const temCirurgiao = it.profissionais.some((p) => p.grauPart === '00');
+          if (cirurgico && !temCirurgiao) {
+            g.riscosGlosa.push(`${it.codigoProcedimento}: procedimento com porte anestésico/auxiliares na CBHPM (natureza cirúrgica), mas nenhum profissional está em grau "Cirurgião".`);
+          } else if (!cirurgico && temCirurgiao) {
+            g.riscosGlosa.push(`${it.codigoProcedimento}: procedimento sem porte anestésico/auxiliares na CBHPM (natureza não-cirúrgica), mas há profissional em grau "Cirurgião".`);
+          }
+        });
+      });
+    }
+  }
+
   const nomeOperadora = resultado.operadoraDestino.nome || '';
   if (/unimed/i.test(nomeOperadora)) {
     const digitoArquivo = (file.name.match(/^(\d)/) || [])[1] || null;
