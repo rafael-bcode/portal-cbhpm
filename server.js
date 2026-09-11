@@ -44,7 +44,6 @@ const pool = new Pool({
 // de entrega que pode não se confirmar. Atualizar aqui só quando algo
 // realmente estiver em avaliação — lista vazia é melhor que item furado.
 const proximosPassos = [
-  'Dúvidas frequentes: NOTIVISA (Sistema de Notificações em Vigilância Sanitária)',
   'Farmácia clínica — atribuições legais, MPP/MAV e protocolo de medicamentos (out/2026)',
   'Enfermagem — atribuições legais e protocolos de segurança do paciente (nov/2026)',
   'Nutrição clínica — atribuições legais e EMTN (dez/2026)',

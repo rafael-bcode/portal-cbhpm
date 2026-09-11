@@ -1,5 +1,17 @@
 [
   {
+    "versao": "2.15.0",
+    "data": "2026-09-11",
+    "mudancas": [
+      "Dúvidas frequentes: novo item sobre NOTIVISA (Sistema de Notificações em Vigilância Sanitária) — o que é, evento adverso × queixa técnica, quem pode notificar, links oficiais.",
+      "Dúvidas frequentes: novo item sobre assinatura digital vs. assinatura eletrônica no TISS.",
+      "Dúvidas frequentes: busca cruzando todas as 17 subabas (83 perguntas) — digite um termo e veja as perguntas de qualquer subaba que batem, com a subaba de origem.",
+      "Validadores SUS (BPA/AIH/APAC/CIHA): o relatório de conferência (PDF) agora exibe o CID (código + descrição) de cada AIH/procedimento.",
+      "Validadores SUS: correção de falso \"código não encontrado\" quando a consulta à base de CID-10/SIGTAP falha por instabilidade — agora mostra um aviso claro em vez de reportar todo código como inválido.",
+      "Home institucional: card de Nutrição clínica (dez/2026) somado ao roadmap público, ao lado de Farmácia e Enfermagem."
+    ]
+  },
+  {
     "versao": "2.14.0",
     "data": "2026-09-04",
     "mudancas": [
