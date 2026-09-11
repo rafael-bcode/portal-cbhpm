@@ -940,6 +940,14 @@
       pra ferramenta — sem precisar sair daqui.
     </p>
 
+    <div class="field field-busca">
+      <label for="faq-busca">Buscar em todas as dúvidas frequentes</label>
+      <div class="busca-wrapper" style="max-width:520px;">
+        <input type="text" id="faq-busca" placeholder="Ex: pacote, glosa, CID..." autocomplete="off">
+      </div>
+    </div>
+    <p id="faq-busca-contagem" class="ajustes-nota hidden"></p>
+
     <div class="tabs subtabs faq-subtabs">
       <button type="button" class="faq-subtab-btn active" data-faqtab="rejeicao">Rejeição / Validação de arquivos</button>
       <button type="button" class="faq-subtab-btn" data-faqtab="sus">SUS / SIGTAP</button>
@@ -1397,6 +1405,32 @@
         </div>
       </details>
 
+      <details class="faq-item">
+        <summary class="faq-pergunta">Qual a diferença entre assinatura digital e assinatura eletrônica, e qual vale no TISS?</summary>
+        <div class="faq-resposta">
+          <p><strong>Assinatura eletrônica</strong> é o termo genérico (Lei 14.063/2020): existem três tipos com
+          validade jurídica — simples, avançada e qualificada — que variam no grau de certeza sobre a identidade
+          de quem assinou. <strong>Assinatura digital ICP-Brasil</strong> é o tipo qualificado: usa certificado
+          emitido por uma Autoridade Certificadora credenciada à ICP-Brasil (Medida Provisória 2.200-2/2001), com
+          criptografia assimétrica e presunção legal de autenticidade.</p>
+          <p>No Padrão TISS <strong>não vale qualquer assinatura eletrônica</strong> — o Componente Organizacional
+          exige que os documentos trocados eletronicamente com certificado ICP-Brasil sejam assinados com
+          certificado do tipo <strong>e-CNPJ</strong> (para a instituição) ou <strong>e-CPF</strong> (quando o
+          agente atua como pessoa física); assinatura eletrônica simples ou avançada não substitui isso.</p>
+          <p><strong>Mudança recente (versão maio/2026 do TISS)</strong>: a assinatura da mensagem "Envio de
+          Documentos" deixou de ser condicionada ao tipo de documento e passou a ser <strong>obrigatória</strong>
+          em todos os casos — o padrão está ficando mais rígido nesse ponto, não mais permissivo.</p>
+          <p>O Validador de XML TISS do portal já confere a <strong>estrutura</strong> do bloco de assinatura
+          (contra o XSD oficial <code>tissAssinaturaDigital_v1.01.xsd</code>) quando presente no arquivo — mas
+          isso <strong>não é</strong> verificação da validade criptográfica da assinatura em si (exigiria acesso à
+          chave privada/cadeia de certificação, que o navegador não tem) e não substitui a validação feita pela
+          operadora receptora.</p>
+          <button type="button" class="faq-portal-link" data-goto-tab="validadores" data-goto-subtab="xml-tiss" data-goto-subtab2="xml">✅ Abrir o Validador de XML TISS →</button>
+          <p class="faq-fonte">Fontes: Medida Provisória 2.200-2/2001, Lei 14.063/2020, Padrão TISS — Componente
+          Organizacional (<a href="https://www.gov.br/ans/pt-br" target="_blank" rel="noopener">gov.br/ans</a>)</p>
+        </div>
+      </details>
+
     </div>
 
     <div id="faqtab-particular" class="faq-subtab-panel hidden">
@@ -1711,6 +1745,28 @@
           que qualquer sistema privado emite por conta própria. Hoje o portal não gera esse livro (é justamente
           por isso que ele precisa ser oficial), mas é um controle interno — planilha ou sistema próprio de
           movimentação de controlados — que pode facilitar a hora de lançar tudo certinho no livro oficial.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary class="faq-pergunta">O que é o NOTIVISA e quando devo notificar um evento adverso ou queixa técnica?</summary>
+        <div class="faq-resposta">
+          <p>É o <strong>Sistema de Notificações em Vigilância Sanitária</strong> da ANVISA — o canal oficial pra
+          notificar eventos adversos (EA) e queixas técnicas (QT) relacionados a medicamentos e outros produtos e
+          serviços sob vigilância sanitária. Base legal: Portaria MS nº 1.660/2009.</p>
+          <ul class="faq-lista">
+            <li><strong>Evento adverso</strong>: incidente que causou dano ao paciente — reação inesperada a um
+            medicamento, erro de administração com dano, entre outros.</li>
+            <li><strong>Queixa técnica</strong>: suspeita de desvio de qualidade num produto (defeito de
+            fabricação, lote fora do padrão, embalagem violada), mesmo sem dano direto ao paciente.</li>
+          </ul>
+          <p>Podem notificar: profissionais e serviços de saúde, empresas detentoras de registro (fabricantes,
+          importadores, distribuidores) e também pacientes, familiares ou cuidadores. Profissionais e serviços de
+          saúde precisam de cadastro prévio no sistema; para o cidadão, existe um formulário simplificado, sem
+          necessidade de cadastro.</p>
+          <a class="faq-portal-link" href="https://notivisa.anvisa.gov.br/" target="_blank" rel="noopener">🌐 NOTIVISA — área profissional (exige cadastro) →</a>
+          <a class="faq-portal-link" href="https://www16.anvisa.gov.br/notivisaServicos/cidadao/notificacao/evento-adverso" target="_blank" rel="noopener">🌐 Formulário do cidadão (sem cadastro) →</a>
+          <p class="faq-fonte">Fonte oficial: <a href="https://www.gov.br/anvisa/pt-br/assuntos/fiscalizacao-e-monitoramento/notificacoes" target="_blank" rel="noopener">gov.br/anvisa</a></p>
         </div>
       </details>
 
