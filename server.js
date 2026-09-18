@@ -1231,6 +1231,39 @@ app.post('/api/cid10/lote', async (req, res) => {
   }
 });
 
+// Usada pela sinalização de risco de glosa estrutural do Validador de XML
+// TISS (18/09/2026) para o achado "grau de participação × natureza
+// cirúrgica": recebe códigos TUSS (como lançados na guia), acha o código
+// CBHPM equivalente via mapeamento_amb_tuss e classifica como cirúrgico ou
+// não usando a mesma regra já validada em produção pro cálculo de Múltiplos
+// Procedimentos — `porte_anestesico` preenchido/≠'0' OU `numero_auxiliares`
+// > 0. Usa sempre a edição mais recente: a natureza do procedimento
+// (cirúrgico ou não) não muda de edição pra edição, só o valor.
+app.post('/api/natureza-procedimento/lote', async (req, res) => {
+  try {
+    const codigosTuss = Array.isArray(req.body.codigos) ? [...new Set(req.body.codigos.map(String))] : [];
+    if (codigosTuss.length === 0) return res.json([]);
+    const { rows } = await pool.query(
+      `SELECT m.codigo_tuss, vp.porte_anestesico, vp.numero_auxiliares
+       FROM mapeamento_amb_tuss m
+       JOIN valores_procedimento vp
+         ON vp.codigo = m.codigo_cbhpm
+        AND vp.edicao_id = (SELECT id FROM edicoes ORDER BY ano_inicio DESC, id DESC LIMIT 1)
+       WHERE m.codigo_tuss = ANY($1)`,
+      [codigosTuss]
+    );
+    res.json(
+      rows.map((r) => ({
+        codigoTuss: r.codigo_tuss,
+        cirurgico: (Boolean(r.porte_anestesico) && r.porte_anestesico !== '0') || Number(r.numero_auxiliares) > 0,
+      }))
+    );
+  } catch (err) {
+    console.error('Erro ao buscar natureza cirúrgica em lote:', err);
+    res.status(500).json({ erro: 'Erro ao buscar natureza cirúrgica dos procedimentos.' });
+  }
+});
+
 // O layout do AIH não traz o nome do estabelecimento — só CNES + código do
 // município (sem DV). Consultamos o CNESNet público do DATASUS (não tem API
 // oficial, então extraímos o campo "Nome:" do HTML) para o relatório de

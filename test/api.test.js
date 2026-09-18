@@ -109,6 +109,20 @@ test('consultar-multiplos-procedimentos: via de acesso (mesma via, 50%) bate com
   assert.equal(corpo.sessao.cirurgiao.subtotal, 892.58);
 });
 
+test('natureza-procedimento/lote: classifica cirúrgico x não-cirúrgico via mapeamento_amb_tuss', async () => {
+  const { status, corpo } = await post('/api/natureza-procedimento/lote', {
+    codigos: ['31309054', '10101012', '00000000'],
+  });
+  assert.equal(status, 200);
+  const porCodigo = Object.fromEntries(corpo.map((r) => [r.codigoTuss, r.cirurgico]));
+  // Cesariana: porte_anestesico=5, numero_auxiliares=1 -> cirúrgico.
+  assert.equal(porCodigo['31309054'], true);
+  // Consulta ambulatorial: sem porte anestésico nem auxiliar -> não-cirúrgico.
+  assert.equal(porCodigo['10101012'], false);
+  // Código sem mapeamento simplesmente não aparece na resposta.
+  assert.equal('00000000' in porCodigo, false);
+});
+
 test('consultar-multiplos-procedimentos: exige exatamente 1 principal', async () => {
   const edicaoId = await edicaoIdPorAno(2015);
   const { status, corpo } = await post('/api/consultar-multiplos-procedimentos', {

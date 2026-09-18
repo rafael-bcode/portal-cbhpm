@@ -2839,6 +2839,7 @@ function analisarItemTiss(itemEl, procEl, extras = {}) {
   const codigoProcedimento = textoDeTiss(procEl, 'codigoProcedimento');
   const descricaoProcedimento = textoDeTiss(procEl, 'descricaoProcedimento') || textoDeTiss(itemEl, 'descricaoProcedimento');
   const dataExecucao = textoDeTiss(itemEl, 'dataExecucao');
+  const viaAcesso = textoDeTiss(itemEl, 'viaAcesso');
   const quantidade = numDeTiss(textoDeTiss(itemEl, 'quantidadeExecutada')) ?? 1;
   const reducao = numDeTiss(textoDeTiss(itemEl, 'reducaoAcrescimo')) ?? 1;
   const valorUnitario = numDeTiss(textoDeTiss(itemEl, 'valorUnitario'));
@@ -2851,6 +2852,7 @@ function analisarItemTiss(itemEl, procEl, extras = {}) {
     codigoProcedimento,
     descricaoProcedimento,
     dataExecucao,
+    viaAcesso,
     quantidade,
     reducao,
     valorUnitario,
@@ -2960,6 +2962,75 @@ function analisarGuiaTiss(guiaEl, tipo) {
   return { tipo, registroANS, numeroGuiaPrestador, itens, consultaItem, valorTotal, profissionais };
 }
 
+// Sinalização de risco de glosa estrutural (pedido do usuário, 26/08/2026,
+// agendado pra 18/09/2026 — ver ROADMAP_MELHORIAS.md): achados derivados só
+// da consistência interna do próprio XML já parseado por analisarGuiaTiss +
+// dadosInternacao/dadosAutorizacao (sem tabela de contrato prestador-operadora,
+// sem julgamento clínico — escopo fechado pelo usuário). Cada achado é um
+// "possível risco de glosa" (⚠), nunca erro certo — sempre existe caso
+// legítimo de exceção (ex.: "Consultor" numa cirurgia complexa é válido).
+function detectarRiscosGlosaEstrutural(guia, guiaEl) {
+  const riscos = [];
+  const dataInicioFaturamento = textoDeTiss(filhoTiss(guiaEl, 'dadosInternacao'), 'dataInicioFaturamento');
+  const dataFinalFaturamento = textoDeTiss(filhoTiss(guiaEl, 'dadosInternacao'), 'dataFinalFaturamento');
+  const dataAutorizacao = textoDeTiss(filhoTiss(guiaEl, 'dadosAutorizacao'), 'dataAutorizacao');
+
+  // Datas incoerentes
+  if (dataInicioFaturamento && dataFinalFaturamento && dataFinalFaturamento < dataInicioFaturamento) {
+    riscos.push(`Alta (${formatarDataBR(dataFinalFaturamento)}) anterior à admissão (${formatarDataBR(dataInicioFaturamento)}) do período de internação faturado.`);
+  }
+  guia.itens.forEach((it) => {
+    if (!it.dataExecucao) return;
+    const rotulo = it.codigoProcedimento || it.grupo || 'item';
+    if (dataInicioFaturamento && it.dataExecucao < dataInicioFaturamento) {
+      riscos.push(`${rotulo}: execução em ${formatarDataBR(it.dataExecucao)}, antes do início do período de internação faturado (${formatarDataBR(dataInicioFaturamento)}).`);
+    }
+    if (dataFinalFaturamento && it.dataExecucao > dataFinalFaturamento) {
+      riscos.push(`${rotulo}: execução em ${formatarDataBR(it.dataExecucao)}, depois do fim do período de internação faturado (${formatarDataBR(dataFinalFaturamento)}).`);
+    }
+    if (dataAutorizacao && it.dataExecucao < dataAutorizacao) {
+      riscos.push(`${rotulo}: execução em ${formatarDataBR(it.dataExecucao)}, antes da data de autorização (${formatarDataBR(dataAutorizacao)}).`);
+    }
+  });
+
+  // Duplicidade de item: mesmo código + mesma data + mesma via de acesso
+  const vistos = new Map();
+  guia.itens.forEach((it) => {
+    if (!it.codigoProcedimento || it.codigoDespesa) return; // só procedimentos, não outras despesas
+    const chave = `${it.codigoProcedimento}|${it.dataExecucao || ''}|${it.viaAcesso || ''}`;
+    vistos.set(chave, (vistos.get(chave) || 0) + 1);
+  });
+  vistos.forEach((qtd, chave) => {
+    if (qtd > 1) riscos.push(`Procedimento ${chave.split('|')[0]} lançado ${qtd}x com a mesma data e via de acesso — possível duplicidade.`);
+  });
+
+  // Diária maior que os dias entre admissão e alta
+  if (dataInicioFaturamento && dataFinalFaturamento) {
+    const dias = Math.round((new Date(`${dataFinalFaturamento}T00:00:00Z`) - new Date(`${dataInicioFaturamento}T00:00:00Z`)) / 86400000) + 1;
+    const qtdDiarias = guia.itens.filter((it) => it.codigoDespesa === '05').reduce((s, it) => s + (it.quantidade || 0), 0);
+    if (dias > 0 && qtdDiarias > dias) {
+      riscos.push(`${qtdDiarias} diária(s) lançada(s) para um período de internação de ${dias} dia(s) (${formatarDataBR(dataInicioFaturamento)} a ${formatarDataBR(dataFinalFaturamento)}).`);
+    }
+  }
+
+  // Mais de um profissional em grau "Cirurgião" (00) no mesmo item
+  guia.itens.forEach((it) => {
+    const cirurgioes = it.profissionais.filter((p) => p.grauPart === '00');
+    if (cirurgioes.length > 1) {
+      riscos.push(`${it.codigoProcedimento || it.grupo || 'item'}: ${cirurgioes.length} profissionais em grau "Cirurgião" (só pode haver 1 por item, os demais deveriam ser Auxiliar).`);
+    }
+  });
+
+  // Taxa de sala/centro cirúrgico sem nenhum indício de procedimento cirúrgico na guia
+  const temIndicioCirurgico = guia.itens.some((it) => !it.codigoDespesa && (it.viaAcesso || it.profissionais.length > 1));
+  const temTaxaSala = guia.itens.some((it) => it.codigoDespesa === '07' && /sala|centro cir[uú]rgico/i.test(it.descricaoProcedimento || ''));
+  if (temTaxaSala && !temIndicioCirurgico) {
+    riscos.push('Taxa de sala/centro cirúrgico lançada, mas nenhum item indica procedimento cirúrgico (sem via de acesso nem equipe de mais de 1 profissional).');
+  }
+
+  return riscos;
+}
+
 async function validarArquivoTiss(file) {
   const textoXml = await lerArquivoTiss(file);
   const hashCalculado = calcularHashTiss(textoXml);
@@ -3019,6 +3090,7 @@ async function validarArquivoTiss(file) {
         const tipo = guiaEl.localName;
         resultado.tiposGuia[tipo] = (resultado.tiposGuia[tipo] || 0) + 1;
         const guia = analisarGuiaTiss(guiaEl, tipo);
+        guia.riscosGlosa = detectarRiscosGlosaEstrutural(guia, guiaEl);
         const enriquecerProfissional = (p) => {
           p.conselhoNome = TISS_CONSELHOS[p.conselho] || (p.conselho ? `Conselho ${p.conselho}` : '');
           p.cboDescricao = cboMedicos[p.cbo] || '';
@@ -3042,6 +3114,45 @@ async function validarArquivoTiss(file) {
           registroOperadora: resultado.operadoraDestino.registro,
         };
         resultado.guias.push(guia);
+      });
+    }
+  }
+
+  // [Média] Grau de participação × natureza cirúrgica do procedimento —
+  // depende de consulta ao banco (mapeamento_amb_tuss + valores_procedimento),
+  // por isso roda em lote depois do parsing local de todas as guias, à parte
+  // das checagens síncronas de detectarRiscosGlosaEstrutural. `null` (em vez
+  // de resposta vazia) sinaliza falha de rede/banco — nesse caso a checagem é
+  // pulada em silêncio, mesmo padrão já usado nos Validadores SUS pra não
+  // acusar falso risco quando a consulta simplesmente não rodou.
+  const codigosParaNatureza = new Set();
+  resultado.guias.forEach((g) => {
+    g.itens.forEach((it) => {
+      if (it.codigoProcedimento && !it.codigoDespesa) codigosParaNatureza.add(it.codigoProcedimento);
+    });
+  });
+  if (codigosParaNatureza.size > 0) {
+    const naturezaResp = await fetch('/api/natureza-procedimento/lote', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ codigos: [...codigosParaNatureza] }),
+    })
+      .then((r) => (r.ok ? r.json() : null))
+      .catch(() => null);
+
+    if (naturezaResp) {
+      const cirurgicoPorCodigo = new Map(naturezaResp.map((r) => [r.codigoTuss, r.cirurgico]));
+      resultado.guias.forEach((g) => {
+        g.itens.forEach((it) => {
+          if (!it.codigoProcedimento || it.codigoDespesa || !cirurgicoPorCodigo.has(it.codigoProcedimento)) return;
+          const cirurgico = cirurgicoPorCodigo.get(it.codigoProcedimento);
+          const temCirurgiao = it.profissionais.some((p) => p.grauPart === '00');
+          if (cirurgico && !temCirurgiao) {
+            g.riscosGlosa.push(`${it.codigoProcedimento}: procedimento com porte anestésico/auxiliares na CBHPM (natureza cirúrgica), mas nenhum profissional está em grau "Cirurgião".`);
+          } else if (!cirurgico && temCirurgiao) {
+            g.riscosGlosa.push(`${it.codigoProcedimento}: procedimento sem porte anestésico/auxiliares na CBHPM (natureza não-cirúrgica), mas há profissional em grau "Cirurgião".`);
+          }
+        });
       });
     }
   }
@@ -3089,7 +3200,7 @@ async function validarArquivoTiss(file) {
 function renderizarGuiaTiss(g, indice) {
   const itensProblema = g.itens.filter((it) => it.ok === false);
   const totalProblema = g.valorTotal && (g.valorTotal.okComponentes === false || g.valorTotal.okItens === false);
-  const statusGeral = itensProblema.length === 0 && !totalProblema;
+  const statusGeral = itensProblema.length === 0 && !totalProblema && !(g.riscosGlosa && g.riscosGlosa.length);
   const qtdItens = g.itens.length || (g.consultaItem ? 1 : 0);
   const qtdProfissionais = (g.profissionais || []).length;
 
@@ -3306,7 +3417,20 @@ function renderizarResumoGuiaModal(guia) {
       <div class="breakdown-row"><span class="label">Profissionais</span><span class="value zero">${(guia.profissionais || []).length}</span></div>
     </div>
     ${itensProblema.length ? `<p class="ajustes-nota" style="margin:10px 16px 0;">⚠ ${itensProblema.length} item(ns) com valor divergente do esperado:</p>${problemasHtml}` : ''}
-    ${totalHtml}`;
+    ${totalHtml}
+    ${riscosGlosaHtml(guia)}`;
+}
+
+// Bloco "possível risco de glosa" no modal da guia — sinalização estrutural
+// (18/09/2026), sempre em linguagem cautelosa: nunca afirma erro certo,
+// porque toda regra aqui tem exceção legítima possível.
+function riscosGlosaHtml(guia) {
+  const riscos = guia.riscosGlosa || [];
+  if (!riscos.length) return '';
+  return `<p class="ajustes-nota" style="margin:10px 16px 0;">⚠ ${riscos.length} possível(is) risco(s) de glosa estrutural (checagem interna do XML — confirme antes de corrigir, pode haver exceção legítima):</p>
+    <div class="breakdown">
+      ${riscos.map((msg) => `<div class="breakdown-row"><span class="label">${escaparHtml(msg)}</span></div>`).join('')}
+    </div>`;
 }
 
 // Identifica um "contratado" (choice codigoPrestadorNaOperadora | cpfContratado
