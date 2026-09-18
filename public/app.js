@@ -2000,7 +2000,11 @@ function gerarGuiaConsulta() {
   const linhas = [];
   linhas.push(['Cirurgião', r.descricao, r.cirurgiao.subtotal]);
   if (r.anestesista.aplicavel) linhas.push(['Anestesista', `Porte anestésico ${r.anestesista.classificacao ?? '—'}`, r.anestesista.total]);
-  if (r.equipe.aplicavel) linhas.push(['Equipe', 'Auxiliares / instrumentador', r.equipe.total]);
+  if (r.equipe.aplicavel) {
+    r.equipe.papeis
+      .filter((p) => p.total > 0)
+      .forEach((p) => linhas.push(['Equipe', p.papel, p.total]));
+  }
   const total = linhas.reduce((soma, l) => soma + l[2], 0);
 
   return `
@@ -2025,7 +2029,9 @@ function gerarGuiaMultiplos() {
     linhas.push(['Anestesista', 'Porte anestésico da sessão (único, maior valor)', data.sessao.anestesista.total]);
   }
   if (data.sessao.equipe.aplicavel) {
-    linhas.push(['Equipe', 'Auxiliares / instrumentador da sessão', data.sessao.equipe.total]);
+    data.sessao.equipe.papeis
+      .filter((p) => p.total > 0)
+      .forEach((p) => linhas.push(['Equipe', p.papel, p.total]));
   }
   const total = linhas.reduce((soma, l) => soma + l[2], 0);
 

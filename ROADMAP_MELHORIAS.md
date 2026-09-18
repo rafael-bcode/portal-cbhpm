@@ -1256,6 +1256,21 @@ caso legítimo de exceção (ex.: "Consultor" numa cirurgia complexa é válido)
   não compatibilidade clínica procedimento-CID). Fica de fora até aparecer fonte
   melhor — revisitar se o usuário achar/tiver acesso a algo assim futuramente.
 
+**25/09/2026 (sexta de ajuste) — Guia/Fatura simulada: detalhar Equipe por
+papel**: puxado em 18/09/2026 do candidato registrado em 09/09/2026 (ver seção
+"Candidato [Média]: Guia/Fatura simulada — detalhar Equipe por papel" acima) —
+ajuste de documento que já existe, não feature nova, cabe em sexta comum.
+**Implementado e testado em 18/09/2026**, uma semana antes da entrega (mesmo
+padrão do pacote de 28/08): `gerarGuiaConsulta` e `gerarGuiaMultiplos` em
+`app.js` agora reaproveitam `equipe.papeis` (mesmo array já usado por
+`exportarMultiplosCsv`) pra listar uma linha "Equipe" por papel com valor > 0
+(1º-4º Auxiliar, Instrumentador, Auxiliar de Anestesista), em vez da linha
+única agregada — verificado via Playwright (fluxo real: adicionar 2
+procedimentos, calcular sessão, gerar guia, conferir a tabela impressa e
+screenshot) contra Cesariana (31309054) + Histerectomia pós-parto (31303323):
+4 papéis com valor > 0 aparecem cada um em sua própria linha, os zerados
+ficam de fora. `npm test` 9/9, lint limpo.
+
 **02/10/2026 (1ª sexta de outubro) — Fase 10: Farmácia (segurança do paciente e do
 trabalhador)**: **decisão do usuário em 20/08/2026** — data fechada pra essa entrega
 específica (não é só uma sinalização de overflow como o resto de setembro). Entre
@@ -1987,7 +2002,7 @@ a Farmácia (sem indicação de dose) e Enfermagem (sem técnica de procedimento
 portal cobre a **moldura legal e regulatória** (atribuições, EMTN, códigos de
 faturamento), não decisão clínica.
 
-## Candidato [Média]: Guia/Fatura simulada — detalhar Equipe por papel
+## Candidato [Média]: Guia/Fatura simulada — detalhar Equipe por papel — ✅ puxado pra 25/09/2026, implementado em 18/09/2026 (ver "Calendário planejado")
 
 Achado em 09/09/2026, investigando um print do usuário (campo "Edição a
 faturar" aparecendo vazio na Guia/Fatura de Múltiplos Procedimentos — bug à
@@ -2151,11 +2166,15 @@ sem confirmação ainda de exploração real.
 
 ## Candidato [Média]: Rate limiting nos endpoints de `server.js`
 
-Achado em 11/09/2026, mesmo scan (`js/missing-rate-limiting`, 21 alertas,
-de #4 a #24) — todas as rotas que fazem acesso a banco em `server.js` hoje não
-têm limite de requisições por IP/janela de tempo, o que abre espaço pra abuso
-(scraping agressivo, tentativa de sobrecarregar o Postgres, força bruta em
-rotas de busca).
+Achado em 11/09/2026, mesmo scan (`js/missing-rate-limiting`) — todas as rotas
+que fazem acesso a banco em `server.js` hoje não têm limite de requisições por
+IP/janela de tempo, o que abre espaço pra abuso (scraping agressivo, tentativa
+de sobrecarregar o Postgres, força bruta em rotas de busca). **Atualizado em
+18/09/2026**: agora 24 alertas abertos (#1-#24) — a PR #41 (glosa estrutural,
+endpoint novo `/api/natureza-procedimento/lote`) adicionou mais uma instância
+do mesmo gap já conhecido; mesclada mesmo assim por decisão do usuário, já que
+não é vulnerabilidade nova, só mais uma rota sem rate limit dentro do escopo
+já mapeado aqui.
 
 **Decisão de escopo em aberto**: qual biblioteca (`express-rate-limit` é o
 padrão mais simples), limites por rota (buscas públicas toleram mais volume
