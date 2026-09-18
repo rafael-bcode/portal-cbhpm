@@ -1,5 +1,13 @@
 [
   {
+    "versao": "2.16.0",
+    "data": "2026-09-18",
+    "mudancas": [
+      "Validador de XML TISS: nova sinalização de risco de glosa estrutural (⚠ \"possível risco de glosa\", nunca erro certo) — datas incoerentes (execução fora do período internado, autorização posterior à execução, alta anterior à admissão), duplicidade de item (mesmo código + data + via de acesso), diária lançada além dos dias entre admissão e alta, mais de um profissional em grau \"Cirurgião\" no mesmo item, e taxa de sala/centro cirúrgico sem nenhum procedimento cirúrgico na guia.",
+      "Validador de XML TISS: cruza o grau de participação de cada profissional com a natureza cirúrgica do procedimento (novo endpoint /api/natureza-procedimento/lote), sinalizando item cirúrgico sem profissional em grau \"Cirurgião\" lançado, e vice-versa."
+    ]
+  },
+  {
     "versao": "2.15.0",
     "data": "2026-09-11",
     "mudancas": [
