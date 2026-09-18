@@ -1523,12 +1523,40 @@ fechada. Entre hoje e lá, o trabalho é justamente esse: levantar e guardar os
 documentos-fonte antes de estruturar o conteúdo — **parte considerável já feita**:
 4 documentos baixados (`fontes-farmacia/`), 2 deles já lidos e com conteúdo
 integralmente extraído (as 3 listas MPP completas + as recomendações de segurança).
-Falta: ler a Portaria 2.095/2013 e a NR-32 linha a linha, e confirmar se vale
-pesquisar a busca de legislação da ANVISA como consulta adicional. Enfermagem (fase
-seguinte, mencionada pelo usuário) fica só registrada como direção declarada — sem
-pesquisa ainda, só entra depois da farmácia estar robusta.
 
-Fontes: [RDC nº 36/2013 — ANVISA](https://www.gov.br/anvisa/pt-br/centraisdeconteudo/publicacoes/servicosdesaude/publicacoes/protocolo-de-seguranca-na-prescricao-uso-e-administracao-de-medicamentos), [Protocolo de Segurança na Prescrição, Uso e Administração de Medicamentos — Proqualis/Fiocruz](https://proqualis.fiocruz.br/protocolo/protocolo-de-seguranca-na-prescricao-uso-e-administracao-de-medicamentos), [Medicamentos Potencialmente Perigosos — ISMP Brasil](https://ismp-brasil.org/boletins/medicamentos-potencialmente-perigosos/), [Norma Regulamentadora nº 32 — Ministério do Trabalho e Emprego](https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/normas-regulamentadora/normas-regulamentadoras-vigentes/norma-regulamentadora-no-32-nr-32)
+**Atualizado em 18/09/2026** (pesquisa da semana +2, fluxo das 3 sextas) — Portaria
+2.095/2013 e NR-32 lidas:
+
+- **Portaria MS/GM nº 2.095/2013**: aprova, junto com a Portaria GM/MS nº 1.377/2013,
+  os **6 Protocolos Básicos de Segurança do Paciente** — identificação do paciente,
+  prevenção de úlcera por pressão, prevenção de quedas, higiene das mãos, cirurgia
+  segura, e **segurança na prescrição, uso e administração de medicamentos** (este
+  último é o que já alimenta o candidato MPP/MAV). Os protocolos são **componentes
+  obrigatórios dos planos locais de segurança do paciente dos estabelecimentos de
+  saúde**, conforme a RDC nº 36/2013 (que também cria a exigência de Núcleo de
+  Segurança do Paciente). Texto oficial na BVS/Saúde Legis ficou instável pra leitura
+  automatizada nesta sessão (timeout de conexão repetido) — confirmado via 2 fontes
+  secundárias (Saúde RJ/Vigilância Sanitária e Portal de Boas Práticas/Fiocruz), sem
+  achar nada que contradiga o já registrado aqui. Se precisar do texto literal
+  (artigo por artigo) depois, vale tentar a BVS de novo em outro momento.
+- **NR-32** (Segurança e Saúde no Trabalho em Serviços de Saúde): estrutura em 8
+  blocos — 32.1 Disposições Gerais/Definições, 32.2 Riscos Biológicos, 32.3 Riscos
+  Químicos, 32.4 Resíduos de Serviços de Saúde (PGRSS), 32.5 EPI, 32.6 Vacinação, 32.7
+  Organização do Trabalho, 32.8 Vigilância à Saúde. Relevante pra farmácia/manuseio de
+  medicamentos: **32.3** exige recipiente estanque/identificado e ambiente com
+  controle de contaminação pro preparo de quimioterápicos, segregação de resíduos
+  específicos e treinamento de pessoal; regra geral de EPI (luva, jaleco impermeável
+  conforme o risco) pra manipulação de medicamentos, evitando contato dérmico/
+  inalação. Responsabilidade se divide: empregador monta PPRA, fornece EPI/
+  capacitação, mantém vigilância médica periódica e documenta acidentes; trabalhador
+  usa o EPI, participa da capacitação e comunica riscos/acidentes. Medidas coletivas
+  (engenharia/ventilação) vêm antes do EPI individual, por princípio da norma.
+- **Ainda em aberto**: confirmar se vale pesquisar a busca de legislação da ANVISA
+  como consulta adicional (não investigado nesta rodada). Enfermagem (fase seguinte,
+  mencionada pelo usuário) continua só registrada como direção declarada — sem
+  pesquisa ainda, só entra depois da farmácia estar robusta.
+
+Fontes: [RDC nº 36/2013 — ANVISA](https://www.gov.br/anvisa/pt-br/centraisdeconteudo/publicacoes/servicosdesaude/publicacoes/protocolo-de-seguranca-na-prescricao-uso-e-administracao-de-medicamentos), [Protocolo de Segurança na Prescrição, Uso e Administração de Medicamentos — Proqualis/Fiocruz](https://proqualis.fiocruz.br/protocolo/protocolo-de-seguranca-na-prescricao-uso-e-administracao-de-medicamentos), [Medicamentos Potencialmente Perigosos — ISMP Brasil](https://ismp-brasil.org/boletins/medicamentos-potencialmente-perigosos/), [Norma Regulamentadora nº 32 (texto atualizado, PDF) — Ministério do Trabalho e Emprego](https://www.gov.br/trabalho-e-emprego/pt-br/acesso-a-informacao/participacao-social/conselhos-e-orgaos-colegiados/comissao-tripartite-partitaria-permanente/arquivos/normas-regulamentadoras/nr-32-atualizada-2022-2.pdf), [Portaria nº 2.095/2013 — Saúde Legis/BVS](https://bvsms.saude.gov.br/bvs/saudelegis/gm/2013/prt2095_24_09_2013.html), [Protocolos de Segurança do Paciente — Saúde RJ](https://www.saude.rj.gov.br/vigilancia-sanitaria/seguranca-do-paciente/protocolos-de-seguranca-do-paciente)
 
 ## Fase 11 — Nova direção estratégica: Enfermagem — pesquisa feita em 20/08/2026,
 entrega prevista 06/11/2026
