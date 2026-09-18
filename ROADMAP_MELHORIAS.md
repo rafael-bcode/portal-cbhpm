@@ -2194,3 +2194,42 @@ necessidade aparente hoje — é um único processo/instância no Render).
 É capacidade nova que o portal ainda não tem (rate limiting), não ajuste do
 que já existe — pela regra de cadência, só entra na 1ª sexta do mês, depois
 de fechar o escopo acima.
+
+## Candidato [Média]: 3 vulnerabilidades de dependência (`npm audit`, achadas em 18/09/2026)
+
+Achado ao rodar `npm install` na atualização de eslint/playwright (PRs #39/#40)
+— não é regressão dessas duas libs, só surgiu porque foi a primeira vez que o
+lockfile foi reinstalado desde que essas 3 ficaram desatualizadas.
+
+- **`adm-zip` (moderado)**: [extração segue symlink de destino, permite
+  sobrescrever arquivo arbitrário](https://github.com/advisories/GHSA-vwc7-r8mq-g2x9).
+  Usado em `atualizar-tiss-xsd.js`, `cnes-atualizador.js`,
+  `sigtap-atualizador.js` — só extrai ZIP baixado de fontes oficiais (ANS,
+  DATASUS/CNES), nunca upload de usuário, então o vetor real exigiria a fonte
+  oficial comprometida/MITM. **Fix disponível** via `npm audit fix`.
+- **`qs` (moderado)**: [bypass de limite de array via chave com vírgula em
+  colchete](https://github.com/advisories/GHSA-x5fp-wj9c-mxmx) e
+  [DoS via `isBuffer` controlado pelo
+  atacante](https://github.com/advisories/GHSA-4mjr-xmp4-gh2g). Dependência
+  transitiva de `express@5.2.1` → `body-parser`, não uma lib que o portal
+  importa direto — não dá pra corrigir isolado, depende de update do
+  `body-parser`/`express` rio acima. Baixo esforço de acompanhar, mas sem ação
+  direta possível agora.
+- **`xlsx` / SheetJS (alto)**: [Prototype Pollution](https://github.com/advisories/GHSA-4r6h-8v6p-xvw6)
+  e [ReDoS](https://github.com/advisories/GHSA-5pgg-2g8v-p4x9). **Sem fix
+  disponível no npm público** — a SheetJS parou de publicar patch no registro
+  público do npm, versão corrigida só no registro próprio deles (CDN). Usado
+  só nos scripts de importação de dados (`import-edicoes.js`,
+  `import-mapeamento-tuss-sigtap.js`, `import-procedimentos*.js`,
+  `import-tabelas-referencia.js`, `import-valores*.js`) — scripts internos
+  rodados manualmente pelo usuário contra planilhas que ele mesmo baixa de
+  fontes oficiais (CBHPM, SIGTAP), não expostos em nenhum endpoint HTTP nem
+  processam upload de terceiro. Risco real baixo hoje, mas é o mais sério dos
+  três (severidade alta, sem fix) — decisão de escopo em aberto: trocar de
+  biblioteca (ex. `exceljs`) nesses scripts, apontar pro registro próprio da
+  SheetJS, ou aceitar o risco residual documentado (scripts internos, input
+  controlado pelo próprio usuário).
+
+É correção/hardening de dependência existente, não capacidade nova — cabe em
+qualquer sexta de ajuste, depois de fechar a decisão de escopo do `xlsx`
+(`adm-zip` pode sair antes, é só `npm audit fix`).
