@@ -139,14 +139,34 @@ function parseProdutoSaudeCsv(texto) {
 // correto que tentar casar linha a linha com o que já estava.
 const PRODUTO_SAUDE_TAMANHO_LOTE = 20_000;
 
-async function importarProdutoSaude(pool, cols) {
-  await pool.query('TRUNCATE TABLE produtos_saude_anvisa');
+// Mesmo padrão do CNES: pool da API fica em 15s; import em lote precisa de
+// mais tempo (latência VPS → Supabase).
+const PRODUTO_SAUDE_IMPORT_TIMEOUT_MS = 5 * 60 * 1000;
+
+async function comTimeoutDeImportacao(pool, fn) {
+  const client = await pool.connect();
+  const queryTimeoutAnterior = client.query_timeout;
+  client.query_timeout = PRODUTO_SAUDE_IMPORT_TIMEOUT_MS;
+  try {
+    await client.query(`SET statement_timeout = '${PRODUTO_SAUDE_IMPORT_TIMEOUT_MS}'`);
+    return await fn(client);
+  } finally {
+    try {
+      await client.query('SET statement_timeout = 15000');
+    } catch (_) { /* conexão pode já ter caído; release abaixo limpa */ }
+    client.query_timeout = queryTimeoutAnterior;
+    client.release();
+  }
+}
+
+async function importarProdutoSaude(client, cols) {
+  await client.query('TRUNCATE TABLE produtos_saude_anvisa');
   const total = cols.numero_registro_cadastro.length;
   for (let inicio = 0; inicio < total; inicio += PRODUTO_SAUDE_TAMANHO_LOTE) {
     const fim = Math.min(inicio + PRODUTO_SAUDE_TAMANHO_LOTE, total);
     const fatia = (arr) => arr.slice(inicio, fim);
 
-    await pool.query(
+    await client.query(
       `INSERT INTO produtos_saude_anvisa (
         numero_registro_cadastro, numero_processo, nome_tecnico, classe_risco, nome_comercial,
         cnpj_detentor, detentor_registro_cadastro, nome_fabricante, pais_fabricante,
@@ -167,8 +187,8 @@ async function importarProdutoSaude(pool, cols) {
   }
 }
 
-async function atualizarMetadata(pool, publicadoEm, totalRegistros) {
-  await pool.query(
+async function atualizarMetadata(client, publicadoEm, totalRegistros) {
+  await client.query(
     `INSERT INTO produto_saude_metadata (id, publicado_em, atualizado_em, total_registros) VALUES (1, $1, now(), $2)
      ON CONFLICT (id) DO UPDATE SET publicado_em = EXCLUDED.publicado_em, atualizado_em = now(), total_registros = EXCLUDED.total_registros`,
     [publicadoEm, totalRegistros]
@@ -183,8 +203,10 @@ async function atualizarProdutoSaude(pool) {
   const buffer = await baixarBuffer(URL_PRODUTO_SAUDE_CSV);
   const { cols, totalLinhas, totalRegistros } = parseProdutoSaudeCsv(buffer.toString('latin1'));
 
-  await importarProdutoSaude(pool, cols);
-  await atualizarMetadata(pool, publicadoEm, totalRegistros);
+  await comTimeoutDeImportacao(pool, async (client) => {
+    await importarProdutoSaude(client, cols);
+    await atualizarMetadata(client, publicadoEm, totalRegistros);
+  });
 
   return { publicadoEm, totalLinhas, totalRegistros };
 }

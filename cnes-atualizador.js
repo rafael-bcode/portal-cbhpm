@@ -177,13 +177,35 @@ function parseCnesZip(buffer) {
 // velocidade (poucas idas e vindas) com tempo de execução por query.
 const CNES_TAMANHO_LOTE = 20_000;
 
-async function importarCnes(pool, cols) {
+// O pool da API usa query/statement_timeout de 15s (consultas rápidas).
+// Lotes UNNEST de 20k + ON CONFLICT, sobretudo com latência VPS → Supabase,
+// passam disso e caem em "Query read timeout". Nesta conexão dedicada
+// liberamos 5 min só durante o import e restauramos ao devolver ao pool.
+const CNES_IMPORT_TIMEOUT_MS = 5 * 60 * 1000;
+
+async function comTimeoutDeImportacao(pool, fn) {
+  const client = await pool.connect();
+  const queryTimeoutAnterior = client.query_timeout;
+  client.query_timeout = CNES_IMPORT_TIMEOUT_MS;
+  try {
+    await client.query(`SET statement_timeout = '${CNES_IMPORT_TIMEOUT_MS}'`);
+    return await fn(client);
+  } finally {
+    try {
+      await client.query('SET statement_timeout = 15000');
+    } catch (_) { /* conexão pode já ter caído; release abaixo limpa */ }
+    client.query_timeout = queryTimeoutAnterior;
+    client.release();
+  }
+}
+
+async function importarCnes(client, cols) {
   const total = cols.codigo_cnes.length;
   for (let inicio = 0; inicio < total; inicio += CNES_TAMANHO_LOTE) {
     const fim = Math.min(inicio + CNES_TAMANHO_LOTE, total);
     const fatia = (arr) => arr.slice(inicio, fim);
 
-    await pool.query(
+    await client.query(
       `INSERT INTO cnes_estabelecimentos (
         codigo_cnes, codigo_unidade, cnpj, cnpj_mantenedora, razao_social,
         nome_fantasia, logradouro, numero, complemento, bairro, cep, cidade,
@@ -219,8 +241,8 @@ async function importarCnes(pool, cols) {
   }
 }
 
-async function atualizarMetadata(pool, competencia, totalRegistros) {
-  await pool.query(
+async function atualizarMetadata(client, competencia, totalRegistros) {
+  await client.query(
     `INSERT INTO cnes_metadata (id, competencia, atualizado_em, total_registros) VALUES (1, $1, now(), $2)
      ON CONFLICT (id) DO UPDATE SET competencia = EXCLUDED.competencia, atualizado_em = now(), total_registros = EXCLUDED.total_registros`,
     [competencia, totalRegistros]
@@ -235,8 +257,10 @@ async function atualizarCnes(pool) {
   const buffer = await baixarBuffer(URL_DOWNLOAD(nomeArquivo));
   const { cols, totalLinhas, totalRegistros } = parseCnesZip(buffer);
 
-  await importarCnes(pool, cols);
-  await atualizarMetadata(pool, competencia, totalRegistros);
+  await comTimeoutDeImportacao(pool, async (client) => {
+    await importarCnes(client, cols);
+    await atualizarMetadata(client, competencia, totalRegistros);
+  });
 
   return { competencia, totalLinhas, totalRegistros };
 }
