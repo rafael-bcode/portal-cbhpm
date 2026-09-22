@@ -137,36 +137,45 @@ function parseProdutoSaudeCsv(texto) {
 // (numero_registro_cadastro se repete por fabricante) — o dado é republicado
 // inteiro todo dia pela ANVISA, então TRUNCATE + reinsere é mais simples e
 // correto que tentar casar linha a linha com o que já estava.
-const PRODUTO_SAUDE_TAMANHO_LOTE = 20_000;
+const PRODUTO_SAUDE_TAMANHO_LOTE = 5_000;
 
-// Mesmo padrão do CNES: pool da API fica em 15s; import em lote precisa de
-// mais tempo (latência VPS → Supabase).
+// Mesmo padrão do CNES: no node-pg o timeout efetivo é
+// connectionParameters.query_timeout — client.query_timeout é ignorado.
 const PRODUTO_SAUDE_IMPORT_TIMEOUT_MS = 5 * 60 * 1000;
+
+async function queryComTimeout(client, text, values) {
+  return client.query({
+    text,
+    values,
+    query_timeout: PRODUTO_SAUDE_IMPORT_TIMEOUT_MS,
+  });
+}
 
 async function comTimeoutDeImportacao(pool, fn) {
   const client = await pool.connect();
-  const queryTimeoutAnterior = client.query_timeout;
-  client.query_timeout = PRODUTO_SAUDE_IMPORT_TIMEOUT_MS;
+  const paramsTimeoutAnterior = client.connectionParameters.query_timeout;
+  client.connectionParameters.query_timeout = PRODUTO_SAUDE_IMPORT_TIMEOUT_MS;
   try {
-    await client.query(`SET statement_timeout = '${PRODUTO_SAUDE_IMPORT_TIMEOUT_MS}'`);
+    await queryComTimeout(client, `SET statement_timeout TO ${PRODUTO_SAUDE_IMPORT_TIMEOUT_MS}`);
     return await fn(client);
   } finally {
     try {
-      await client.query('SET statement_timeout = 15000');
+      await queryComTimeout(client, 'SET statement_timeout TO 15000');
     } catch (_) { /* conexão pode já ter caído; release abaixo limpa */ }
-    client.query_timeout = queryTimeoutAnterior;
+    client.connectionParameters.query_timeout = paramsTimeoutAnterior;
     client.release();
   }
 }
 
 async function importarProdutoSaude(client, cols) {
-  await client.query('TRUNCATE TABLE produtos_saude_anvisa');
+  await queryComTimeout(client, 'TRUNCATE TABLE produtos_saude_anvisa');
   const total = cols.numero_registro_cadastro.length;
   for (let inicio = 0; inicio < total; inicio += PRODUTO_SAUDE_TAMANHO_LOTE) {
     const fim = Math.min(inicio + PRODUTO_SAUDE_TAMANHO_LOTE, total);
     const fatia = (arr) => arr.slice(inicio, fim);
 
-    await client.query(
+    await queryComTimeout(
+      client,
       `INSERT INTO produtos_saude_anvisa (
         numero_registro_cadastro, numero_processo, nome_tecnico, classe_risco, nome_comercial,
         cnpj_detentor, detentor_registro_cadastro, nome_fabricante, pais_fabricante,
@@ -188,7 +197,8 @@ async function importarProdutoSaude(client, cols) {
 }
 
 async function atualizarMetadata(client, publicadoEm, totalRegistros) {
-  await client.query(
+  await queryComTimeout(
+    client,
     `INSERT INTO produto_saude_metadata (id, publicado_em, atualizado_em, total_registros) VALUES (1, $1, now(), $2)
      ON CONFLICT (id) DO UPDATE SET publicado_em = EXCLUDED.publicado_em, atualizado_em = now(), total_registros = EXCLUDED.total_registros`,
     [publicadoEm, totalRegistros]

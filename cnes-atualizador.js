@@ -173,28 +173,37 @@ function parseCnesZip(buffer) {
 }
 
 // Em lotes — uma única query UNNEST com as 632 mil linhas inteiras estoura
-// o statement_timeout do banco (confirmado). 20.000 por vez equilibra
-// velocidade (poucas idas e vindas) com tempo de execução por query.
-const CNES_TAMANHO_LOTE = 20_000;
+// o statement_timeout do banco (confirmado). 5.000 por vez é mais seguro com
+// latência VPS → Supabase (payload grande + ON CONFLICT); 20k estourava o
+// query_timeout de 15s do pool antes de a query sequer terminar de ir.
+const CNES_TAMANHO_LOTE = 5_000;
 
 // O pool da API usa query/statement_timeout de 15s (consultas rápidas).
-// Lotes UNNEST de 20k + ON CONFLICT, sobretudo com latência VPS → Supabase,
-// passam disso e caem em "Query read timeout". Nesta conexão dedicada
-// liberamos 5 min só durante o import e restauramos ao devolver ao pool.
+// No node-pg o timeout efetivo vem de connectionParameters.query_timeout
+// (setar client.query_timeout NÃO funciona — confirmado na v8). Por isso
+// alteramos connectionParameters e passamos query_timeout em cada query.
 const CNES_IMPORT_TIMEOUT_MS = 5 * 60 * 1000;
+
+async function queryComTimeout(client, text, values) {
+  return client.query({
+    text,
+    values,
+    query_timeout: CNES_IMPORT_TIMEOUT_MS,
+  });
+}
 
 async function comTimeoutDeImportacao(pool, fn) {
   const client = await pool.connect();
-  const queryTimeoutAnterior = client.query_timeout;
-  client.query_timeout = CNES_IMPORT_TIMEOUT_MS;
+  const paramsTimeoutAnterior = client.connectionParameters.query_timeout;
+  client.connectionParameters.query_timeout = CNES_IMPORT_TIMEOUT_MS;
   try {
-    await client.query(`SET statement_timeout = '${CNES_IMPORT_TIMEOUT_MS}'`);
+    await queryComTimeout(client, `SET statement_timeout TO ${CNES_IMPORT_TIMEOUT_MS}`);
     return await fn(client);
   } finally {
     try {
-      await client.query('SET statement_timeout = 15000');
+      await queryComTimeout(client, 'SET statement_timeout TO 15000');
     } catch (_) { /* conexão pode já ter caído; release abaixo limpa */ }
-    client.query_timeout = queryTimeoutAnterior;
+    client.connectionParameters.query_timeout = paramsTimeoutAnterior;
     client.release();
   }
 }
@@ -205,7 +214,8 @@ async function importarCnes(client, cols) {
     const fim = Math.min(inicio + CNES_TAMANHO_LOTE, total);
     const fatia = (arr) => arr.slice(inicio, fim);
 
-    await client.query(
+    await queryComTimeout(
+      client,
       `INSERT INTO cnes_estabelecimentos (
         codigo_cnes, codigo_unidade, cnpj, cnpj_mantenedora, razao_social,
         nome_fantasia, logradouro, numero, complemento, bairro, cep, cidade,
@@ -242,7 +252,8 @@ async function importarCnes(client, cols) {
 }
 
 async function atualizarMetadata(client, competencia, totalRegistros) {
-  await client.query(
+  await queryComTimeout(
+    client,
     `INSERT INTO cnes_metadata (id, competencia, atualizado_em, total_registros) VALUES (1, $1, now(), $2)
      ON CONFLICT (id) DO UPDATE SET competencia = EXCLUDED.competencia, atualizado_em = now(), total_registros = EXCLUDED.total_registros`,
     [competencia, totalRegistros]
@@ -254,8 +265,11 @@ async function atualizarMetadata(client, competencia, totalRegistros) {
 // já resolvidos) e atualiza cnes_metadata.
 async function atualizarCnes(pool) {
   const { competencia, nomeArquivo } = await buscarUltimaCompetenciaDisponivel();
+  console.log(`[cnes] Baixando ${nomeArquivo} (competência ${competencia})...`);
   const buffer = await baixarBuffer(URL_DOWNLOAD(nomeArquivo));
+  console.log(`[cnes] Download ok (${Math.round(buffer.length / 1024 / 1024)} MB). Parseando...`);
   const { cols, totalLinhas, totalRegistros } = parseCnesZip(buffer);
+  console.log(`[cnes] Parse ok (${totalRegistros} registros). Importando no banco...`);
 
   await comTimeoutDeImportacao(pool, async (client) => {
     await importarCnes(client, cols);
